@@ -12,7 +12,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-2ea043"></a>
   <img alt="Python 3.12+" src="https://img.shields.io/badge/python-3.12%2B-3572A5">
-  <img alt="3,939 tests passing" src="https://img.shields.io/badge/tests-3%2C939%20passing-2ea043">
+  <img alt="3,941 tests" src="https://img.shields.io/badge/tests-3%2C941-2ea043">
   <img alt="62 CLI commands" src="https://img.shields.io/badge/CLI-62%20commands-a3620a">
   <img alt="API keys mostly optional" src="https://img.shields.io/badge/API%20keys-mostly%20optional-f0a92e">
 </p>
@@ -321,12 +321,17 @@ uv sync --all-extras
 pytest tests/
 ```
 
-2,681 test functions across 239 files, **3,939 cases** once parametrisation expands them —
-with one skip, a proof that needs the network. Under that headline: a local mock-RPC server
-for degraded-network E2E runs (`tests/e2e/`), adversarial payload suites, a regression file
-seeded by real exchange API anomalies, and `tests/conformance/`, which asserts the *arguments*
-this codebase runs on rather than its behaviour. CI-friendly — Matplotlib runs headless and
-BLAS thread caps keep imports fast on Apple Silicon.
+2,682 test functions across 240 files, **3,941 cases** once parametrisation expands them.
+Under that headline: a local mock-RPC server for degraded-network E2E runs (`tests/e2e/`),
+adversarial payload suites, a regression file seeded by real exchange API anomalies, and
+`tests/conformance/`, which asserts the *arguments* this codebase runs on rather than its
+behaviour. CI-friendly — Matplotlib runs headless and BLAS thread caps keep imports fast on
+Apple Silicon.
+
+One of them is worth naming. `tests/replay/test_byte_identity.py` replays the same window in
+two subprocesses under two different `PYTHONHASHSEED` values and compares raw stdout, because
+the claim at the top of this page is about bytes and a same-process repeat would not notice a
+silent dependency on `set` iteration order. It is the gate under the hero image.
 
 Neither `mypy --strict` nor Ruff gates the whole of `src/`, and saying otherwise was the more
 expensive kind of wrong — it described a gate nobody would re-derive. What actually holds:
