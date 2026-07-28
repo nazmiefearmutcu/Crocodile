@@ -151,7 +151,7 @@ def make_connector(
         if extra is not None:
             raise ModuleNotFoundError(
                 f"Connector {exchange!r} requires optional dependencies "
-                f"(missing: {e.name}) — install with: pip install 'crypcodile[{extra}]'"
+                f"(missing: {e.name}) — install with: pip install 'crocodile[{extra}]'"
             ) from e
         raise
     return cls(
@@ -176,7 +176,7 @@ def _make_ccxt_connector(
     Raises
     ------
     ModuleNotFoundError
-        When ccxt is not installed — with the ``crypcodile[market]`` install hint.
+        When ccxt is not installed — with the ``crocodile[market]`` install hint.
     ValueError
         When *exchange* is neither a native connector nor a ccxt exchange id.
     """
@@ -186,7 +186,7 @@ def _make_ccxt_connector(
         raise ModuleNotFoundError(
             f"Exchange {exchange!r} is served by the universal ccxt connector, "
             f"which needs the 'market' extra — install with: "
-            f"pip install 'crypcodile[market]'"
+            f"pip install 'crocodile[market]'"
         ) from e
 
     if exchange not in ccxt.exchanges:
