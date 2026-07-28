@@ -126,6 +126,22 @@ class BinanceConnector(Connector):
     The connector reuses :func:`~.normalize.normalize_message` from the existing
     binance normalizer, passing the ``venue`` as ``"binance-<market>"`` so that
     downstream code can distinguish spot from futures records.
+
+    That market-tagged venue is the connector's whole instrument identity, not
+    just a label on the records: it is the ``source`` every record carries, the
+    prefix of the fallback canonical the normalizer builds when the registry
+    misses (``f"{venue}:{raw}"``), and the key
+    :meth:`~crocodile.crypto.instruments.registry.InstrumentRegistry.get_raw`
+    is called with on every message.  So :meth:`list_instruments` must register
+    under it too.  It registered under the bare ``"binance"`` instead, and since
+    the registry keys on ``(Instrument.exchange, Instrument.symbol_raw)`` every
+    live lookup missed: prices still flowed on the fallback canonical, but no
+    tick size, base/quote or :class:`~...registry.Kind` ever reached a consumer,
+    and the same stream's canonical flipped between ``binance:BTCUSDT`` and
+    ``binance-spot:BTCUSDT`` depending on whether the registry had loaded.
+    ``"binance"`` is also not a unique key here — spot ``BTCUSDT`` and USD-M
+    ``BTCUSDT`` are different instruments with different tick sizes, and one
+    shared registry would have collapsed them onto each other.
     """
 
     name = EXCHANGE
@@ -310,6 +326,10 @@ class BinanceConnector(Connector):
 
         Uses ``GET /api/v3/exchangeInfo`` for spot or
         ``GET /fapi/v1/exchangeInfo`` for USD-M futures.
+
+        ``exchange`` and the canonical prefix are :attr:`_venue`, not the bare
+        ``EXCHANGE`` constant, so that what is registered is what the live path
+        looks up — see the class docstring.
         """
         if self.market == "spot":
             url = f"{self.rest_url}/api/v3/exchangeInfo"
@@ -355,8 +375,8 @@ class BinanceConnector(Connector):
 
             instruments.append(
                 Instrument(
-                    canonical=f"{EXCHANGE}:{sym}",
-                    exchange=EXCHANGE,
+                    canonical=f"{self._venue}:{sym}",
+                    exchange=self._venue,
                     symbol_raw=sym,
                     kind=kind,
                     base=base,
