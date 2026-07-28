@@ -69,11 +69,18 @@ cannot be forgotten per capability the way the SQL guard was forgotten per surfa
 
 What does *not* belong here, or anywhere in this package: infrastructure. ``health``,
 ``ready``, ``version``, ``metrics``, ``docs``, ``/``, ``/api/events``, the x402 payment
-routes, and the launchers ``mcp``, ``api``, ``update``, ``shell``, ``flowmap`` and
-``gas-tracker`` are hand-written on the surfaces that have them. A capability is something
-with an asset class, a parameter schema and a provenance; a readiness probe has none of
-the three, and registering one would put it in the symmetry gate's subject list where it
-can only ever be answered with an exemption.
+routes, and the launchers ``mcp``, ``api``, ``update`` and ``shell`` are hand-written on
+the surfaces that have them. A capability is something with an asset class, a parameter
+schema and a provenance; a readiness probe has none of the three, and registering one
+would put it in the symmetry gate's subject list where it can only ever be answered with
+an exemption.
+
+That list of launchers used to end ``flowmap`` and ``gas-tracker``. Both opened a PyQt6
+window, and the argument below for why neither could be a capability turned out to be the
+argument for why neither belonged in a headless engine either; they were deleted with the
+rest of the desktop layer. The name ``gas-tracker`` stays on :data:`UNDECLARED` anyway,
+because that ledger records a decision rather than an inventory — see
+:func:`_why_gas_tracker_is_not_a_capability`.
 """
 
 from __future__ import annotations
@@ -521,9 +528,18 @@ def _why_gas_tracker_is_not_a_capability() -> str:
       projection of "open a window on the operator's desktop" onto an HTTP route or a
       JSON-RPC tool.
 
-    ``flowmap`` is the same thing — a Qt launcher over lake data — and it is *not* on
+    ``flowmap`` was the same thing — a Qt launcher over lake data — and it was *not* on
     ``IRREDUCIBLE``. That inconsistency is the evidence: the two were classified together
     as launchers by the survey, and only one of them picked up an exemption it never needed.
+
+    Both commands have since been deleted, and the deletion rests on this argument rather
+    than replacing it. Every property listed above is a property of a Qt window, not of
+    gas: no parameters, no return, no provenance, no asset class, reachable from exactly
+    one of three surfaces. A component that can only ever be reached from one surface of a
+    three-surface engine is a desktop application that happens to live in the same
+    repository, and the PyQt6 dependency it required was the engine's claim about itself
+    that a headless product could not keep. ``gas-vol`` still carries the gas data, which
+    was always the part with an answer in it.
 
     The entry was left in place at first because ``core/capability.py`` was not this
     batch's to edit and because removing a name from ``IRREDUCIBLE`` is a claim of its own.

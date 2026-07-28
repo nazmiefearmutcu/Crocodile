@@ -24,6 +24,23 @@ name still answers at all.
 
 **Its exemptions carry arguments.** Both ledgers below follow ``IRREDUCIBLE``'s rule: every
 entry states the argument, and "we did not port it" is not one.
+
+What the fixture is *for*, since it has now been shrunk once
+------------------------------------------------------------
+``premerge_phase2_surface.json`` is a photograph of the wire at ``cf87774``, kept so that a
+*regeneration* cannot quietly drop a name — the projector emits a smaller table than the six
+hand-written files did, and nothing in the diff would say which name went. It is not a
+promise that the product may never retire a command. Those are different claims, and only
+the first is mechanical: a name that vanishes because a projector missed it leaves no
+record anywhere, while a name that is retired on purpose leaves a commit that argues for it.
+
+``flowmap`` and ``gas-tracker`` were removed from the fixture in the commit that deleted the
+PyQt6 desktop layer. Both were ``QApplication`` launchers, both are gone from the tree, and
+both are gone from ``_INFRASTRUCTURE`` and ``_INFRASTRUCTURE_AS_SHIPPED`` below in the same
+edit — which is the point: an entry cannot leave one of these three places without leaving
+all three, so shrinking the fixture is a four-file diff and not a line nobody reads. The
+counts in :func:`test_the_frozen_surface_is_the_size_it_should_be` moved with it, which is
+the assertion that makes a *fifth* deletion someone tries to sneak past fail loudly.
 """
 
 from __future__ import annotations
@@ -114,14 +131,15 @@ _INFRASTRUCTURE: dict[str, str] = {
         "this gate ever gave it, because this gate only ever asked whether the *name* "
         "answered and could not have caught the drift that made the old route wrong."
     ),
-    "flowmap": "Launcher: opens the PyQt6 flowmap window. A GUI entry point, not a query.",
-    "gas-tracker": (
-        "Launcher: opens the PyQt6 gas-tracker window and takes no parameters. Note "
-        "`IRREDUCIBLE['gas-tracker']` names the *gas-market data* as a capability with no "
-        "equity analogue; that is not this entry. If a `gas-tracker` capability is ever "
-        "registered, this exemption becomes inert rather than wrong — and "
-        "`test_the_infrastructure_list_is_not_hoarding_entries` fails until it is removed."
-    ),
+    # `flowmap` and `gas-tracker` stood here, each with the same argument: a launcher that
+    # opens a PyQt6 window, no parameters worth a schema, unreachable from REST or MCP. The
+    # desktop layer has since been deleted from this repository — the engine is headless on
+    # every other surface, and a Qt dependency inside a data engine is a claim about the
+    # product that is not true. They left this dict, `_INFRASTRUCTURE_AS_SHIPPED` and the
+    # frozen fixture together, because an entry that leaves only one of the three is
+    # precisely what `test_the_infrastructure_list_cannot_grow_to_excuse_a_deleted_
+    # capability` exists to catch. FlowMap continues to ship as its own product; what was
+    # removed here is the launcher, not the visualizer.
 }
 """Wire entries that exist but are not capabilities, each with the argument for why.
 
@@ -145,8 +163,6 @@ _INFRASTRUCTURE_AS_SHIPPED: frozenset[str] = frozenset(
         "capabilities",
         "docs",
         "events",
-        "flowmap",
-        "gas-tracker",
         "health",
         "mcp",
         "metrics",
@@ -159,7 +175,7 @@ _INFRASTRUCTURE_AS_SHIPPED: frozenset[str] = frozenset(
         "version",
     }
 )
-"""The eighteen names above, written out a second time, because this ledger may only shrink.
+"""The sixteen names above, written out a second time, because this ledger may only shrink.
 
 Not redundancy: a *pin*. ``_INFRASTRUCTURE`` is a claim about the past — *this was never a
 capability* — and an exit review showed the dict alone could not tell that claim apart from
@@ -169,9 +185,13 @@ was one a freshly deleted capability satisfies by construction (see
 :func:`test_the_infrastructure_list_cannot_grow_to_excuse_a_deleted_capability`).
 
 Growing the list is therefore an edit to two places with a failing test in between, and the
-test says what the second edit is admitting to. Shrinking it stays free in one direction
+test says what the second edit is admitting to. Shrinking it stays free in two directions
 only — when the name became a declared capability, which
-:func:`test_the_infrastructure_list_is_not_hoarding_entries` already forces.
+:func:`test_the_infrastructure_list_is_not_hoarding_entries` already forces, and when the
+launcher itself was deleted from the product, which is what took ``flowmap`` and
+``gas-tracker`` off this list. The second exit is narrower than it looks: it requires the
+name to leave the frozen fixture too, and the fixture's counts are pinned, so it cannot be
+taken without a diff that shows a reviewer the whole claim at once.
 """
 
 
@@ -962,7 +982,10 @@ def test_the_frozen_surface_is_the_size_it_should_be() -> None:
 
     counts = {(f, k): len(e) for f, kinds in frozen.items() for k, e in kinds.items()}
     assert counts == {
-        ("crypto", "cli"): 48,
+        # 48 → 46: `flowmap` and `gas-tracker` were removed with the PyQt6 desktop layer.
+        # See this module's docstring for why a deliberate retirement is allowed to move
+        # these numbers and an accidental one still cannot.
+        ("crypto", "cli"): 46,
         ("crypto", "rest"): 48,
         ("crypto", "mcp"): 37,
         ("equity", "cli"): 9,
@@ -971,7 +994,9 @@ def test_the_frozen_surface_is_the_size_it_should_be() -> None:
     }, f"the six legacy surfaces exposed these counts; found {counts}"
 
     total = sum(len(params) for *_, params in _frozen_entries())
-    assert total == 456, f"the six surfaces declared 456 parameters between them, found {total}"
+    # 456 → 453: `flowmap`'s three options (`--symbol`, `--historical-hours`, `--data-dir`)
+    # left with it; `gas-tracker` had none.
+    assert total == 453, f"the six surfaces declared 453 parameters between them, found {total}"
 
 
 def test_the_scanners_still_find_the_surfaces_they_are_pointed_at() -> None:

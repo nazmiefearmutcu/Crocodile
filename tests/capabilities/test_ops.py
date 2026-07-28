@@ -193,13 +193,20 @@ def test_gas_tracker_is_a_launcher_and_is_on_no_list_that_would_imply_otherwise(
     It was a finding — recorded here because ``IRREDUCIBLE`` was not this batch's file to
     edit — and the coordinator acted on it, so the assertion now pins the resolution rather
     than the contradiction. A Qt launcher has no parameters, no return, no provenance and
-    no asset class; it cannot reach REST or MCP even in principle, and its old
+    no asset class; it could not reach REST or MCP even in principle, and its old
     justification argued about gas *data*, which ``gas-vol`` already carries. ``flowmap``
-    is the same kind of thing and was never on the list, which is the evidence.
+    was the same kind of thing and was never on the list, which is the evidence.
 
     The reasoning stays reachable from the batch module rather than living only in a commit
     message, because the next reader of ``UNDECLARED`` is someone asking why this name is
     not in the registry.
+
+    Both commands have since been deleted: the PyQt6 desktop layer left the repository, so
+    ``gas-tracker`` is no longer a CLI command either. This test is unchanged by that, and
+    deliberately so — ``UNDECLARED`` is a record of a decision, not an index of what ships,
+    and the next reader asking "why is this name not a capability" is at least as likely to
+    be reading a changelog as a ``--help``. What the deletion does change is the tense of
+    the argument, not its content.
     """
     assert "gas-tracker" not in IRREDUCIBLE
     assert "gas-tracker" not in REGISTRY

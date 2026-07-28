@@ -228,6 +228,31 @@ def test_the_ops_batch_counts_the_exemption_list_correctly() -> None:
         assert f"``{name}``" in doc, f"{name} is exempted and declared here but unnamed"
 
 
+def test_the_operator_module_counts_the_commands_it_registers() -> None:
+    """It said "These seven" for a table that now holds five.
+
+    ``surfaces/operate.py`` is the one place the hand-written command table is described in
+    prose rather than derived, and its docstring opened by counting it — which made the
+    sentence a hostage to the next command added or removed. Deleting the two PyQt6
+    launchers, ``flowmap`` and ``gas-tracker``, is what collected on that: seven became
+    five and nothing in the tree read the sentence again.
+
+    Against ``build_app()`` rather than against a literal, per this module's first rule; a
+    reworded paragraph fails on the missing anchor rather than passing vacuously, per its
+    second.
+    """
+    from crocodile.surfaces import operate
+
+    count = len(operate.build_app().registered_commands)
+    doc = _module_docstring(_SRC / "surfaces" / "operate.py")
+    assert f"These {_NUMBER_WORDS[count]} answer questions" in doc, (
+        f"`operate.build_app()` registers {count} hand-written commands "
+        f"({sorted(c.name or '' for c in operate.build_app().registered_commands)}); the "
+        f"module docstring does not say so. First paragraph as written:\n"
+        f"{doc.split(chr(10) + chr(10))[1]}"
+    )
+
+
 def test_gas_tracker_is_described_as_removed_rather_than_present() -> None:
     """Its argument outlived its entry; the argument may not still describe it as live.
 

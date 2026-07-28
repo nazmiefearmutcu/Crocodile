@@ -28,14 +28,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-gui = [
-    "PyQt6>=6.0.0",
-    "pyqtgraph>=0.13.0",
-    "matplotlib>=3.7.0",
-]
 ml = [
     "xgboost>=1.7.0",
     "scipy>=1.10.0",
+    # Was in the deleted `gui` extra, which is where it never belonged: the only
+    # consumer is `crypto/analytics/volsurface_3d.py`, which calls
+    # `matplotlib.use("Agg")` before importing pyplot. That is a headless raster
+    # backend — no Qt, no window, no display. It shipped beside PyQt6 because the
+    # desktop layer arrived first, and deleting that layer without moving this
+    # would have taken `plot_volsurface_3d` down with it in silence.
+    "matplotlib>=3.7.0",
 ]
 web = [
     "fastapi>=0.100.0",
@@ -58,7 +60,7 @@ evasion = [
     # on purpose: the default posture is to respect quotas, not to evade them.
 ]
 full = [
-    "crocodile[gui,ml,web,onchain,market]",
+    "crocodile[ml,web,onchain,market]",
 ]
 
 

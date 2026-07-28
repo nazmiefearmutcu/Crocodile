@@ -400,6 +400,23 @@ def test_no_capability_disappeared_in_the_merge() -> None:
     The inventory beside this file is the two forks' public surface at the last
     commit where both trees were intact. Deleting a name from it to make this
     pass is the one thing that defeats it.
+
+    The snapshot has been shrunk once, deliberately, and the distinction that
+    licensed it is the one this gate is about. It catches a name that stopped
+    existing *while nobody decided it should* — a promotion that assumed the
+    other fork's copy was a superset, a projector that emitted a smaller table.
+    It was never a promise that the product may not retire a feature. The commit
+    that deleted the PyQt6 desktop layer took eight names off the ``crypto``
+    list: ``flowmap``, ``gas_tracker`` and ``run_flowmap_gui`` (the launchers),
+    and ``FlowmapWindow``, ``GasTrackerWidget``, ``dict_to_flowmap_objects``,
+    ``compute_hist_target_bw`` and ``compute_hist_vis_rows`` (the window and its
+    helpers). ``_DELIBERATELY_DROPPED`` was the other available shape and would
+    have kept the file frozen; it was not used because every existing entry
+    there is a name whose *behaviour* survives somewhere else under a different
+    spelling, and these have no survivor to point at — the argument for them is
+    that a headless data engine should not ship a Qt dependency, which belongs
+    in a commit message rather than in a one-line exemption. FlowMap remains a
+    published product; it is the launcher that left this repository.
     """
     inventory = json.loads((pathlib.Path(__file__).parent / "premerge_public_api.json").read_text())
     merged = _merged_public_names()
@@ -463,7 +480,12 @@ def test_the_dropped_list_is_not_quietly_hoarding_names() -> None:
 # written here for the same reason: it is `_ruff("src/crocodile/crypto")` and
 # `_ruff("src/crocodile/equity")`, and a prose copy of a number only ever goes out
 # of date in the direction that loosens the gate.
-_LEGACY_RUFF_BUDGET = 222
+# 222 → 202: no fix, a deletion. `crypto/gui/` — the PyQt6 FlowMap window and the
+# gas-tracker widget — left the tree with the rest of the desktop layer, and its 20
+# inherited findings left with it. Lowered in the same commit rather than a later
+# one, because a budget sitting 20 above the tree is 20 new findings that land green,
+# which is the condition the 431 → 430 and 240 → 222 steps were both taken to remove.
+_LEGACY_RUFF_BUDGET = 202
 
 
 def _ruff(*paths: str) -> list[str]:

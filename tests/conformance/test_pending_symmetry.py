@@ -289,8 +289,10 @@ def test_scheduling_against_an_invented_method_is_caught(_isolate: None) -> None
 def test_a_name_on_both_lists_is_caught(_isolate: None) -> None:
     """The fixture is any live IRREDUCIBLE name; it used to be `gas-tracker`.
 
-    That entry was removed — it opens a Qt window, so it is a launcher rather than a
-    capability, and an exemption list that covers one makes the list mean two things.
+    That entry was removed — it opened a Qt window, so it was a launcher rather than a
+    capability, and an exemption list that covers one makes the list mean two things. The
+    command itself has since been deleted along with the rest of the desktop layer, which
+    is why the fixture cannot be a live name from that side any more.
     `mev-sandwich` stands in because it is what IRREDUCIBLE is actually for: it needs a
     public mempool, which is a property of the market and not of the schedule.
     """

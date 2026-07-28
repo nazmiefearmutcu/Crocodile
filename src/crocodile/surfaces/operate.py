@@ -2,12 +2,19 @@
 
 Everything in :mod:`crocodile.surfaces.cli` is generated from a capability declaration and
 nothing here is. That is the whole distinction: a capability has an asset class, a parameter
-schema and a provenance, and answers a question about a market. These seven answer questions
-about the *installation* — start a server, open a window, upgrade the package, rename a
-directory — so there is nothing for the registry to hold and no honest ``prov`` to publish.
+schema and a provenance, and answers a question about a market. These five answer questions
+about the *installation* — start a server, upgrade the package, rename a directory — so
+there is nothing for the registry to hold and no honest ``prov`` to publish.
 :func:`crocodile.capabilities.ops._why_migrate_lake_is_infrastructure` and
 :func:`~crocodile.capabilities.ops._why_gas_tracker_is_not_a_capability` are the long form of
 that argument for the two names where it was contested.
+
+There were seven, and two of them opened windows. ``flowmap`` and ``gas-tracker`` started a
+``QApplication`` in a child process; the argument that kept them out of the registry — no
+asset class, no parameter schema, no provenance, unreachable from REST or MCP — is the same
+argument for why a headless data engine should not carry them at all, and it applies to the
+PyQt6 dependency they were the only consumers of. FlowMap is a published product in its own
+right and continues to be one; what left here is the launcher, not the visualizer.
 
 Kept in a separate module from the projection on purpose. ``cli.build_app()`` is what Gate 4
 measures against the registry, and a hand-written command inside it would make that gate
@@ -38,21 +45,13 @@ import typer
 from crocodile.core.config import Settings
 from crocodile.surfaces import dispatch
 
-__all__ = ["build_app", "is_interactive_stdin", "run_flowmap_gui"]
+__all__ = ["build_app", "is_interactive_stdin"]
 
 _DataDirOpt = Annotated[
     Path | None,
     typer.Option("--data-dir", help="Lake root. Defaults to CROCODILE_DATA_DIR."),
 ]
 """The same option the projection adds to every command, spelled once for these too."""
-
-_SHELL_ENV = "CRYPCODILE_SHELL"
-"""Set by ``shell`` so ``flowmap`` returns instead of blocking on its GUI child.
-
-Still spelled ``CRYPCODILE_`` because it is read by a running process that may have been
-started before this rename; the on-disk and on-environment vocabulary is a migration with
-its own decision, deliberately not this phase's.
-"""
 
 
 def is_interactive_stdin() -> bool:
@@ -77,8 +76,6 @@ def build_app() -> typer.Typer:
     app.command(name="api")(api)
     app.command(name="update")(update)
     app.command(name="shell")(shell)
-    app.command(name="flowmap")(flowmap)
-    app.command(name="gas-tracker")(gas_tracker)
     app.command(name="migrate-lake")(migrate_lake_cmd)
     return app
 
@@ -127,100 +124,6 @@ def api(
 
     typer.echo(f"Starting the Crocodile API server on http://{host}:{port}...", err=True)
     uvicorn.run(build_server(data_dir=data_dir), host=host, port=port, log_level="info")
-
-
-def flowmap(
-    symbol: Annotated[
-        str, typer.Option("--symbol", help="Canonical symbol, e.g. binance-spot:BTCUSDT.")
-    ],
-    historical_hours: Annotated[
-        float, typer.Option("--historical-hours", help="Number of historical hours to load.")
-    ] = 2.0,
-    data_dir: _DataDirOpt = None,
-) -> None:
-    """Open the PyQt6 flowmap window on one symbol's stored book."""
-    import multiprocessing
-
-    if ":" not in symbol:
-        typer.echo(
-            f"Error: symbol {symbol!r} is not canonical; it must be source:RAW.",
-            err=True,
-        )
-        raise typer.Exit(code=1)
-
-    process = multiprocessing.Process(
-        target=run_flowmap_gui,
-        args=(symbol, str(_lake(data_dir)), historical_hours),
-        daemon=True,
-    )
-    process.start()
-    typer.echo(f"Launched the flowmap window for {symbol}.")
-
-    if os.environ.get(_SHELL_ENV) == "1":
-        return
-    try:
-        process.join()
-    except (KeyboardInterrupt, SystemExit):
-        process.terminate()
-
-
-def run_flowmap_gui(initial_symbol: str, data_dir: str, historical_hours: float) -> None:
-    """Body of the flowmap child process.
-
-    A separate process rather than a Qt app in this one: the CLI is not an event loop, and a
-    ``QApplication`` started inside it would own the interpreter until the window closed —
-    which is why the shell sets ``CRYPCODILE_SHELL`` rather than the launcher blocking.
-    """
-    import faulthandler
-    import signal
-
-    faulthandler.enable()
-    for name in ("SIGUSR1", "SIGINFO"):
-        handler = getattr(signal, name, None)
-        if handler is not None:
-            faulthandler.register(handler)
-
-    try:
-        from PyQt6.QtWidgets import QApplication
-
-        from crocodile.crypto.gui.flowmap_window import FlowmapWindow
-    except ImportError as exc:
-        sys.stderr.write(
-            f"GUI dependencies not available: {exc}\nInstall with: pip install 'crocodile[gui]'\n"
-        )
-        sys.stderr.flush()
-        return
-
-    qt = QApplication(sys.argv)
-    window = FlowmapWindow(
-        initial_symbol=initial_symbol, data_dir=data_dir, historical_hours=historical_hours
-    )
-    window.show()
-    sys.exit(qt.exec())
-
-
-def gas_tracker() -> None:
-    """Open the PyQt6 gas-tracker window."""
-    try:
-        from PyQt6.QtWidgets import QApplication, QMainWindow
-
-        from crocodile.crypto.gui.widgets.gas_tracker import GasTrackerWidget
-    except ImportError as exc:
-        typer.echo(
-            f"GUI dependencies not available: {exc}. "
-            "Install with: pip install 'crocodile[gui]'",
-            err=True,
-        )
-        raise typer.Exit(code=1) from exc
-
-    qt = QApplication.instance() or QApplication(sys.argv)
-    window = QMainWindow()
-    window.setWindowTitle("Crocodile Gas Tracker")
-    window.setCentralWidget(GasTrackerWidget())
-    window.resize(800, 400)
-    window.show()
-    if "pytest" not in sys.modules:
-        sys.exit(qt.exec())
 
 
 # ---------------------------------------------------------------------------
@@ -313,7 +216,6 @@ def shell() -> None:
     from crocodile import __version__
     from crocodile.surfaces import entrypoint
 
-    os.environ[_SHELL_ENV] = "1"
     typer.echo(f"Crocodile interactive shell (v{__version__}).")
     typer.echo("Type 'help' to list commands. Type 'exit' or 'quit' to leave.")
 

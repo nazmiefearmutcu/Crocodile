@@ -15,6 +15,17 @@ because every gate was asking whether something *worked* rather than whether som
 An optional integration is allowed to be absent. It is not allowed to be absent *at import
 time*: absence must surface where a caller asks for the feature, as a raised error that
 names what is missing, which is the same rule the evasion extra follows.
+
+The module that prompted this gate is gone. ``crocodile.crypto.gui`` was deleted with the
+rest of the PyQt6 desktop layer, and with it
+``test_the_flowmap_integration_degrades_instead_of_exploding``, which asserted that
+``HAS_FLOWMAP`` existed and that ``dict_to_flowmap_objects`` raised ``ConfigError`` naming
+what was missing. That test is not replaced, because there is nothing left to replace it
+over: the rule it demonstrated is the one
+:func:`test_every_module_imports` enforces across the whole tree, and the demonstration was
+only ever a second copy of it aimed at the one module that had failed. The strongest form
+of "an optional dependency may not break the import" is not needing the optional dependency
+at all, which is what the deletion bought.
 """
 
 from __future__ import annotations
@@ -64,22 +75,3 @@ def test_every_module_imports(module: str) -> None:
             "raises ConfigError when the feature is used — never at import."
         )
 
-
-def test_the_flowmap_integration_degrades_instead_of_exploding() -> None:
-    """The specific regression this gate was written for.
-
-    ``HAS_FLOWMAP`` is the switch; its existence is what proves the import is guarded
-    rather than merely happening to succeed on a machine that has FlowMap checked out.
-    """
-    from crocodile.crypto.gui import flowmap_window
-
-    assert isinstance(flowmap_window.HAS_FLOWMAP, bool)
-
-    if flowmap_window.HAS_FLOWMAP:
-        pytest.skip("FlowMap is importable here; the absent path is covered on hosts without it")
-
-    from crocodile.core.errors import ConfigError
-
-    with pytest.raises(ConfigError) as caught:
-        flowmap_window.dict_to_flowmap_objects({"channel": "trade"})
-    assert "flowmap" in str(caught.value).lower(), "the error must name what is missing"

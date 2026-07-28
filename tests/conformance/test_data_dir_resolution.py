@@ -31,8 +31,11 @@ _LAKE_DIR_VARS = frozenset(
 )
 """Every spelling that has ever meant "the lake root".
 
-Deliberately not a suffix match: ``FLOWMAP_DATA_DIR`` in the GUI names where that window
-keeps its own files, which is a different setting that happens to end in the same words.
+Deliberately not a suffix match. ``FLOWMAP_DATA_DIR`` was the case that proved it: it named
+where the FlowMap window kept its own files, which is a different setting that happens to
+end in the same words. That window has been deleted, so the variable no longer exists in the
+tree — the negative case below keeps it as a synthetic fixture rather than a live example,
+because the property being pinned is a property of the scanner and not of the GUI.
 """
 
 _MAY_READ_THE_ENVIRONMENT = {
@@ -111,7 +114,12 @@ def test_the_scanner_sees_every_spelling_of_an_environment_read() -> None:
 
 
 def test_the_scanner_leaves_an_unrelated_directory_variable_alone() -> None:
-    """``FLOWMAP_DATA_DIR`` is where a GUI window keeps its files, not the lake."""
+    """``FLOWMAP_DATA_DIR`` was where a GUI window kept its files, not the lake.
+
+    Synthetic now — the window is gone — and kept because the rule is about the scanner:
+    a name that merely ends in ``_DATA_DIR`` is not a lake resolver, and a suffix match
+    would have said it was.
+    """
     assert not _env_reads(ast.parse('os.environ.get("FLOWMAP_DATA_DIR")'))
     assert not _env_reads(ast.parse('os.getenv("STOCKODILE_HOME")'))
 

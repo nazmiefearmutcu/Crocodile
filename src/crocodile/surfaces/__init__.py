@@ -20,9 +20,15 @@ one ``query`` capability shipped three different SQL policies — rather than on
 
 Infrastructure is not projected and is not in the registry: ``health``, ``ready``,
 ``version``, ``metrics``, ``docs``, ``/``, ``/api/events``, the x402 payment routes, and
-the launchers ``mcp``, ``api``, ``update``, ``shell``, ``flowmap`` and ``gas-tracker``
-stay hand-written on whichever surface has them. A capability has an asset class, a
-parameter schema and a provenance; a readiness probe has none of the three.
+the launchers ``mcp``, ``api``, ``update``, ``shell`` and ``migrate-lake`` stay
+hand-written on whichever surface has them. A capability has an asset class, a parameter
+schema and a provenance; a readiness probe has none of the three.
+
+``flowmap`` and ``gas-tracker`` were on that list until the PyQt6 desktop layer was
+deleted. They were the only two entries that could not be reached from all three surfaces
+even in principle — there is no projection of "open a window on the operator's desktop"
+onto an HTTP route or a JSON-RPC tool — which is the same reason they were never
+capabilities and, in the end, the reason they are no longer here.
 """
 
 from __future__ import annotations

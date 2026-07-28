@@ -394,11 +394,19 @@ in the tree.
 
 IRREDUCIBLE: Final[dict[str, str]] = {
     # `gas-tracker` was here and is not a capability at all. It takes no parameters,
-    # returns nothing, observes nothing, and belongs to no asset class: it opens a Qt
-    # window and enters an event loop, so it cannot reach REST or MCP even in principle.
-    # Its justification was an argument about gas *data*, which `gas-vol` already carries.
-    # The evidence is `flowmap`, which is the same kind of thing and was never on this
-    # list. An exemption that covers a launcher makes the list mean two things.
+    # returns nothing, observes nothing, and belongs to no asset class: it opened a Qt
+    # window and entered an event loop, so it could not reach REST or MCP even in
+    # principle. Its justification was an argument about gas *data*, which `gas-vol`
+    # already carries. The evidence was `migrate-lake`, which is the same kind of thing —
+    # infrastructure declined on purpose, argued for in `capabilities.ops.UNDECLARED` —
+    # and was never on this list. An exemption that covers a non-capability makes the list
+    # mean two things: "no equity analogue can exist" and "not a capability at all". Only
+    # the first is checkable against a market.
+    #
+    # The original evidence was `flowmap`, a Qt launcher of exactly the same shape that
+    # also never appeared here. Both commands have since been deleted along with the rest
+    # of the desktop layer, so the pair no longer exists to point at — the argument is
+    # unchanged and the surviving example is `migrate-lake`.
     "gas-vol": "Correlates price volatility with gas prices; gas is chain-native.",
     "mev-sandwich": "Requires a public mempool and atomic transaction ordering.",
     "sequencer-latency": "Measures an L2 sequencer; equities have no sequencer.",

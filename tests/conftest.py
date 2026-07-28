@@ -35,10 +35,10 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 # tests/analytics/test_funding_prediction.py, whose `_WeightedSumRegressor` returns a value
 # derivable by hand, so the assertion is about the wiring and not about MagicMock.
 
-# NOTE: PyQt6 / pyqtgraph are intentionally NOT mocked here. The FlowMap GUI
-# tests exercise real (offscreen) Qt widgets — QT_QPA_PLATFORM=offscreen above
-# keeps that headless and hang-free, which is why a blanket sys.modules stub of
-# PyQt6 would break them (e.g. QMainWindow.move missing on a dummy widget).
+# NOTE: PyQt6 / pyqtgraph used to be exempted from mocking here, because the FlowMap GUI
+# tests exercised real offscreen Qt widgets. The desktop layer is gone and so are those
+# tests; no module under src/crocodile imports either package now, so there is nothing
+# left to mock or to exempt.
 
 # Safeguard against matplotlib interactive GUI backend loading delays/hangs on macOS
 try:

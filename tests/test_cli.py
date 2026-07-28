@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import pathlib
 
-import pytest
 from typer.testing import CliRunner
 
 from crocodile.surfaces import entrypoint
@@ -74,15 +73,16 @@ def test_cli_migrate_lake_refuses_to_merge_partitions(tmp_path: pathlib.Path) ->
 # ---------------------------------------------------------------------------
 
 
-def test_cli_shell_lists_the_command_table_and_exits(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_shell_lists_the_command_table_and_exits() -> None:
     """``shell`` runs the same app the console script does, and leaves on ``exit``.
 
-    ``monkeypatch.setenv`` rather than nothing: ``shell`` sets ``CRYPCODILE_SHELL=1`` so a
-    ``flowmap`` started from inside it returns instead of blocking on its GUI child, and an
-    un-restored process environment would carry that into every later test.
+    ``shell`` used to set ``CRYPCODILE_SHELL=1`` so that a ``flowmap`` started from inside
+    it returned instead of blocking on its GUI child, and this test took a
+    ``monkeypatch.setenv`` so an un-restored process environment could not carry that into
+    every later test. The flag had exactly one reader, ``flowmap``, and both are gone with
+    the desktop layer — so ``shell`` now mutates no environment at all and there is nothing
+    to isolate.
     """
-    monkeypatch.setenv("CRYPCODILE_SHELL", "")
-
     result = CliRunner().invoke(entrypoint.build_app(), ["shell"], input="help\nexit\n")
     assert result.exit_code == 0, result.output
     assert "Crocodile interactive shell" in result.output

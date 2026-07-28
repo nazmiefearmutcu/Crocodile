@@ -349,16 +349,6 @@
           "--force": false
         }
       },
-      "flowmap": {
-        "options": {
-          "--data-dir": "Path('data')",
-          "--historical-hours": 2.0,
-          "--symbol": null
-        }
-      },
-      "gas-tracker": {
-        "options": {}
-      },
       "shell": {
         "options": {}
       },
