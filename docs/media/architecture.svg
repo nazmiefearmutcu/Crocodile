@@ -1,0 +1,264 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 546" width="880" height="546" role="img">
+<style>
+  :root{--bg:#faf6ee;--panel:#f2ead9;--panel2:#e8dec8;--ink:#17140f;--dim:#6c6355;--rule:#d6c9b0;--accent:#a3620a;--accent_bg:#f6e2bd;--teal:#0f666e;--teal_bg:#d3e7e7;--ok:#2c7a2f;--warn:#b23c1b;--warn_bg:#f8ddd2}
+  @media (prefers-color-scheme: dark){
+  :root{--bg:#14120f;--panel:#1d1a15;--panel2:#272219;--ink:#ece6da;--dim:#948b7c;--rule:#3a332a;--accent:#f0a92e;--accent_bg:#3a2a10;--teal:#4ec2ce;--teal_bg:#10302f;--ok:#7fc25e;--warn:#e8724f;--warn_bg:#3a1d13}
+  }
+
+  text { font-family: ui-monospace, SFMono-Regular, &#34;SF Mono&#34;, Menlo, Consolas, &#34;DejaVu Sans Mono&#34;, &#34;Liberation Mono&#34;, monospace; fill: var(--ink); }
+  .dim { fill: var(--dim); }
+  .acc { fill: var(--accent); }
+  .teal { fill: var(--teal); }
+  .ok { fill: var(--ok); }
+  .warn { fill: var(--warn); }
+  .b { font-weight: 700; }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .18em; }
+  .h { font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+  .lbl { font-size: 12px; letter-spacing: .04em; }
+  .sm { font-size: 11px; }
+  .xs { font-size: 10px; letter-spacing: .02em; }
+  .xxs { font-size: 9px; letter-spacing: .01em; }
+  .code { font-size: 12.5px; }
+  .big { font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+  .panel { fill: var(--panel); stroke: var(--rule); stroke-width: 1; }
+  .panel2 { fill: var(--panel2); stroke: var(--rule); stroke-width: 1; }
+  .hair { stroke: var(--rule); stroke-width: 1; fill: none; }
+  .wire { stroke: var(--rule); stroke-width: 1.25; fill: none; }
+  .wire-acc { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+  .wire-teal { stroke: var(--teal); stroke-width: 1.6; fill: none; }
+</style>
+<rect width="880" height="546" rx="6" fill="var(--bg)"/>
+<defs>
+<marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--rule)"/></marker>
+<marker id="ar-acc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--accent)"/></marker>
+<marker id="ar-teal" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--teal)"/></marker>
+</defs>
+<text x="24" y="28" class="kicker acc">ARCHITECTURE</text>
+<text x="856" y="28" class="xs dim" text-anchor="end">many shapes in  &#183;  one shape through  &#183;  three shapes out</text>
+<line x1="24" y1="42" x2="856" y2="42" class="hair"/>
+<rect x="24" y="62" width="214" height="214" rx="3" class="panel"/>
+<text x="36" y="84" class="h acc">CRYPTO</text>
+<text x="226" y="84" class="xs dim" text-anchor="end">109 venues</text>
+<rect x="36" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="53" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="70" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="87" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="104" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="121" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="138" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="155" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="172" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="189" y="96" width="13" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="206" y="96" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="206" y="107" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="206" y="118" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="206" y="129" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="206" y="140" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="206" y="151" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="206" y="162" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="206" y="173" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="206" y="184" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="36" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="53" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="70" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="87" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="104" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="121" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="138" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="155" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="172" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="189" y="195" width="13" height="7" rx="1.5" fill="var(--rule)"/>
+<text x="36" y="214" class="xs">10 native  +  105 ccxt  &#8722;  6 shared</text>
+<text x="36" y="230" class="xs dim">binance bybit coinbase deribit okx</text>
+<text x="36" y="244" class="xs dim">base gmx derive superchain coingecko</text>
+<rect x="36" y="258" width="7" height="7" rx="1" fill="var(--accent)"/>
+<text x="48" y="263" class="xs dim">native</text>
+<rect x="100" y="258" width="7" height="7" rx="1" fill="var(--rule)"/>
+<text x="112" y="263" class="xs dim">via ccxt</text>
+<rect x="24" y="290" width="214" height="194" rx="3" class="panel"/>
+<text x="36" y="312" class="h acc">US EQUITIES</text>
+<text x="226" y="312" class="xs dim" text-anchor="end">9 sources</text>
+<rect x="36" y="323" width="6" height="6" rx="1" fill="var(--dim)"/>
+<text x="50" y="332" class="xs">alpaca</text>
+<text x="226" y="332" class="xs dim" text-anchor="end">key</text>
+<rect x="36" y="339" width="6" height="6" rx="1" fill="var(--teal)"/>
+<text x="50" y="348" class="xs">yahoo</text>
+<rect x="36" y="355" width="6" height="6" rx="1" fill="var(--teal)"/>
+<text x="50" y="364" class="xs">sec_edgar</text>
+<rect x="36" y="371" width="6" height="6" rx="1" fill="var(--teal)"/>
+<text x="50" y="380" class="xs">treasury</text>
+<rect x="36" y="387" width="6" height="6" rx="1" fill="var(--dim)"/>
+<text x="50" y="396" class="xs">tiingo</text>
+<text x="226" y="396" class="xs dim" text-anchor="end">key</text>
+<rect x="36" y="403" width="6" height="6" rx="1" fill="var(--teal)"/>
+<text x="50" y="412" class="xs">stooq</text>
+<rect x="36" y="419" width="6" height="6" rx="1" fill="var(--teal)"/>
+<text x="50" y="428" class="xs">msn_money</text>
+<rect x="36" y="435" width="6" height="6" rx="1" fill="var(--teal)"/>
+<text x="50" y="444" class="xs">google_finance</text>
+<rect x="36" y="451" width="6" height="6" rx="1" fill="var(--dim)"/>
+<text x="50" y="460" class="xs">finnhub</text>
+<text x="226" y="460" class="xs dim" text-anchor="end">key</text>
+<rect x="36" y="470" width="7" height="7" rx="1" fill="var(--teal)"/>
+<text x="48" y="475" class="xs dim">keyless</text>
+<rect x="108" y="470" width="7" height="7" rx="1" fill="var(--dim)"/>
+<text x="120" y="475" class="xs dim">needs a key</text>
+<path d="M238 96 C 284 96, 284 220, 324 220" class="wire" opacity="0.55"/>
+<path d="M238 121 C 284 121, 284 224, 324 224" class="wire" opacity="0.55"/>
+<path d="M238 146 C 284 146, 284 228, 324 228" class="wire" opacity="0.55"/>
+<path d="M238 171 C 284 171, 284 232, 324 232" class="wire" opacity="0.55"/>
+<path d="M238 196 C 284 196, 284 236, 324 236" class="wire" opacity="0.55"/>
+<path d="M238 221 C 284 221, 284 240, 324 240" class="wire" opacity="0.55"/>
+<path d="M238 246 C 284 246, 284 244, 324 244" class="wire" opacity="0.55"/>
+<path d="M238 271 C 284 271, 284 248, 324 248" class="wire" opacity="0.55"/>
+<path d="M238 296 C 284 296, 284 252, 324 252" class="wire" opacity="0.55"/>
+<path d="M238 321 C 284 321, 284 256, 324 256" class="wire" opacity="0.55"/>
+<path d="M238 346 C 284 346, 284 260, 324 260" class="wire" opacity="0.55"/>
+<path d="M238 371 C 284 371, 284 264, 324 264" class="wire" opacity="0.55"/>
+<path d="M238 396 C 284 396, 284 268, 324 268" class="wire" opacity="0.55"/>
+<path d="M238 421 C 284 421, 284 272, 324 272" class="wire" opacity="0.55"/>
+<path d="M238 446 C 284 446, 284 276, 324 276" class="wire" opacity="0.55"/>
+<path d="M238 471 C 284 471, 284 280, 324 280" class="wire" opacity="0.55"/>
+<rect x="330" y="62" width="236" height="62" rx="3" class="panel2"/>
+<text x="344" y="84" class="h acc">NORMALIZE</text>
+<text x="344" y="104" class="xs dim">every venue &#8594; one record shape</text>
+<text x="344" y="117" class="xs dim">validated, typed, timestamped in ns</text>
+<line x1="448" y1="124" x2="448" y2="140" class="wire-acc" marker-end="url(#ar-acc)"/>
+<rect x="330" y="146" width="236" height="190" rx="3" class="panel2"/>
+<text x="344" y="168" class="h acc">ONE SCHEMA</text>
+<text x="552" y="168" class="xs dim" text-anchor="end">30 record types</text>
+<text x="344" y="188" class="xs teal">Trade</text>
+<text x="452" y="188" class="xs teal">BookSnapshot</text>
+<text x="344" y="202" class="xs teal">BookDelta</text>
+<text x="452" y="202" class="xs teal">BookTicker</text>
+<text x="344" y="216" class="xs teal">OHLCV</text>
+<text x="452" y="216" class="xs teal">Quote</text>
+<text x="344" y="230" class="xs teal">Funding</text>
+<text x="452" y="230" class="xs teal">OpenInterest</text>
+<text x="344" y="244" class="xs teal">Liquidation</text>
+<text x="452" y="244" class="xs teal">OptionsChain</text>
+<text x="344" y="258" class="xs teal">DepthProfile</text>
+<text x="452" y="258" class="xs teal">Auction</text>
+<text x="344" y="272" class="xs teal">Instrument</text>
+<text x="452" y="272" class="xs teal">Filing</text>
+<text x="344" y="286" class="xs teal">Holding13F</text>
+<text x="452" y="286" class="xs teal">InsiderTransaction</text>
+<text x="344" y="300" class="xs teal">CorporateAction</text>
+<text x="452" y="300" class="xs teal">Fundamental</text>
+<text x="344" y="314" class="xs teal">MacroSeries</text>
+<text x="452" y="314" class="xs teal">IndexValue</text>
+<text x="344" y="328" class="xs dim">&#8230; and 10 more</text>
+<line x1="448" y1="336" x2="448" y2="352" class="wire-acc" marker-end="url(#ar-acc)"/>
+<rect x="330" y="358" width="236" height="126" rx="3" class="panel2"/>
+<text x="344" y="380" class="h acc">PARQUET LAKE</text>
+<text x="344" y="400" class="xs">data/</text>
+<text x="354" y="414" class="xs dim">source=deribit/</text>
+<text x="364" y="428" class="xs dim">channel=trade/</text>
+<text x="374" y="442" class="xs dim">date=2023-11-14/</text>
+<text x="384" y="456" class="xs dim">part-0000.parquet</text>
+<text x="344" y="474" class="xs teal">one DuckDB view per channel</text>
+<path d="M566 273 C 616 273, 612 128, 656 128" class="wire-teal" marker-end="url(#ar-teal)"/>
+<path d="M566 273 C 616 273, 612 262, 656 262" class="wire-teal" marker-end="url(#ar-teal)"/>
+<path d="M566 273 C 616 273, 612 396, 656 396" class="wire-teal" marker-end="url(#ar-teal)"/>
+<rect x="662" y="82" width="194" height="94" rx="3" class="panel"/>
+<text x="674" y="104" class="h acc">CLI</text>
+<text x="674" y="120" class="xs dim">one command per capability</text>
+<text x="674" y="142" class="xs teal">$ crocodile depth \</text>
+<text x="674" y="157" class="xs teal">    --symbol AAPL</text>
+<rect x="662" y="216" width="194" height="94" rx="3" class="panel"/>
+<text x="674" y="238" class="h acc">REST</text>
+<text x="674" y="254" class="xs dim">one route per capability</text>
+<text x="674" y="276" class="xs teal">GET /api/v1/depth</text>
+<text x="674" y="291" class="xs teal">    ?symbol=AAPL</text>
+<rect x="662" y="350" width="194" height="94" rx="3" class="panel"/>
+<text x="674" y="372" class="h acc">MCP</text>
+<text x="674" y="388" class="xs dim">one tool per capability</text>
+<text x="674" y="410" class="xs teal">tools/call</text>
+<text x="674" y="425" class="xs teal">  {"name": "depth"}</text>
+<rect x="662" y="452" width="194" height="44" rx="3" class="panel2"/>
+<text x="674" y="473" class="lbl b">49 capabilities</text>
+<text x="674" y="488" class="xs dim">projected, never re-implemented</text>
+<line x1="24" y1="514" x2="856" y2="514" class="hair"/>
+<text x="24" y="530" class="xs dim">109 crypto venues  &#183;  9 equity sources  &#183;  30 record types  &#183;  3 surfaces &#8212; and one schema between all of them.</text>
+
+</svg>

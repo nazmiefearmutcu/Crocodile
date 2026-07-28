@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 512" width="880" height="512" role="img">
+<style>
+  :root{--bg:#faf6ee;--panel:#f2ead9;--panel2:#e8dec8;--ink:#17140f;--dim:#6c6355;--rule:#d6c9b0;--accent:#a3620a;--accent_bg:#f6e2bd;--teal:#0f666e;--teal_bg:#d3e7e7;--ok:#2c7a2f;--warn:#b23c1b;--warn_bg:#f8ddd2}
+  @media (prefers-color-scheme: dark){
+  :root{--bg:#14120f;--panel:#1d1a15;--panel2:#272219;--ink:#ece6da;--dim:#948b7c;--rule:#3a332a;--accent:#f0a92e;--accent_bg:#3a2a10;--teal:#4ec2ce;--teal_bg:#10302f;--ok:#7fc25e;--warn:#e8724f;--warn_bg:#3a1d13}
+  }
+
+  text { font-family: ui-monospace, SFMono-Regular, &#34;SF Mono&#34;, Menlo, Consolas, &#34;DejaVu Sans Mono&#34;, &#34;Liberation Mono&#34;, monospace; fill: var(--ink); }
+  .dim { fill: var(--dim); }
+  .acc { fill: var(--accent); }
+  .teal { fill: var(--teal); }
+  .ok { fill: var(--ok); }
+  .warn { fill: var(--warn); }
+  .b { font-weight: 700; }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .18em; }
+  .h { font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+  .lbl { font-size: 12px; letter-spacing: .04em; }
+  .sm { font-size: 11px; }
+  .xs { font-size: 10px; letter-spacing: .02em; }
+  .xxs { font-size: 9px; letter-spacing: .01em; }
+  .code { font-size: 12.5px; }
+  .big { font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+  .panel { fill: var(--panel); stroke: var(--rule); stroke-width: 1; }
+  .panel2 { fill: var(--panel2); stroke: var(--rule); stroke-width: 1; }
+  .hair { stroke: var(--rule); stroke-width: 1; fill: none; }
+  .wire { stroke: var(--rule); stroke-width: 1.25; fill: none; }
+  .wire-acc { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+  .wire-teal { stroke: var(--teal); stroke-width: 1.6; fill: none; }
+</style>
+<rect width="880" height="512" rx="6" fill="var(--bg)"/>
+<defs>
+<marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--rule)"/></marker>
+<marker id="ar-acc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--accent)"/></marker>
+<marker id="ar-teal" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--teal)"/></marker>
+</defs>
+<text x="24" y="28" class="kicker acc">PROVENANCE</text>
+<text x="856" y="28" class="xs dim" text-anchor="end">level  &#8594;  method  &#8594;  a confidence nobody chose by hand</text>
+<line x1="24" y1="42" x2="856" y2="42" class="hair"/>
+<rect x="24" y="62" width="278" height="250" rx="3" class="panel"/>
+<text x="38" y="84" class="h acc">1  THE RECORD</text>
+<text x="38" y="106" class="sm b teal">DepthProfile</text>
+<text x="38" y="126" class="xs">channel</text>
+<text x="288" y="126" class="xs dim" text-anchor="end">"depth"</text>
+<text x="38" y="143" class="xs">source</text>
+<text x="288" y="143" class="xs dim" text-anchor="end">"yahoo"</text>
+<text x="38" y="160" class="xs">symbol</text>
+<text x="288" y="160" class="xs dim" text-anchor="end">"yahoo:AAPL"</text>
+<text x="38" y="177" class="xs">reference_price</text>
+<text x="288" y="177" class="xs dim" text-anchor="end">227.41</text>
+<text x="38" y="194" class="xs">depth</text>
+<text x="288" y="194" class="xs dim" text-anchor="end">10</text>
+<text x="38" y="211" class="xs dim">&#8230;</text>
+<text x="288" y="211" class="xs b dim" text-anchor="end"></text>
+<line x1="38" y1="216" x2="288" y2="216" class="hair"/>
+<text x="38" y="228" class="xs acc">prov</text>
+<text x="288" y="228" class="xs b acc" text-anchor="end">synthetic</text>
+<text x="38" y="245" class="xs acc">prov_basis</text>
+<text x="288" y="245" class="xs b acc" text-anchor="end">"yahoo_1m_vap"</text>
+<text x="38" y="262" class="xs acc">prov_inputs</text>
+<text x="288" y="262" class="xs b acc" text-anchor="end">["ohlcv"]</text>
+<text x="38" y="279" class="xs acc">prov_confidence</text>
+<text x="288" y="279" class="xs b acc" text-anchor="end">0.8</text>
+<text x="38" y="300" class="xs dim">the four-field tail every record carries</text>
+<rect x="326" y="62" width="244" height="250" rx="3" class="panel"/>
+<text x="340" y="84" class="h acc">2  THE LEVEL</text>
+<text x="340" y="102" class="xs dim">prov &#8212; what class of thing this is</text>
+<rect x="340" y="122" width="216" height="32" rx="3" class="panel2"/>
+<text x="352" y="136" class="sm b">native</text>
+<text x="352" y="149" class="xs dim">the venue reported this value</text>
+<text x="544" y="136" class="xs dim" text-anchor="end">rank 0</text>
+<rect x="340" y="162" width="216" height="32" rx="3" class="panel2"/>
+<text x="352" y="176" class="sm b">derived</text>
+<text x="352" y="189" class="xs dim">computed from native records</text>
+<text x="544" y="176" class="xs dim" text-anchor="end">rank 1</text>
+<rect x="340" y="202" width="216" height="32" rx="3" class="" fill="var(--accent_bg)" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="352" y="216" class="sm b acc">synthetic</text>
+<text x="352" y="229" class="xs dim">modelled from another data class</text>
+<text x="544" y="216" class="xs dim" text-anchor="end">rank 2</text>
+<rect x="340" y="242" width="216" height="32" rx="3" class="panel2"/>
+<text x="352" y="256" class="sm b">unavailable</text>
+<text x="352" y="269" class="xs dim">a typed hole, never a zero</text>
+<text x="544" y="256" class="xs dim" text-anchor="end">rank 3</text>
+<text x="340" y="300" class="xs dim">worst_provenance() wins on any join</text>
+<rect x="594" y="62" width="262" height="250" rx="3" class="panel"/>
+<text x="608" y="84" class="h acc">3  THE METHOD</text>
+<text x="608" y="106" class="sm b teal">prov_basis = "yahoo_1m_vap"</text>
+<text x="608" y="128" class="xs dim">Volume-at-price depth built from one</text>
+<text x="608" y="143" class="xs dim">minute Yahoo bars, standing in for</text>
+<text x="608" y="158" class="xs dim">resting size. Registered with the</text>
+<text x="608" y="173" class="xs dim">level it is allowed to claim and the</text>
+<text x="608" y="188" class="xs dim">channels it consumes.</text>
+<line x1="608" y1="212" x2="842" y2="212" class="hair"/>
+<text x="608" y="230" class="xs">@register_basis(</text>
+<text x="618" y="245" class="xs acc">"yahoo_1m_vap",</text>
+<text x="618" y="260" class="xs teal">level=SYNTHETIC,</text>
+<text x="618" y="275" class="xs teal">inputs=["ohlcv"],</text>
+<text x="608" y="290" class="xs">)</text>
+<text x="608" y="306" class="xs dim">17 bases registered, all documented</text>
+<line x1="308" y1="187" x2="320" y2="187" class="wire-acc" marker-end="url(#ar-acc)"/>
+<line x1="576" y1="187" x2="588" y2="187" class="wire-acc" marker-end="url(#ar-acc)"/>
+<rect x="24" y="334" width="832" height="108" rx="3" class="panel2"/>
+<text x="38" y="358" class="h acc">4  THE FORMULA &#8212; the confidence is computed, not chosen</text>
+<text x="38" y="390" class="code b teal">min( n_volume_bars / 390 , 1.0 )</text>
+<text x="38" y="410" class="xs dim">390 = one regular US session in one-minute bars.</text>
+<text x="38" y="424" class="xs dim">The formula must be pure, must be documented, and is the only supported way to fill prov_confidence.</text>
+<text x="842" y="380" class="sm" text-anchor="end">min( 312 / 390 , 1.0 )</text>
+<text x="842" y="412" class="big acc" text-anchor="end">= 0.8</text>
+<text x="842" y="428" class="xs dim" text-anchor="end">prov_confidence</text>
+<line x1="24" y1="466" x2="856" y2="466" class="hair"/>
+<text x="24" y="482" class="xs dim">Confidence measures sampling adequacy within a level, not truthfulness across levels: prov is what says the ladder was modelled,</text>
+<text x="24" y="496" class="xs dim">and no number substitutes for it.</text>
+
+</svg>

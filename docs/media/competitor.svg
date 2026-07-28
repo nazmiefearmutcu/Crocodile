@@ -1,0 +1,205 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 763" width="880" height="763" role="img">
+<style>
+  :root{--bg:#faf6ee;--panel:#f2ead9;--panel2:#e8dec8;--ink:#17140f;--dim:#6c6355;--rule:#d6c9b0;--accent:#a3620a;--accent_bg:#f6e2bd;--teal:#0f666e;--teal_bg:#d3e7e7;--ok:#2c7a2f;--warn:#b23c1b;--warn_bg:#f8ddd2}
+  @media (prefers-color-scheme: dark){
+  :root{--bg:#14120f;--panel:#1d1a15;--panel2:#272219;--ink:#ece6da;--dim:#948b7c;--rule:#3a332a;--accent:#f0a92e;--accent_bg:#3a2a10;--teal:#4ec2ce;--teal_bg:#10302f;--ok:#7fc25e;--warn:#e8724f;--warn_bg:#3a1d13}
+  }
+
+  text { font-family: ui-monospace, SFMono-Regular, &#34;SF Mono&#34;, Menlo, Consolas, &#34;DejaVu Sans Mono&#34;, &#34;Liberation Mono&#34;, monospace; fill: var(--ink); }
+  .dim { fill: var(--dim); }
+  .acc { fill: var(--accent); }
+  .teal { fill: var(--teal); }
+  .ok { fill: var(--ok); }
+  .warn { fill: var(--warn); }
+  .b { font-weight: 700; }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .18em; }
+  .h { font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+  .lbl { font-size: 12px; letter-spacing: .04em; }
+  .sm { font-size: 11px; }
+  .xs { font-size: 10px; letter-spacing: .02em; }
+  .xxs { font-size: 9px; letter-spacing: .01em; }
+  .code { font-size: 12.5px; }
+  .big { font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+  .panel { fill: var(--panel); stroke: var(--rule); stroke-width: 1; }
+  .panel2 { fill: var(--panel2); stroke: var(--rule); stroke-width: 1; }
+  .hair { stroke: var(--rule); stroke-width: 1; fill: none; }
+  .wire { stroke: var(--rule); stroke-width: 1.25; fill: none; }
+  .wire-acc { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+  .wire-teal { stroke: var(--teal); stroke-width: 1.6; fill: none; }
+</style>
+<rect width="880" height="763" rx="6" fill="var(--bg)"/>
+<defs>
+<marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--rule)"/></marker>
+<marker id="ar-acc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--accent)"/></marker>
+<marker id="ar-teal" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--teal)"/></marker>
+</defs>
+<text x="24" y="28" class="kicker acc">CAPABILITY MATRIX</text>
+<text x="856" y="28" class="xs dim" text-anchor="end">11 sources compared  &#183;  verified 2026-07-29</text>
+<line x1="24" y1="42" x2="856" y2="42" class="hair"/>
+<rect x="24" y="54" width="832" height="52" rx="3" class="panel2"/>
+<rect x="24" y="54" width="4" height="52" rx="2" fill="var(--accent)"/>
+<text x="44" y="80" class="code">&#8220;you agree to cease all use of the Market Data and delete all Market Data in your possession.&#8221;</text>
+<text x="44" y="97" class="xs dim">Massive (formerly Polygon.io), Market Data Terms &#167;8 &#8212; what the fourth column is asking.</text>
+<rect x="541" y="112" width="105" height="514" rx="3" fill="var(--accent_bg)"/>
+<text x="278.5" y="156" class="xs b" text-anchor="middle">Crypto</text>
+<text x="383.5" y="156" class="xs b" text-anchor="middle">US equities</text>
+<text x="488.5" y="144" class="xs b" text-anchor="middle">Local store</text>
+<text x="488.5" y="156" class="xs b" text-anchor="middle">you own</text>
+<text x="593.5" y="144" class="xs b acc" text-anchor="middle">Keep it after</text>
+<text x="593.5" y="156" class="xs b acc" text-anchor="middle">you stop paying</text>
+<text x="698.5" y="144" class="xs b" text-anchor="middle">SQL over</text>
+<text x="698.5" y="156" class="xs b" text-anchor="middle">the store</text>
+<text x="803.5" y="156" class="xs b" text-anchor="middle">Replay</text>
+<line x1="24" y1="164" x2="856" y2="164" class="hair"/>
+<text x="24" y="184" class="sm b">Kaiko (incl. Amberdata)</text>
+<text x="24" y="197" class="xs dim">Proprietary</text>
+<rect x="272" y="172.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<path d="M379 172.5 L383.5 172.5 L383.5 185.5 L379 185.5 A2 2 0 0 1 377 183.5 L377 174.5 A2 2 0 0 1 379 172.5 Z" fill="var(--accent)"/>
+<rect x="377" y="172.5" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="383.5" y="195" class="xxs dim" text-anchor="middle">equity options</text>
+<path d="M484 172.5 L488.5 172.5 L488.5 185.5 L484 185.5 A2 2 0 0 1 482 183.5 L482 174.5 A2 2 0 0 1 484 172.5 Z" fill="var(--accent)"/>
+<rect x="482" y="172.5" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="488.5" y="195" class="xxs dim" text-anchor="middle">S3 Parquet,</text>
+<text x="488.5" y="204.5" class="xxs dim" text-anchor="middle">enterprise annual</text>
+<rect x="587" y="172.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="692" y="172.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<path d="M799 172.5 L803.5 172.5 L803.5 185.5 L799 185.5 A2 2 0 0 1 797 183.5 L797 174.5 A2 2 0 0 1 799 172.5 Z" fill="var(--accent)"/>
+<rect x="797" y="172.5" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="803.5" y="195" class="xxs dim" text-anchor="middle">72h gap-recovery</text>
+<line x1="24" y1="206" x2="856" y2="206" class="hair"/>
+<text x="24" y="226" class="sm b">CoinAPI</text>
+<text x="24" y="239" class="xs dim">Proprietary</text>
+<rect x="272" y="214.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="377" y="214.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<path d="M484 214.5 L488.5 214.5 L488.5 227.5 L484 227.5 A2 2 0 0 1 482 225.5 L482 216.5 A2 2 0 0 1 484 214.5 Z" fill="var(--accent)"/>
+<rect x="482" y="214.5" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="488.5" y="237" class="xxs dim" text-anchor="middle">metered flat</text>
+<text x="488.5" y="246.5" class="xxs dim" text-anchor="middle">files</text>
+<rect x="587" y="214.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.2" stroke-dasharray="2.6 2"/>
+<text x="593.5" y="224.4" class="xxs dim b" text-anchor="middle">?</text>
+<rect x="692" y="214.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="797" y="214.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<line x1="24" y1="248" x2="856" y2="248" class="hair"/>
+<text x="24" y="268" class="sm b">Tardis.dev</text>
+<text x="24" y="281" class="xs dim">Proprietary</text>
+<rect x="272" y="256.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="377" y="256.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="482" y="256.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="587" y="256.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="692" y="256.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="797" y="256.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<line x1="24" y1="290" x2="856" y2="290" class="hair"/>
+<text x="24" y="310" class="sm b">Databento</text>
+<text x="24" y="323" class="xs dim">Proprietary</text>
+<rect x="272" y="298.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="377" y="298.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="482" y="298.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="587" y="298.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="692" y="298.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<path d="M799 298.5 L803.5 298.5 L803.5 311.5 L799 311.5 A2 2 0 0 1 797 309.5 L797 300.5 A2 2 0 0 1 799 298.5 Z" fill="var(--accent)"/>
+<rect x="797" y="298.5" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="803.5" y="321" class="xxs dim" text-anchor="middle">last 24h</text>
+<line x1="24" y1="332" x2="856" y2="332" class="hair"/>
+<text x="24" y="352" class="sm b">Massive (formerly Polygon.io)</text>
+<text x="24" y="365" class="xs dim">Proprietary</text>
+<rect x="272" y="340.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="377" y="340.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="482" y="340.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="587" y="340.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="692" y="340.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="797" y="340.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<line x1="24" y1="374" x2="856" y2="374" class="hair"/>
+<text x="24" y="394" class="sm b">CryptoQuant</text>
+<text x="24" y="407" class="xs dim">Proprietary</text>
+<rect x="272" y="382.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<text x="278.5" y="405" class="xxs dim" text-anchor="middle">metrics only</text>
+<rect x="377" y="382.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="482" y="382.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="587" y="382.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="692" y="382.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="797" y="382.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<line x1="24" y1="416" x2="856" y2="416" class="hair"/>
+<text x="24" y="436" class="sm b">ccxt</text>
+<text x="24" y="449" class="xs dim">MIT</text>
+<rect x="272" y="424.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="377" y="424.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="482" y="424.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<line x1="587" y1="431" x2="600" y2="431" stroke="var(--dim)" stroke-width="1.8" stroke-linecap="round"/>
+<text x="593.5" y="447" class="xxs dim" text-anchor="middle">free</text>
+<rect x="692" y="424.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="797" y="424.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<line x1="24" y1="458" x2="856" y2="458" class="hair"/>
+<text x="24" y="478" class="sm b">cryptofeed</text>
+<text x="24" y="491" class="xs dim">custom permissive</text>
+<rect x="272" y="466.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="377" y="466.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<path d="M484 466.5 L488.5 466.5 L488.5 479.5 L484 479.5 A2 2 0 0 1 482 477.5 L482 468.5 A2 2 0 0 1 484 466.5 Z" fill="var(--accent)"/>
+<rect x="482" y="466.5" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="488.5" y="489" class="xxs dim" text-anchor="middle">14 backends,</text>
+<text x="488.5" y="498.5" class="xxs dim" text-anchor="middle">no Parquet</text>
+<rect x="587" y="466.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="692" y="466.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<path d="M799 466.5 L803.5 466.5 L803.5 479.5 L799 479.5 A2 2 0 0 1 797 477.5 L797 468.5 A2 2 0 0 1 799 466.5 Z" fill="var(--accent)"/>
+<rect x="797" y="466.5" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="803.5" y="489" class="xxs dim" text-anchor="middle">single feed,</text>
+<text x="803.5" y="498.5" class="xxs dim" text-anchor="middle">undocumented</text>
+<line x1="24" y1="500" x2="856" y2="500" class="hair"/>
+<text x="24" y="520" class="sm b">NautilusTrader</text>
+<text x="24" y="533" class="xs dim">LGPL-3.0</text>
+<rect x="272" y="508.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="377" y="508.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<text x="383.5" y="531" class="xxs dim" text-anchor="middle">needs paid</text>
+<text x="383.5" y="540.5" class="xxs dim" text-anchor="middle">Databento or IB</text>
+<rect x="482" y="508.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="587" y="508.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="692" y="508.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="797" y="508.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<line x1="24" y1="542" x2="856" y2="542" class="hair"/>
+<text x="24" y="562" class="sm b">Freqtrade</text>
+<text x="24" y="575" class="xs dim">GPL-3.0</text>
+<rect x="272" y="550.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="377" y="550.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<path d="M484 550.5 L488.5 550.5 L488.5 563.5 L484 563.5 A2 2 0 0 1 482 561.5 L482 552.5 A2 2 0 0 1 484 550.5 Z" fill="var(--accent)"/>
+<rect x="482" y="550.5" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="488.5" y="573" class="xxs dim" text-anchor="middle">OHLCV files only</text>
+<rect x="587" y="550.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="692" y="550.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<rect x="797" y="550.5" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<text x="803.5" y="573" class="xxs dim" text-anchor="middle">candle backtest</text>
+<line x1="24" y1="584" x2="856" y2="584" class="wire-acc"/>
+<rect x="24" y="590" width="3" height="30" fill="var(--accent)"/>
+<text x="36" y="604" class="sm b acc">Crocodile</text>
+<text x="36" y="617" class="xs acc">Apache-2.0</text>
+<rect x="272" y="592.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="377" y="592.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="482" y="592.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="587" y="592.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="692" y="592.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<rect x="797" y="592.5" width="13" height="13" rx="2" fill="var(--ok)"/>
+<line x1="24" y1="626" x2="856" y2="626" class="wire-acc"/>
+<rect x="24" y="640" width="13" height="13" rx="2" fill="var(--ok)"/>
+<text x="44" y="650" class="xs dim">yes</text>
+<path d="M91.2 640 L95.7 640 L95.7 653 L91.2 653 A2 2 0 0 1 89.2 651 L89.2 642 A2 2 0 0 1 91.2 640 Z" fill="var(--accent)"/>
+<rect x="89.2" y="640" width="13" height="13" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+<text x="109.2" y="650" class="xs dim">partial &#8212; a qualified yes</text>
+<rect x="295.2" y="640" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.5" opacity="0.6"/>
+<text x="315.2" y="650" class="xs dim">no</text>
+<rect x="354" y="640" width="13" height="13" rx="2" fill="none" stroke="var(--dim)" stroke-width="1.2" stroke-dasharray="2.6 2"/>
+<text x="360.5" y="649.9" class="xxs dim b" text-anchor="middle">?</text>
+<text x="374" y="650" class="xs dim">unknown &#8212; not published</text>
+<line x1="547.2" y1="646.5" x2="560.2" y2="646.5" stroke="var(--dim)" stroke-width="1.8" stroke-linecap="round"/>
+<text x="567.2" y="650" class="xs dim">not applicable</text>
+<text x="24" y="680" class="xs dim">&#183;</text>
+<text x="38" y="680" class="xs dim">Verified 2026-07-29 against each vendor&#8217;s own pricing, docs and terms pages.</text>
+<text x="24" y="693" class="xs dim">&#183;</text>
+<text x="38" y="693" class="xs dim">Kaiko acquired Amberdata; counted once.</text>
+<text x="24" y="706" class="xs dim">&#183;</text>
+<text x="38" y="706" class="xs dim">Polygon.io was renamed Massive.com on 2025-10-30.</text>
+<text x="24" y="719" class="xs dim">&#183;</text>
+<text x="38" y="719" class="xs dim">NautilusTrader reaches US equities through a paid Databento subscription (from $199/mo) or an Interactive Brokers account.</text>
+<text x="24" y="732" class="xs dim">&#183;</text>
+<text x="38" y="732" class="xs dim">Kaiko and Databento publish no list price for the tiers compared here.</text>
+<text x="24" y="745" class="xs dim">&#183;</text>
+<text x="38" y="745" class="xs dim">Crocodile ingests what public endpoints return. It is not a licensed, SLA-backed archive.</text>
+
+</svg>

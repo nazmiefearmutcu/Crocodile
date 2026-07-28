@@ -1,0 +1,294 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 580" width="880" height="580" role="img">
+<style>
+  :root{--bg:#faf6ee;--panel:#f2ead9;--panel2:#e8dec8;--ink:#17140f;--dim:#6c6355;--rule:#d6c9b0;--accent:#a3620a;--accent_bg:#f6e2bd;--teal:#0f666e;--teal_bg:#d3e7e7;--ok:#2c7a2f;--warn:#b23c1b;--warn_bg:#f8ddd2}
+  @media (prefers-color-scheme: dark){
+  :root{--bg:#14120f;--panel:#1d1a15;--panel2:#272219;--ink:#ece6da;--dim:#948b7c;--rule:#3a332a;--accent:#f0a92e;--accent_bg:#3a2a10;--teal:#4ec2ce;--teal_bg:#10302f;--ok:#7fc25e;--warn:#e8724f;--warn_bg:#3a1d13}
+  }
+
+  text { font-family: ui-monospace, SFMono-Regular, &#34;SF Mono&#34;, Menlo, Consolas, &#34;DejaVu Sans Mono&#34;, &#34;Liberation Mono&#34;, monospace; fill: var(--ink); }
+  .dim { fill: var(--dim); }
+  .acc { fill: var(--accent); }
+  .teal { fill: var(--teal); }
+  .ok { fill: var(--ok); }
+  .warn { fill: var(--warn); }
+  .b { font-weight: 700; }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .18em; }
+  .h { font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+  .lbl { font-size: 12px; letter-spacing: .04em; }
+  .sm { font-size: 11px; }
+  .xs { font-size: 10px; letter-spacing: .02em; }
+  .xxs { font-size: 9px; letter-spacing: .01em; }
+  .code { font-size: 12.5px; }
+  .big { font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+  .panel { fill: var(--panel); stroke: var(--rule); stroke-width: 1; }
+  .panel2 { fill: var(--panel2); stroke: var(--rule); stroke-width: 1; }
+  .hair { stroke: var(--rule); stroke-width: 1; fill: none; }
+  .wire { stroke: var(--rule); stroke-width: 1.25; fill: none; }
+  .wire-acc { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+  .wire-teal { stroke: var(--teal); stroke-width: 1.6; fill: none; }
+</style>
+<rect width="880" height="580" rx="6" fill="var(--bg)"/>
+<defs>
+<marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--rule)"/></marker>
+<marker id="ar-acc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--accent)"/></marker>
+<marker id="ar-teal" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--teal)"/></marker>
+</defs>
+<text x="24" y="28" class="kicker acc">ONE DECLARATION, THREE PROJECTIONS</text>
+<text x="856" y="28" class="xs dim" text-anchor="end">49 capabilities  &#183;  57 wire names (aliases included)</text>
+<line x1="24" y1="42" x2="856" y2="42" class="hair"/>
+<text x="24" y="66" class="lbl b">THE DECLARATION &#8212; written once</text>
+<rect x="24" y="76" width="396" height="214" rx="3" class="panel2"/>
+<text x="38" y="98" class="code dim">Capability(</text>
+<text x="38" y="114" class="code acc">    name="depth",</text>
+<text x="38" y="130" class="code">    summary="Market-depth ladder around a</text>
+<text x="38" y="146" class="code">             reference price, real L1 when keyed.",</text>
+<text x="38" y="162" class="code">    params=DepthParams,</text>
+<text x="38" y="178" class="code">    returns=ReturnKind.SCALAR,</text>
+<text x="38" y="194" class="code dim">    impls={</text>
+<text x="38" y="210" class="code teal">        CRYPTO: Impl(basis="book_snapshot_slice"),</text>
+<text x="38" y="226" class="code teal">        EQUITY: Impl(basis="alpaca_l1",</text>
+<text x="38" y="242" class="code teal">                     fallback="yahoo_1m_vap"),</text>
+<text x="38" y="258" class="code dim">    },</text>
+<text x="38" y="274" class="code dim">)</text>
+<text x="24" y="320" class="lbl b">THE REGISTRY &#8212; 49 of these</text>
+<rect x="28" y="332" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="54" y="332" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="80" y="332" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="106" y="332" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="132" y="332" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="158" y="332" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="184" y="332" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="28" y="358" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="54" y="358" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="80" y="358" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="106" y="358" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="132" y="358" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="158" y="358" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="184" y="358" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="28" y="384" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="54" y="384" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="80" y="384" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="106" y="384" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="132" y="384" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="158" y="384" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="184" y="384" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="28" y="410" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="54" y="410" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="80" y="410" width="20" height="20" rx="1.5" fill="var(--accent)"/>
+<rect x="106" y="410" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="132" y="410" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="158" y="410" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="184" y="410" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="28" y="436" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="54" y="436" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="80" y="436" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="106" y="436" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="132" y="436" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="158" y="436" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="184" y="436" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="28" y="462" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="54" y="462" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="80" y="462" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="106" y="462" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="132" y="462" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="158" y="462" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="184" y="462" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="28" y="488" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="54" y="488" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="80" y="488" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="106" y="488" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="132" y="488" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="158" y="488" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<rect x="184" y="488" width="20" height="20" rx="1.5" fill="var(--rule)"/>
+<text x="230" y="348" class="xs dim">one square =</text>
+<text x="230" y="362" class="xs dim">one capability</text>
+<rect x="230" y="380" width="10" height="10" rx="1.5" fill="var(--accent)"/>
+<text x="248" y="389" class="sm b acc">depth</text>
+<text x="230" y="408" class="xs dim">traced through all</text>
+<text x="230" y="421" class="xs dim">three surfaces &#8594;</text>
+<text x="230" y="448" class="xs dim">17 confidence</text>
+<text x="230" y="461" class="xs dim">formulas behind</text>
+<text x="230" y="474" class="xs dim">them</text>
+<path d="M354 420 C 384 420, 436 135, 462 135" class="wire-acc" marker-end="url(#ar-acc)"/>
+<path d="M354 420 C 384 420, 436 293, 462 293" class="wire-acc" marker-end="url(#ar-acc)"/>
+<path d="M354 420 C 384 420, 436 451, 462 451" class="wire-acc" marker-end="url(#ar-acc)"/>
+<circle cx="354" cy="420" r="3.5" fill="var(--accent)"/>
+<rect x="470" y="66" width="386" height="138" rx="3" class="panel"/>
+<text x="486" y="90" class="h acc">CLI</text>
+<text x="840" y="90" class="xs dim" text-anchor="end">typer command table</text>
+<line x1="486" y1="100" x2="840" y2="100" class="hair"/>
+<rect x="486" y="114" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="114" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="114" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="114" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="114" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="114" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="114" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="123.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="123.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="123.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="123.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="123.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="123.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="123.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="133" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="133" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="133" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="133" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="133" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="133" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="133" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="142.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="142.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="142.5" width="7" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="514.5" y="142.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="142.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="142.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="142.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="152" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="152" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="152" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="152" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="152" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="152" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="152" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="161.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="161.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="161.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="161.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="161.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="161.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="161.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="171" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="171" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="171" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="171" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="171" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="171" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="171" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<text x="486" y="188.5" class="xs dim">all 49</text>
+<text x="572" y="118" class="xs acc">$ crocodile depth --symbol AAPL \</text>
+<text x="572" y="134" class="xs teal">      --asset-class equity</text>
+<text x="572" y="166" class="xs dim">generated from REGISTRY; the app holds</text>
+<text x="572" y="182" class="xs dim">exactly the registry's names.</text>
+<rect x="470" y="224" width="386" height="138" rx="3" class="panel"/>
+<text x="486" y="248" class="h acc">REST</text>
+<text x="840" y="248" class="xs dim" text-anchor="end">fastapi routes</text>
+<line x1="486" y1="258" x2="840" y2="258" class="hair"/>
+<rect x="486" y="272" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="272" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="272" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="272" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="272" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="272" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="272" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="281.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="281.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="281.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="281.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="281.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="281.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="281.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="291" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="291" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="291" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="291" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="291" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="291" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="291" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="300.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="300.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="300.5" width="7" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="514.5" y="300.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="300.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="300.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="300.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="310" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="310" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="310" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="310" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="310" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="310" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="310" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="319.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="319.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="319.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="319.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="319.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="319.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="319.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="329" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="329" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="329" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="329" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="329" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="329" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="329" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<text x="486" y="346.5" class="xs dim">all 49</text>
+<text x="572" y="276" class="xs acc">GET  /api/v1/depth?symbol=AAPL</text>
+<text x="572" y="292" class="xs teal">POST /api/v1/depth</text>
+<text x="572" y="324" class="xs dim">one route per capability, both methods</text>
+<text x="572" y="340" class="xs dim">on it &#8212; never two routes with one each.</text>
+<rect x="470" y="382" width="386" height="138" rx="3" class="panel"/>
+<text x="486" y="406" class="h acc">MCP</text>
+<text x="840" y="406" class="xs dim" text-anchor="end">tools/list &#183; tools/call</text>
+<line x1="486" y1="416" x2="840" y2="416" class="hair"/>
+<rect x="486" y="430" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="430" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="430" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="430" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="430" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="430" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="430" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="439.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="439.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="439.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="439.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="439.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="439.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="439.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="449" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="449" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="449" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="449" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="449" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="449" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="449" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="458.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="458.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="458.5" width="7" height="7" rx="1.5" fill="var(--accent)"/>
+<rect x="514.5" y="458.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="458.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="458.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="458.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="468" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="468" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="468" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="468" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="468" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="468" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="468" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="477.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="477.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="477.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="477.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="477.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="477.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="477.5" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="486" y="487" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="495.5" y="487" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="505" y="487" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="514.5" y="487" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="524" y="487" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="533.5" y="487" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<rect x="543" y="487" width="7" height="7" rx="1.5" fill="var(--rule)"/>
+<text x="486" y="504.5" class="xs dim">all 49</text>
+<text x="572" y="434" class="xs acc">{"name": "depth", "inputSchema": {&#8230;}}</text>
+<text x="572" y="450" class="xs teal">&#8594; tools/call {"name": "depth"}</text>
+<text x="572" y="482" class="xs dim">input schema derived from DepthParams,</text>
+<text x="572" y="498" class="xs dim">so an agent cannot call it wrong.</text>
+<line x1="24" y1="534" x2="856" y2="534" class="hair"/>
+<text x="24" y="550" class="xs dim">Gate 4 asserts every surface holds exactly the registry's names, once each. A surface cannot add, drop or rename a capability &#8212; so</text>
+<text x="24" y="564" class="xs dim">the three cannot drift apart.</text>
+
+</svg>

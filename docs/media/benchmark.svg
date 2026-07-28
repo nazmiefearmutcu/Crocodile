@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 476" width="880" height="476" role="img">
+<style>
+  :root{--bg:#faf6ee;--panel:#f2ead9;--panel2:#e8dec8;--ink:#17140f;--dim:#6c6355;--rule:#d6c9b0;--accent:#a3620a;--accent_bg:#f6e2bd;--teal:#0f666e;--teal_bg:#d3e7e7;--ok:#2c7a2f;--warn:#b23c1b;--warn_bg:#f8ddd2}
+  @media (prefers-color-scheme: dark){
+  :root{--bg:#14120f;--panel:#1d1a15;--panel2:#272219;--ink:#ece6da;--dim:#948b7c;--rule:#3a332a;--accent:#f0a92e;--accent_bg:#3a2a10;--teal:#4ec2ce;--teal_bg:#10302f;--ok:#7fc25e;--warn:#e8724f;--warn_bg:#3a1d13}
+  }
+
+  text { font-family: ui-monospace, SFMono-Regular, &#34;SF Mono&#34;, Menlo, Consolas, &#34;DejaVu Sans Mono&#34;, &#34;Liberation Mono&#34;, monospace; fill: var(--ink); }
+  .dim { fill: var(--dim); }
+  .acc { fill: var(--accent); }
+  .teal { fill: var(--teal); }
+  .ok { fill: var(--ok); }
+  .warn { fill: var(--warn); }
+  .b { font-weight: 700; }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .18em; }
+  .h { font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+  .lbl { font-size: 12px; letter-spacing: .04em; }
+  .sm { font-size: 11px; }
+  .xs { font-size: 10px; letter-spacing: .02em; }
+  .xxs { font-size: 9px; letter-spacing: .01em; }
+  .code { font-size: 12.5px; }
+  .big { font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+  .panel { fill: var(--panel); stroke: var(--rule); stroke-width: 1; }
+  .panel2 { fill: var(--panel2); stroke: var(--rule); stroke-width: 1; }
+  .hair { stroke: var(--rule); stroke-width: 1; fill: none; }
+  .wire { stroke: var(--rule); stroke-width: 1.25; fill: none; }
+  .wire-acc { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+  .wire-teal { stroke: var(--teal); stroke-width: 1.6; fill: none; }
+</style>
+<rect width="880" height="476" rx="6" fill="var(--bg)"/>
+<defs>
+<marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--rule)"/></marker>
+<marker id="ar-acc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--accent)"/></marker>
+<marker id="ar-teal" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--teal)"/></marker>
+</defs>
+<text x="24" y="28" class="kicker acc">BENCHMARK</text>
+<text x="856" y="28" class="xs dim" text-anchor="end">offline data path  &#183;  synthetic input  &#183;  seed 42  &#183;  no network</text>
+<line x1="24" y1="42" x2="856" y2="42" class="hair"/>
+<text x="24" y="68" class="lbl b">THROUGHPUT</text>
+<text x="300" y="68" class="xs dim">items per second, log scale</text>
+<line x1="300" y1="76" x2="300" y2="248" class="hair" opacity="0.7"/>
+<text x="300" y="264" class="xs dim" text-anchor="middle">100 K</text>
+<line x1="444.667" y1="76" x2="444.667" y2="248" class="hair" opacity="0.7"/>
+<text x="444.667" y="264" class="xs dim" text-anchor="middle">1 M</text>
+<line x1="589.333" y1="76" x2="589.333" y2="248" class="hair" opacity="0.7"/>
+<text x="589.333" y="264" class="xs dim" text-anchor="middle">10 M</text>
+<line x1="734" y1="76" x2="734" y2="248" class="hair" opacity="0.7"/>
+<text x="734" y="264" class="xs dim" text-anchor="middle">100 M</text>
+<text x="288" y="98" class="sm" text-anchor="end">resample &#8594; 1m OHLCV</text>
+<text x="288" y="112" class="xs dim" text-anchor="end">500,000 rows in, 42 bars out</text>
+<rect x="300" y="84" width="322.672" height="22" rx="2" fill="var(--accent)"/>
+<text x="632.672" y="100" class="sm b">17,000,000 rows/s</text>
+<text x="288" y="138" class="sm" text-anchor="end">normalize (raw &#8594; records)</text>
+<text x="288" y="152" class="xs dim" text-anchor="end">600,000 records, 282 ns each</text>
+<rect x="300" y="124" width="224.089" height="22" rx="2" fill="var(--accent)"/>
+<text x="534.089" y="140" class="sm b">3,540,000 rec/s</text>
+<text x="288" y="178" class="sm" text-anchor="end">replay (k-way merge)</text>
+<text x="288" y="192" class="xs dim" text-anchor="end">500,000 records in 1.09 s</text>
+<rect x="300" y="164" width="95.6052" height="22" rx="2" fill="var(--accent)"/>
+<text x="405.605" y="180" class="sm b">458,000 rec/s</text>
+<text x="288" y="218" class="sm" text-anchor="end">write (ParquetSink, zstd-5)</text>
+<text x="288" y="232" class="xs dim" text-anchor="end">500,000 records in 2.04 s</text>
+<rect x="300" y="204" width="56.2994" height="22" rx="2" fill="var(--accent)"/>
+<text x="366.299" y="220" class="sm b">245,000 rec/s</text>
+<rect x="24" y="292" width="394" height="92" rx="3" class="panel2"/>
+<text x="42" y="338" class="big acc">20.20&#215;</text>
+<text x="42" y="358" class="sm b">compression vs raw JSON</text>
+<text x="42" y="374" class="xs dim">500,000 records &#183; 117.3 MB JSON &#8594; 5.8 MB parquet</text>
+<rect x="442" y="292" width="394" height="92" rx="3" class="panel2"/>
+<text x="460" y="338" class="big acc">0.36 ms</text>
+<text x="460" y="358" class="sm b">count(*) over the lake</text>
+<text x="460" y="374" class="xs dim">500,000 rows &#183; median of 7 runs &#183; DuckDB view</text>
+<text x="24" y="410" class="xs dim">Darwin 25.5.0 | arm (arm64) | 10 logical CPUs | Python 3.12.12 | polars 1.41.2 | duckdb 1.5.3 | pyarrow 24.0.0</text>
+<text x="24" y="426" class="xs teal">Reproduce: uv run python benchmarks/bench.py</text>
+<line x1="24" y1="430" x2="856" y2="430" class="hair"/>
+<text x="24" y="446" class="xs dim">Every figure above is transcribed verbatim from benchmarks/RESULTS.md, which is written by the benchmark run itself. Nothing here</text>
+<text x="24" y="460" class="xs dim">is rounded or re-measured.</text>
+
+</svg>

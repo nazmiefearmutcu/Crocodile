@@ -75,3 +75,6 @@ docs/ralph/
 # The fixture is being pointed at the system temp dir; this keeps a stale run
 # from landing in a commit in the meantime.
 tests/equity/e2e/.test_custom_pools_ipc_*
+
+# SDD controller workspace
+.superpowers/
