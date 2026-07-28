@@ -1,38 +1,52 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" role="img" aria-labelledby="title desc">
-  <title id="title">Crypcodile logo</title>
-  <desc id="desc">Square rounded-tile icon with a teal-to-green gradient background and a minimal centered crocodile-eye mark in translucent white: an almond-shaped lid with a solid pupil ring, flanked by a small row of triangular scales.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title desc">
+  <title id="title">Crocodile</title>
+  <desc id="desc">A bold square bracket whose two inner faces carry interlocking triangular teeth, holding a solid block cursor in the gap between them: a bracket that bites, and a crocodile jaw seen in profile. Drawn in amber on a transparent background, switching to a darker amber under a light colour scheme.</desc>
 
-  <defs>
-    <linearGradient id="crocGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#14B8A6"/>
-      <stop offset="1" stop-color="#22C55E"/>
-    </linearGradient>
-    <linearGradient id="crocFade" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#0B3B36" stop-opacity="0"/>
-      <stop offset="1" stop-color="#0B3B36" stop-opacity="0.20"/>
-    </linearGradient>
-  </defs>
+  <style>
+    /* One file, both themes — the same technique as every asset in docs/media:
+       the palette is two custom properties, overridden inside a
+       prefers-color-scheme query. The mark is drawn on a transparent background
+       rather than a tile, so it sits directly on GitHub's own page colour. */
+    :root { --jaw: #a3620a; --bite: #17140f; }
+    @media (prefers-color-scheme: dark) {
+      :root { --jaw: #f0a92e; --bite: #ece6da; }
+    }
+  </style>
 
-  <!-- Tile background -->
-  <rect x="0" y="0" width="256" height="256" rx="56" fill="url(#crocGrad)"/>
-  <rect x="0" y="0" width="256" height="256" rx="56" fill="url(#crocFade)"/>
+  <!-- The jaw. One closed path: out around the bracket, then back along the two
+       toothed inner faces.
+         · Three teeth above, two below, half a pitch out of phase, so the rows
+           mesh rather than oppose — which is what makes it read as a jaw and not
+           as a zigzag.
+         · Both jaws end in a flat before the opening, and the upper jaw's flat is
+           the shorter of the two, so the teeth close with an overbite instead of
+           chewing into the corner.
+         · Every dimension is set by the 24 px case: the bracket is 44 units thick
+           (4.1 px at 24) and the teeth are 24 units tall (2.2 px), which is enough
+           to stay a serrated edge instead of blurring into a straight one.
+         · The glyph is 168 x 200 inside a 256 box, placed at x=44 so the left and
+           right margins match; the bracket's own opening supplies the asymmetry. -->
+  <path fill="var(--jaw)" d="
+    M 44 28
+    L 212 28
+    L 212 72
+    L 194 72
+    L 179 96  L 164 72
+    L 149 96  L 134 72
+    L 119 96  L 104 72
+    L 88 72
+    L 88 184
+    L 119 184
+    L 134 160 L 149 184
+    L 164 160 L 179 184
+    L 212 184
+    L 212 228
+    L 44 228
+    Z"/>
 
-  <!-- Crocodile-eye mark, centered -->
-  <g transform="translate(128 124)">
-    <!-- Almond eye outline -->
-    <path d="M-66 0 q66 -52 132 0 q-66 52 -132 0 z" fill="#FFFFFF" fill-opacity="0.18"/>
-    <!-- Iris ring -->
-    <circle cx="0" cy="0" r="32" fill="#FFFFFF" fill-opacity="0.30"/>
-    <!-- Pupil -->
-    <circle cx="0" cy="0" r="15" fill="#FFFFFF"/>
-    <!-- Highlight -->
-    <circle cx="-7" cy="-7" r="5" fill="#ECFDF5" fill-opacity="0.85"/>
-  </g>
-
-  <!-- Row of triangular scales below the eye -->
-  <g transform="translate(128 196)" fill="#FFFFFF" fill-opacity="0.22">
-    <path d="M-54 0 l18 -22 l18 22 z"/>
-    <path d="M-18 0 l18 -22 l18 22 z"/>
-    <path d="M18 0 l18 -22 l18 22 z"/>
-  </g>
+  <!-- The block cursor held in the bite, cradled by one tooth above and one below.
+       15 units of clearance to each row of tips: any tighter and at 24 px it merges
+       with them, filling the bracket's opening and collapsing the glyph into a
+       solid square. -->
+  <rect x="135" y="111" width="30" height="34" rx="3" fill="var(--bite)"/>
 </svg>
