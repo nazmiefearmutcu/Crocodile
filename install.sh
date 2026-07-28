@@ -19,21 +19,20 @@ cat << 'EOF'
                                       (((-'\ .' /
                                     _____..'  .'
                                    '-._____.-'   
-   ____                               _ _ _ 
-  / ___|_ __ _   _ _ __   ___ ___  __| (_) | ___ 
- | |   | '__| | | | '_ \ / __/ _ \/ _` | | |/ _ \
- | |___| |  | |_| | |_) | (_| (_) | (_| | | |  __/
-  \____|_|   \__, | .__/ \___\___/\__,_|_|_|\___|
-             |___/|_|                            
+   ____                         _ _ _
+  / ___|_ __ ___   ___ ___   __| (_) | ___
+ | |   | '__/ _ \ / __/ _ \ / _` | | |/ _ \
+ | |___| | | (_) | (_| (_) | (_| | | |  __/
+  \____|_|  \___/ \___\___/ \__,_|_|_|\___|
 EOF
 echo -ne "${NC}"
 
 echo -e "${GREEN}=================================================${NC}"
-echo -e "${GREEN}      Crypcodile CLI Framework Installer         ${NC}"
+echo -e "${GREEN}      Crocodile CLI Framework Installer         ${NC}"
 echo -e "${GREEN}=================================================${NC}"
 echo
 
-LOG_FILE="${TMPDIR:-/tmp}/crypcodile_install.log"
+LOG_FILE="${TMPDIR:-/tmp}/crocodile_install.log"
 rm -f "$LOG_FILE"
 touch "$LOG_FILE"
 
@@ -126,32 +125,42 @@ fi
 GIT_VER=$(git --version | head -n 1)
 echo -e "${GREEN}✓ Verified${NC} ($GIT_VER)"
 
-# 3. Creates the directory ~/.crypcodile
-run_step "Creating directory ~/.crypcodile..." "mkdir -p \"\$HOME/.crypcodile\""
+# 3. Creates the directory ~/.crocodile
+run_step "Creating directory ~/.crocodile..." "mkdir -p \"\$HOME/.crocodile\""
 
-# 4. Creates a virtual environment ~/.crypcodile/venv
+# 4. Creates a virtual environment ~/.crocodile/venv
 create_venv() {
-    "$PYTHON_CMD" -m venv "$HOME/.crypcodile/venv"
+    "$PYTHON_CMD" -m venv "$HOME/.crocodile/venv"
 }
 run_step "Creating virtual environment..." "create_venv"
 
 # 5. Upgrades pip
-run_step "Upgrading pip..." "\"\$HOME/.crypcodile/venv/bin/pip\" install --upgrade pip"
+run_step "Upgrading pip..." "\"\$HOME/.crocodile/venv/bin/pip\" install --upgrade pip"
 
 # 6. Installs the CLI package
 # The distribution is `crocodile` as of 0.3.0; pip rejects a requirement whose
-# name does not match the project it resolves to. The repository is renamed
-# separately, so the URL still says Crypcodile.
-run_step "Installing Crocodile..." "\"\$HOME/.crypcodile/venv/bin/pip\" install \"crocodile[full] @ git+https://github.com/nazmiefearmutcu/Crypcodile.git\""
+# name does not match the project it resolves to. The repository rename has since
+# landed, so the URL says Crocodile too — Crypcodile.git still redirects, but a
+# redirect is not a thing to depend on.
+run_step "Installing Crocodile..." "\"\$HOME/.crocodile/venv/bin/pip\" install \"crocodile[full] @ git+https://github.com/nazmiefearmutcu/Crocodile.git\""
 
-# 7. Configures a wrapper script at ~/.local/bin/crypcodile
+# 7. Configures the wrapper scripts at ~/.local/bin
+# `crocodile` is the command. `crypcodile` is kept because it was on people's
+# PATH before the merge and removing it silently would break them; it is the
+# deprecated console script, it prints a notice on stderr, and it goes away in
+# 0.4. Until this step existed only the deprecated name was installed, so a
+# fresh install handed you the one command the docs never mention.
 configure_wrapper() {
-    mkdir -p "$HOME/.local/bin" && \
+    mkdir -p "$HOME/.local/bin" || return 1
+    cat << 'EOF' > "$HOME/.local/bin/crocodile"
+#!/bin/sh
+exec "$HOME/.crocodile/venv/bin/crocodile" "$@"
+EOF
     cat << 'EOF' > "$HOME/.local/bin/crypcodile"
 #!/bin/sh
-exec "$HOME/.crypcodile/venv/bin/crypcodile" "$@"
+exec "$HOME/.crocodile/venv/bin/crypcodile" "$@"
 EOF
-    chmod +x "$HOME/.local/bin/crypcodile"
+    chmod +x "$HOME/.local/bin/crocodile" "$HOME/.local/bin/crypcodile"
 }
 run_step "Configuring wrapper script..." "configure_wrapper"
 
@@ -162,7 +171,7 @@ update_path_config() {
         # Even if they don't exist, we can touch them
         touch "$profile"
         if ! grep -q '\.local/bin' "$profile"; then
-            echo -e "\n# Crypcodile CLI PATH configuration" >> "$profile"
+            echo -e "\n# Crocodile CLI PATH configuration" >> "$profile"
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$profile"
             UPDATED_PROFILES+=("$profile")
         fi
@@ -173,7 +182,7 @@ run_step "Updating PATH configuration..." "update_path_config"
 # 9. Displays prominent notification message
 echo
 echo -e "${GREEN}${BOLD}========================================================================${NC}"
-echo -e "${GREEN}${BOLD}Crypcodile has successfully downloaded!${NC}"
+echo -e "${GREEN}${BOLD}Crocodile has successfully downloaded!${NC}"
 echo -e "${BOLD}You must restart your terminal or run:${NC}"
 for profile in "${UPDATED_PROFILES[@]}"; do
     echo -e "  source ~/${profile##*/}"

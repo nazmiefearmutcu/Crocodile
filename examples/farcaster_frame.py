@@ -1,4 +1,4 @@
-"""Farcaster Frame Server for Crypcodile Base Analytics.
+"""Farcaster Frame Server for Crocodile Base Analytics.
 
 Provides an interactive Farcaster Frame to display live on-chain analytics
 (price, reserves, volume, and TVL snapshot) for popular pairs on Base mainnet.
@@ -26,7 +26,7 @@ from crocodile.crypto.exchanges.base_onchain.connector import POOL_SPECS
 from crocodile.crypto.exchanges.base_onchain.price import get_base_market_data
 
 app = FastAPI(
-    title="Crypcodile Farcaster Frame",
+    title="Crocodile Farcaster Frame",
     description="Interactive Frame displaying live Base L2 on-chain analytics.",
     version="0.1.0"
 )
@@ -58,10 +58,10 @@ def generate_frame_html(base_url: str, pair: str) -> str:
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Crypcodile Base Analytics — {pair}</title>
+    <title>Crocodile Base Analytics — {pair}</title>
     <!-- Open Graph tags -->
-    <meta property="og:title" content="Crypcodile Base Analytics — {pair}" />
-    <meta property="og:description" content="Live Base L2 on-chain analytics powered by Crypcodile." />
+    <meta property="og:title" content="Crocodile Base Analytics — {pair}" />
+    <meta property="og:description" content="Live Base L2 on-chain analytics powered by Crocodile." />
     <meta property="og:image" content="{image_url}" />
     
     <!-- Farcaster Frame tags -->
@@ -74,12 +74,12 @@ def generate_frame_html(base_url: str, pair: str) -> str:
     <meta property="fc:frame:button:4" content="cbBTC-USDC" />
 </head>
 <body style="background: #0d1117; color: #c9d1d9; font-family: sans-serif; text-align: center; padding: 40px;">
-    <h2>🐊 Crypcodile Farcaster Frame</h2>
+    <h2>🐊 Crocodile Farcaster Frame</h2>
     <p>This page serves Farcaster Frame metadata for on-chain Base mainnet DEX data.</p>
     <div style="margin: 20px auto; max-width: 600px; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; background: #161b22;">
         <img src="{image_url}" alt="Live Stats" style="width: 100%; height: auto; display: block;" />
     </div>
-    <p><small>Powered by Crypcodile Engine v0.1.0</small></p>
+    <p><small>Powered by Crocodile Engine</small></p>
 </body>
 </html>
 """
@@ -151,8 +151,8 @@ def generate_snapshot_svg(data: dict[str, Any]) -> str:
 
     <!-- Footer Area -->
     <rect x="0" y="274" width="600" height="40" rx="0" fill="#070a13" opacity="0.8"/>
-    <text x="24" y="298" font-family="system-ui, sans-serif" font-size="11" fill="#475569">Block: {block} | Source: Crypcodile Aggregated Index</text>
-    <text x="576" y="298" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#14b8a6" text-anchor="end">🐊 Crypcodile Engine</text>
+    <text x="24" y="298" font-family="system-ui, sans-serif" font-size="11" fill="#475569">Block: {block} | Source: Crocodile Aggregated Index</text>
+    <text x="576" y="298" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#14b8a6" text-anchor="end">🐊 Crocodile Engine</text>
 </svg>
 """
 
@@ -224,7 +224,7 @@ def generate_svg_card(pair: str, data: dict[str, Any]) -> str:
     <!-- Footer Area -->
     <rect x="0" y="274" width="600" height="40" rx="0" fill="#070a13" opacity="0.8"/>
     <text x="24" y="298" font-family="system-ui, sans-serif" font-size="11" fill="#475569">Block: {block} | Sync: Live Mainnet Polling</text>
-    <text x="576" y="298" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#14b8a6" text-anchor="end">🐊 Crypcodile Engine</text>
+    <text x="576" y="298" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#14b8a6" text-anchor="end">🐊 Crocodile Engine</text>
 </svg>
 """
 

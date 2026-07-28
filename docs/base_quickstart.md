@@ -1,53 +1,74 @@
-# 🔵 Base Developer Quickstart: Track Base Whales in 10 Lines of Python
+# Base quickstart: find the whales in ten lines
 
-This quickstart guides you through using **Crypcodile** to monitor on-chain swap events on the Base L2 network and filter for large "whale" transactions (trades greater than $50,000 USD).
+Crocodile reads Uniswap V3 and Aerodrome swap events straight off Base L2 RPC logs and
+normalizes them into the same `Trade` records a CEX connector emits. That is the whole point
+of this page: once the on-chain data is in the lake, finding large swaps is a SQL query, not
+a second codebase.
 
 ## Prerequisites
 
-Ensure you have installed Crypcodile and synced the data pipeline:
+The Base connector reads L2 RPC logs through `web3`, which ships in the `onchain` extra — a
+bare install gives you the core CEX and lake engine only.
+
 ```bash
-pip install 'crocodile[onchain]'
-# or with uv
-uv pip install 'crocodile[onchain]'
+uv pip install "crocodile[onchain] @ git+https://github.com/nazmiefearmutcu/Crocodile.git"
 ```
 
-The Base connector reads L2 RPC logs via `web3`, which ships in the
-`onchain` extra (a bare `pip install crocodile` gives you the core
-CEX/lake engine only).
+Then collect something. `replay` and `query` read the lake you point them at and nothing
+else, so a fresh install answers empty until you have:
 
-## Python Implementation
+```bash
+crocodile collect --asset-class crypto --sources base_onchain --symbols _ \
+    --channels trade --data-dir data
+```
 
-Using Crypcodile's standardized query interface powered by DuckDB, you can load on-chain transaction data directly into a Pandas DataFrame and filter for whale trades:
+Public Base data needs no API key. On-chain reads use a default RPC endpoint you can
+override.
+
+## The query
 
 ```python
 from crocodile.crypto.client.client import CrypcodileClient
 
-# 1. Initialize Crypcodile client pointing to your Parquet data lake
 client = CrypcodileClient(data_dir="data")
 
-# 2. Query normalized trades from Base DEXs filtering for volume > $50k USD
-whale_query = """
-    SELECT symbol, price, amount, side, (amount * price) AS usd_value, local_ts 
-    FROM trade 
-    WHERE exchange = 'base_onchain' AND (amount * price) > 50000 
-    ORDER BY local_ts DESC LIMIT 10
+whales = """
+    SELECT symbol, price, amount, side, (amount * price) AS usd_value, local_ts
+    FROM trade
+    WHERE source = 'base_onchain' AND (amount * price) > 50000
+    ORDER BY local_ts DESC
+    LIMIT 10
 """
-df = client.query(whale_query).to_pandas()
-
-# 3. Display the detected Base whale swaps
-print(df)
+print(client.query(whales).to_pandas())
 ```
 
-## How It Works Under the Hood
+Two things in there are easy to get wrong:
 
-1. **RPC Extraction**: The Crypcodile ingestion engine queries the Base mainnet RPC nodes, listening for swap events on Uniswap V3 and Aerodrome Finance pools.
-2. **Schema Normalization**: Raw Ethereum logs are decoded and normalized into standard internal `Trade` schemas.
-3. **Parquet Storage**: Normalized trades are written to partitioned `.parquet` files under the `data` directory.
-4. **DuckDB Querying**: The `CrypcodileClient` spins up an in-memory DuckDB instance to query the Parquet files directly, combining the execution speed of Polars/Pandas with the expressiveness of SQL.
+- **The column is `source`, not `exchange`.** The merge collapsed the two forks' partitions
+  into one `source=`, and the column went with it. A query written against `exchange` does
+  not error — it just matches nothing, which is the more expensive failure.
+- **The class is still `CrypcodileClient`.** The product is Crocodile; this public class kept
+  its name because renaming it would break every caller for no gain. It is not a typo.
 
----
+## What happens underneath
 
-For complete production-grade examples, check the [examples/](file:///Users/nazmi/Crypcodile/examples) directory:
-- [monitor_base_volume.py](file:///Users/nazmi/Crypcodile/examples/monitor_base_volume.py): Real-time on-chain logs parser.
-- [base_dashboard.py](file:///Users/nazmi/Crypcodile/examples/base_dashboard.py): Interactive Streamlit visualizer for Base DEX volume.
-- [farcaster_frame.py](file:///Users/nazmi/Crypcodile/examples/farcaster_frame.py): Deployable Farcaster Frame endpoint.
+1. **RPC extraction** — the ingestion engine polls Base mainnet RPC for swap and reserve
+   events on Uniswap V3 and Aerodrome pools.
+2. **Decode and normalize** — raw Ethereum logs are decoded into the same `Trade` record type
+   a Binance or Deribit connector produces. A cross-venue query does not know the difference.
+3. **Provenance** — each record carries how it came to exist, so a modelled value cannot pass
+   itself off as one the chain reported.
+4. **Parquet storage** — records land in partitioned `.parquet` under your data directory.
+5. **DuckDB** — the client registers one view per channel over those files and queries them
+   in place. No import step, no server.
+
+## Runnable examples
+
+- [`examples/monitor_base_volume.py`](../examples/monitor_base_volume.py) — real-time
+  on-chain log parser
+- [`examples/base_dashboard.py`](../examples/base_dashboard.py) — Streamlit dashboard for Base
+  DEX volume
+- [`examples/farcaster_frame.py`](../examples/farcaster_frame.py) — deployable Farcaster frame
+  endpoint
+- [`examples/collect_base_onchain.py`](../examples/collect_base_onchain.py) — the collection
+  loop on its own

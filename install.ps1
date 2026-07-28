@@ -20,12 +20,12 @@ $banner = @'
 Write-Host $banner -ForegroundColor Green
 
 Write-Host "=================================================" -ForegroundColor Green
-Write-Host "      Crypcodile CLI Framework Installer         " -ForegroundColor Green
+Write-Host "      Crocodile CLI Framework Installer         " -ForegroundColor Green
 Write-Host "=================================================" -ForegroundColor Green
 Write-Host ""
 
 $tempDir = if ($env:TEMP) { $env:TEMP } else { $env:USERPROFILE }
-$LogFile = Join-Path $tempDir "crypcodile_install.log"
+$LogFile = Join-Path $tempDir "crocodile_install.log"
 Remove-Item -Path $LogFile -ErrorAction SilentlyContinue
 
 # Helper function to run steps and handle failures
@@ -144,16 +144,16 @@ if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
 $gitVersion = (git --version) | Select-Object -First 1
 Write-Host "✓ Verified ($gitVersion)" -ForegroundColor Green
 
-# 3. Creates directory $env:USERPROFILE\.crypcodile
-$crypcodileDir = Join-Path $env:USERPROFILE ".crypcodile"
-Run-Step "Creating directory ~/.crypcodile..." {
-    if (-not (Test-Path $crypcodileDir)) {
-        New-Item -ItemType Directory -Path $crypcodileDir | Out-Null
+# 3. Creates directory $env:USERPROFILE\.crocodile
+$crocodileDir = Join-Path $env:USERPROFILE ".crocodile"
+Run-Step "Creating directory ~/.crocodile..." {
+    if (-not (Test-Path $crocodileDir)) {
+        New-Item -ItemType Directory -Path $crocodileDir | Out-Null
     }
 }
 
-# 4. Creates virtual environment $env:USERPROFILE\.crypcodile\venv
-$venvDir = Join-Path $crypcodileDir "venv"
+# 4. Creates virtual environment $env:USERPROFILE\.crocodile\venv
+$venvDir = Join-Path $crocodileDir "venv"
 Run-Step "Creating virtual environment..." {
     & $pythonCmd -m venv $venvDir
 }
@@ -165,14 +165,15 @@ Run-Step "Upgrading pip..." {
 }
 
 # 6. Installs the CLI package
-Run-Step "Installing Crypcodile..." {
+Run-Step "Installing Crocodile..." {
     # The distribution is `crocodile` as of 0.3.0; pip rejects a requirement whose
-# name does not match the project it resolves to. The repository is renamed
-# separately, so the URL still says Crypcodile.
-& $pipExe install "crocodile[full] @ git+https://github.com/nazmiefearmutcu/Crypcodile.git"
+    # name does not match the project it resolves to. The repository rename has
+    # since landed, so the URL says Crocodile too — Crypcodile.git still redirects,
+    # but a redirect is not a thing to depend on.
+    & $pipExe install "crocodile[full] @ git+https://github.com/nazmiefearmutcu/Crocodile.git"
 }
 
-# 7. Adds $env:USERPROFILE\.crypcodile\venv\Scripts to the User PATH environment variable
+# 7. Adds $env:USERPROFILE\.crocodile\venv\Scripts to the User PATH environment variable
 Run-Step "Updating PATH configuration..." {
     $userPathTarget = [System.EnvironmentVariableTarget]::User
     $currentPath = [System.Environment]::GetEnvironmentVariable("Path", $userPathTarget)
@@ -190,7 +191,7 @@ Run-Step "Updating PATH configuration..." {
     }
 
     if (-not $alreadyExists) {
-        if ($currentPath -notlike "*\.crypcodile\venv\Scripts*") {
+        if ($currentPath -notlike "*\.crocodile\venv\Scripts*") {
             $newPath = $currentPath
             if ($currentPath -and -not $currentPath.EndsWith(';')) {
                 $newPath += ";"
@@ -204,7 +205,7 @@ Run-Step "Updating PATH configuration..." {
 # 8. Displays prominent notification message
 Write-Host ""
 Write-Host "========================================================================" -ForegroundColor Green
-Write-Host "Crypcodile has successfully downloaded!" -ForegroundColor Green
+Write-Host "Crocodile has successfully downloaded!" -ForegroundColor Green
 Write-Host "Please restart your terminal/PowerShell session before using it." -ForegroundColor White
 Write-Host "========================================================================" -ForegroundColor Green
 Write-Host ""

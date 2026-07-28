@@ -37,7 +37,7 @@ _NS_MAX = 9_223_372_036_854_775_807  # max int64 — covers all stored history
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Replay trade records from the Crypcodile data lake and write to CSV."
+        description="Replay trade records from the Crocodile data lake and write to CSV."
     )
     parser.add_argument("--data-dir", default="data", help="Root of the data lake (default: data)")
     parser.add_argument("--out", default="trades.csv", help="Output CSV path (default: trades.csv)")

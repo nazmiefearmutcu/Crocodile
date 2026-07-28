@@ -5,6 +5,30 @@ description = "Deterministic market-data engine for crypto and US equities: inge
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
+# Grounded in what the engine actually does. Nothing aspirational: every term below
+# names a surface, a format or a source that exists in this tree today.
+keywords = [
+    "market-data",
+    "crypto",
+    "cryptocurrency",
+    "equities",
+    "stock-market",
+    "order-book",
+    "parquet",
+    "duckdb",
+    "polars",
+    "replay",
+    "determinism",
+    "provenance",
+    "mcp",
+    "ccxt",
+    "websocket",
+    "sec-edgar",
+    "defi",
+    "quantitative-finance",
+    "time-series",
+    "data-engineering",
+]
 dependencies = [
     "msgspec>=0.18",
     "polars>=1.0",

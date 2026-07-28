@@ -1,4 +1,4 @@
-## Crypcodile data-path benchmark
+## Crocodile data-path benchmark
 
 Network-free, synthetic-data benchmark of the offline data path (normalize → store → query → resample → replay). Fixed RNG seed (42); all numbers measured by running the script.
 

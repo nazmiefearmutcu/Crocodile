@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         Exit code: 0 on success (including "no data" — exit 0 with a message).
     """
     parser = argparse.ArgumentParser(
-        description="Print IV surface and term structure from a Crypcodile data lake."
+        description="Print IV surface and term structure from a Crocodile data lake."
     )
     parser.add_argument(
         "--data-dir",

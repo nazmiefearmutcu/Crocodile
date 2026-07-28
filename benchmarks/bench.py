@@ -1,5 +1,9 @@
-"""Reproducible, network-free performance benchmark for the Crypcodile
-(import name ``crypcodile``) crypto market-data engine.
+"""Reproducible, network-free performance benchmark for the Crocodile
+(import name ``crocodile``) market-data engine.
+
+Scope note: this exercises the offline data path with crypto-shaped records, which is
+the path both asset classes share — normalize, store, query, resample, replay. It is not
+a crypto-only engine; it is a crypto-shaped fixture.
 
 Measures the offline data-path on synthetic data only — no websockets, no REST,
 no exchange access. Every stage uses a fixed RNG seed so the synthetic input is
@@ -442,7 +446,7 @@ def main() -> int:
         mach = machine_info()
 
         md_lines = [
-            "## Crypcodile data-path benchmark",
+            "## Crocodile data-path benchmark",
             "",
             "Network-free, synthetic-data benchmark of the offline data path "
             "(normalize → store → query → resample → replay). "

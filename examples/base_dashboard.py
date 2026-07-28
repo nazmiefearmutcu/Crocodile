@@ -17,7 +17,7 @@ from crocodile.crypto.exchanges.base_onchain.price import get_base_market_data
 
 # Page configuration for rich aesthetics
 st.set_page_config(
-    page_title="Crypcodile — Base On-chain Analytics",
+    page_title="Crocodile — Base On-chain Analytics",
     page_icon="🐊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -50,7 +50,7 @@ st.markdown("""
 
 st.title("🔵 Built for the Base Ecosystem — Live On-chain DEX Dashboard")
 st.markdown("""
-This dashboard showcases **Crypcodile's** capability to extract, normalize, and analyze live on-chain DEX data directly from the **Base mainnet** (polling Uniswap V3 and Aerodrome Finance).
+This dashboard showcases **Crocodile's** capability to extract, normalize, and analyze live on-chain DEX data directly from the **Base mainnet** (polling Uniswap V3 and Aerodrome Finance).
 """)
 
 # Sidebar selection
@@ -219,6 +219,6 @@ else:
 st.markdown("---")
 st.markdown("""
 <div align="center">
-    <small>Crypcodile Base L2 On-chain Analytics Engine © 2026. Built with Web3, DuckDB and Streamlit.</small>
+    <small>Crocodile Base L2 On-chain Analytics Engine © 2026. Built with Web3, DuckDB and Streamlit.</small>
 </div>
 """, unsafe_allow_html=True)

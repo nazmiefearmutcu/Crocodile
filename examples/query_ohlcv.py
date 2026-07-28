@@ -36,7 +36,7 @@ _NS_MAX = 9_223_372_036_854_775_807  # max int64 — covers full stored history
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Resample Crypcodile trade records into OHLCV bars."
+        description="Resample Crocodile trade records into OHLCV bars."
     )
     parser.add_argument("--data-dir", default="data", help="Root of the data lake (default: data)")
     parser.add_argument(

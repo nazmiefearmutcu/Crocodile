@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         Exit code: 0 on success (including "no data" — exit 0 with a message).
     """
     parser = argparse.ArgumentParser(
-        description="Print funding APR time series from a Crypcodile data lake."
+        description="Print funding APR time series from a Crocodile data lake."
     )
     parser.add_argument(
         "--data-dir",
