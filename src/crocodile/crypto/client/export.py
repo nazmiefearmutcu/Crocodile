@@ -40,8 +40,8 @@ from pathlib import Path
 from typing import Literal
 
 import polars as pl
-import pyarrow.ipc as pa_ipc
 
+from crocodile.core.optional import require
 from crocodile.core.store.catalog import Catalog
 
 # Supported format strings (exposed as a Literal type for type-checker friendliness).
@@ -238,6 +238,14 @@ def _write_arrow(df: pl.DataFrame, dest: Path) -> None:
     IPC writer rather than short-circuiting to zero bytes (which would produce an
     unreadable file for downstream pa_ipc.open_file callers).
     """
+    # Deferred on purpose — see crocodile.core.optional. pyarrow at module scope
+    # made this one output format able to break `import crocodile.crypto.client`
+    # on any platform that cannot install it.
+    pa_ipc = require(
+        "pyarrow.ipc",
+        feature="fmt='arrow' (Arrow IPC / Feather v2) export",
+        hint="Install pyarrow, or export parquet/csv/json/jsonl instead.",
+    )
     # Convert to PyArrow Table then write IPC stream.
     table = df.to_arrow()
     with pa_ipc.new_file(str(dest), table.schema) as writer:  # type: ignore[no-untyped-call]

@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Literal
 
 import polars as pl
-import pyarrow.ipc as pa_ipc
 
+from crocodile.core.optional import require
 from crocodile.core.store.catalog import Catalog
 
 # Supported format strings
@@ -108,6 +108,14 @@ def _write_csv(df: pl.DataFrame, dest: Path) -> None:
 
 
 def _write_arrow(df: pl.DataFrame, dest: Path) -> None:
+    # Deferred on purpose — see crocodile.core.optional. pyarrow at module scope
+    # made `import crocodile.equity.client` (and therefore `collect`) fail
+    # wherever pyarrow cannot be installed, for the sake of one output format.
+    pa_ipc = require(
+        "pyarrow.ipc",
+        feature="fmt='arrow' (Arrow IPC / Feather v2) export",
+        hint="Install pyarrow, or export parquet/csv/json/jsonl instead.",
+    )
     table = df.to_arrow()
     with pa_ipc.new_file(str(dest), table.schema) as writer:  # type: ignore[no-untyped-call]
         if len(table) > 0:
