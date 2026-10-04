@@ -881,3 +881,81 @@ class SecEdgarClient:
                 else:
                     for fact in raw_facts:
                         yield fact
+
+    async def get_fails_to_deliver(
+        self,
+        symbol: str,
+        *,
+        limit_months: int = 6,
+    ) -> list[dict[str, Any]]:
+        """Fetch and parse SEC Fails-To-Deliver (CNS fails) data for a symbol.
+
+        URL: https://www.sec.gov/files/data/fails-deliver-data/cnsfails{YYYYMM}[a|b].zip
+        Twice-monthly regulatory dataset of settlement failures across US clearing equities.
+        """
+        import io
+        import zipfile
+        from datetime import UTC, datetime, timedelta
+
+        sym_clean = symbol.upper()
+        now = datetime.now(UTC)
+        results: list[dict[str, Any]] = []
+
+        # Generate (year, month, half) tuples backwards from current month
+        periods: list[tuple[int, int, str]] = []
+        for i in range(limit_months):
+            dt = now - timedelta(days=i * 30)
+            periods.append((dt.year, dt.month, "b"))
+            periods.append((dt.year, dt.month, "a"))
+
+        for year, month, half in periods:
+            url = f"https://www.sec.gov/files/data/fails-deliver-data/cnsfails{year}{month:02d}{half}.zip"
+            try:
+                body = await self._request_bytes(url)
+            except Exception as exc:
+                log.debug("SEC FTD file not available at %s: %s", url, exc)
+                continue
+
+            try:
+                with zipfile.ZipFile(io.BytesIO(body)) as zf:
+                    for name in zf.namelist():
+                        raw_txt = zf.read(name).decode("latin-1")
+                        for line in raw_txt.splitlines():
+                            line = line.strip()
+                            if (
+                                not line
+                                or line.startswith("SETTLEMENT DATE")
+                                or line.startswith("Trailer")
+                            ):
+                                continue
+                            parts = line.split("|")
+                            if len(parts) < 6:
+                                continue
+                            if parts[2].strip().upper() == sym_clean:
+                                date_str = parts[0].strip()
+                                iso_date = (
+                                    f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+                                    if len(date_str) == 8
+                                    else date_str
+                                )
+                                try:
+                                    qty = float(parts[3].strip() or 0.0)
+                                    px = float(parts[5].strip() or 0.0)
+                                except (ValueError, TypeError):
+                                    continue
+                                results.append(
+                                    {
+                                        "settlement_date": iso_date,
+                                        "cusip": parts[1].strip(),
+                                        "symbol": sym_clean,
+                                        "quantity": qty,
+                                        "description": parts[4].strip(),
+                                        "price": px,
+                                        "dollar_value": round(qty * px, 2),
+                                    }
+                                )
+            except Exception as exc:
+                log.warning("Failed parsing SEC FTD archive %s: %s", url, exc)
+
+        results.sort(key=lambda r: r["settlement_date"])
+        return results

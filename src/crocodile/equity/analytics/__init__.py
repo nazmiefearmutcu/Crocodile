@@ -18,6 +18,16 @@ from crocodile.core.analytics.indicators import (
     calculate_rsi,
     calculate_sma,
 )
+from crocodile.core.analytics.slippage import estimate_slippage
+from crocodile.equity.analytics.dark_pool import (
+    build_dark_pool_frame,
+    dark_pool_market_share,
+)
+from crocodile.equity.analytics.fails_to_deliver import (
+    build_ftd_frame,
+    detect_ftd_spikes,
+    ftd_summary,
+)
 from crocodile.equity.analytics.metrics import (
     calculate_beta,
     calculate_realized_volatility,
@@ -44,7 +54,14 @@ from crocodile.equity.analytics.returns import (
     calculate_log_returns,
     calculate_simple_returns,
 )
-from crocodile.core.analytics.slippage import estimate_slippage
+from crocodile.equity.analytics.short_interest import (
+    short_interest_history,
+    short_interest_metrics,
+)
+from crocodile.equity.analytics.short_volume import (
+    regsho_short_ratio,
+    short_volume_summary,
+)
 
 __all__ = [
     "bsm_delta",
@@ -55,6 +72,8 @@ __all__ = [
     "bsm_rho",
     "bsm_theta",
     "bsm_vega",
+    "build_dark_pool_frame",
+    "build_ftd_frame",
     "calculate_beta",
     "calculate_bollinger_bands",
     "calculate_ema",
@@ -70,5 +89,12 @@ __all__ = [
     "calculate_rsi",
     "calculate_simple_returns",
     "calculate_sma",
+    "dark_pool_market_share",
+    "detect_ftd_spikes",
     "estimate_slippage",
+    "ftd_summary",
+    "regsho_short_ratio",
+    "short_interest_history",
+    "short_interest_metrics",
+    "short_volume_summary",
 ]

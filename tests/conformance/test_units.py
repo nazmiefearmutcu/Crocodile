@@ -96,6 +96,10 @@ PCT_UNITS: dict[str, tuple[str, str]] = {
         "magnitude' is a stated behaviour rather than a discovered one — note it cannot "
         "express a haircut above 100 %.",
     ),
+    "share_pct": (
+        PERCENT,
+        "`dark_pool_market_share` computes `(shares / total_shares) * 100.0` as percentage of volume.",
+    ),
 }
 """Every ``_pct`` name that reaches a consumer, its unit, and why it is that one.
 

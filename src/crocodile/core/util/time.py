@@ -29,7 +29,9 @@ def us_to_ns(us: int | float) -> int:
 
 def now_ns() -> int:
     """Capture clock for local_ts. Realtime so it's comparable to source_ts."""
-    return time.clock_gettime_ns(time.CLOCK_REALTIME)
+    if hasattr(time, "clock_gettime_ns") and hasattr(time, "CLOCK_REALTIME"):
+        return time.clock_gettime_ns(time.CLOCK_REALTIME)
+    return time.time_ns()
 
 
 def rfc3339_to_ns(dt_str: str) -> int:

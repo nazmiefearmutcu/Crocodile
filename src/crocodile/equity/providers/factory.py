@@ -7,6 +7,7 @@ from crocodile.core.sink.base import Sink
 from crocodile.equity.providers.alpaca.connector import AlpacaProvider
 from crocodile.equity.providers.base import Provider
 from crocodile.equity.providers.finnhub.connector import FinnhubProvider
+from crocodile.equity.providers.finra.connector import FinraProvider
 from crocodile.equity.providers.google_finance.connector import GoogleFinanceProvider
 from crocodile.equity.providers.msn_money.connector import MsnMoneyProvider
 from crocodile.equity.providers.sec_edgar.connector import SecEdgarProvider
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
 _REGISTRY: dict[str, type[Provider]] = {
     "alpaca": AlpacaProvider,
     "finnhub": FinnhubProvider,
+    "finra": FinraProvider,
     "stooq": StooqProvider,
     "google_finance": GoogleFinanceProvider,
     "msn_money": MsnMoneyProvider,
@@ -179,8 +181,8 @@ def make_provider(
     ----------
     provider:
         Lowercase provider name. Valid values: ``alpaca``, ``finnhub``,
-        ``google_finance``, ``msn_money``, ``sec_edgar``, ``stooq``, ``tiingo``,
-        ``treasury``, ``yahoo`` — ``_REGISTRY`` below spelled out, with
+        ``finra``, ``google_finance``, ``msn_money``, ``sec_edgar``, ``stooq``,
+        ``tiingo``, ``treasury``, ``yahoo`` — ``_REGISTRY`` below spelled out, with
         ``tests/conformance/test_prose_counts.py`` asserting the two agree.
 
         The last four arrived when the argument for keeping them out was measured and
