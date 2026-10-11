@@ -283,7 +283,9 @@ class BinanceConnector(Connector):
         if isinstance(msg, dict) and msg.get("e") == "serverShutdown":
             raise TransientConnectorError("Binance requested connection renewal")
         if self.wire_format == "sbe":
-            if isinstance(msg, dict) and msg.get("error") is not None:
+            if isinstance(msg, dict) and (
+                msg.get("error") is not None or ("code" in msg and "msg" in msg)
+            ):
                 raise SbeProtocolError("Binance SBE subscription/control rejected")
             return True
         return await super()._handle_control_message(msg, frame)

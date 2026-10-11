@@ -64,7 +64,9 @@ class HttpSnapshotProvider:
                 received_utc_ns=time.time_ns(),
                 received_monotonic_ns=time.monotonic_ns(),
             )
-        ordinal = await self.capture.append(result) if self.capture is not None else None
+            # Capture admission does not yield. Keep the sampled receive clocks
+            # ordered before an asynchronous response cleanup admits later frames.
+            ordinal = await self.capture.append(result) if self.capture is not None else None
         if result.status != 200:
             raise TransientConnectorError("Public depth snapshot request failed")
         return CapturedSnapshot(response=result, origin_ordinal=ordinal)

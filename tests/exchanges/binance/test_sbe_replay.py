@@ -32,6 +32,7 @@ def test_binary_replay_matches_live_book_and_original_timestamps(
 
 def test_bbo_and_duplicate_frames_do_not_inflate_new_depth_counter(recorded_sbe_session):
     from scripts.benchmark_raw_capture import benchmark_capture
+
     reader, _, stats = recorded_sbe_session
     result = benchmark_capture(reader, repeats=3)
     assert result["received_frames"] == stats.received_frames == 4
@@ -86,6 +87,28 @@ async def test_subscription_error_is_sanitized_fatal():
     conn.transport = FakeTransport([b'{"id":1,"error":{"code":2,"message":"SENTINEL_SECRET"}}'])
     with pytest.raises(FatalConnectorError) as error:
         await conn.run(max_reconnects=3)
+    assert "SENTINEL_SECRET" not in str(error.value)
+    assert conn._dlq.drain() == []
+
+
+@pytest.mark.parametrize("with_id", [False, True])
+async def test_documented_stream_rejection_is_sanitized_and_stops_collect(with_id):
+    from crocodile.crypto.client.collect import collect
+
+    payload = {"code": 2, "msg": "SENTINEL_SECRET"}
+    if with_id:
+        payload["id"] = 1
+    conn = BinanceConnector(
+        ["BTCUSDT"],
+        ["trade"],
+        MemorySink(),
+        InstrumentRegistry(),
+        wire_format="sbe",
+        api_key="fixture-key",
+    )
+    conn.transport = FakeTransport([json.dumps(payload).encode()])
+    with pytest.raises(FatalConnectorError) as error:
+        await collect([conn], conn.out, max_reconnects=0)
     assert "SENTINEL_SECRET" not in str(error.value)
     assert conn._dlq.drain() == []
 

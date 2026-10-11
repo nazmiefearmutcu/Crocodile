@@ -121,3 +121,26 @@ async def test_cancelled_close_drains_capture(tmp_path, capture_context):
         await task
     assert (await writer.close()).stats.fsynced_records == 1
     assert len(list(CaptureReader(tmp_path).records())) == 1
+
+
+async def test_slow_fsync_lag_is_warned_and_retained_after_sealing(
+    tmp_path, capture_context, monkeypatch, caplog
+):
+    clock = [10]
+    monkeypatch.setattr(mod.time, "monotonic_ns", lambda: clock[0])
+    writer = await mod.CaptureWriter.create(tmp_path, capture_context, fsync_interval_s=0.02)
+    sync_disk = writer._sync_disk
+
+    def slow_sync():
+        clock[0] += 100_000_000
+        sync_disk()
+
+    monkeypatch.setattr(writer, "_sync_disk", slow_sync)
+    await writer.append(RegistryCheckpoint(instruments=()))
+    await writer.flush()
+    summary = await writer.close()
+    assert "durable lag exceeded" in caplog.text
+    assert summary.stats.durable_lag_ns == 0
+    assert summary.stats.peak_durable_lag_ns == 100_000_000
+    assert summary.stats.durable_lag_overruns == 1
+    assert CaptureReader(tmp_path).manifest.stats.peak_durable_lag_ns == 100_000_000

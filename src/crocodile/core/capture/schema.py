@@ -77,8 +77,14 @@ class ControlMetadata(msgspec.Struct, tag="control", frozen=True, kw_only=True):
     observed_utc_ns: int
 
 
-CaptureEvent = (MarketFrame | SnapshotRequest | SnapshotResponse | RegistryCheckpoint
-                | ApplicationDecision | ControlMetadata)
+CaptureEvent = (
+    MarketFrame
+    | SnapshotRequest
+    | SnapshotResponse
+    | RegistryCheckpoint
+    | ApplicationDecision
+    | ControlMetadata
+)
 
 
 class JournalRecord(msgspec.Struct, frozen=True, kw_only=True):
@@ -97,6 +103,8 @@ class CaptureStats(msgspec.Struct, frozen=True, kw_only=True):
     queued_bytes: int = 0
     peak_queued_bytes: int = 0
     durable_lag_ns: int = 0
+    peak_durable_lag_ns: int = 0
+    durable_lag_overruns: int = 0
     failed: bool = False
 
 

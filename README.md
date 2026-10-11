@@ -377,7 +377,8 @@ Deribit control messages retain only metadata, because that socket carries crede
 The raw byte queue includes encoding and in-flight writes, defaults to 32 MiB, and can be
 lowered with `CROCODILE_RAW_CAPTURE_QUEUE_BYTES`. Records are limited to 16 MiB; segments
 target 256 MiB. Admission, written and fsynced counters differ: the default fsync interval
-is at most one second, with explicit durable-lag reporting. An admitted unsynced tail may
+targets one second, with current/peak durable-lag and overrun reporting. Disk stalls
+can exceed this interval. An admitted unsynced tail may
 be lost on process crash. Queue, disk or fsync failures end required capture and return an
 error after cleanup. This supports process-crash recovery; power-loss guarantees depend
 on the filesystem and hardware.

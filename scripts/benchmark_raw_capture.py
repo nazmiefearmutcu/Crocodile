@@ -71,6 +71,8 @@ def benchmark_capture(reader: CaptureReader, *, repeats: int = 1) -> dict[str, i
         "written_records",
         "peak_queued_bytes",
         "durable_lag_ns",
+        "peak_durable_lag_ns",
+        "durable_lag_overruns",
     ):
         result[name] = getattr(stats, name) if stats else "unavailable"
     return result

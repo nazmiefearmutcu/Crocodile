@@ -35,8 +35,16 @@ def write_all(file: BinaryIO, payload: bytes) -> None:
 
 
 class CaptureWriter:
-    def __init__(self, root: Path, context: CaptureContext, *, queue_bytes: int,
-                 segment_bytes: int, max_record_bytes: int, fsync_interval_s: float):
+    def __init__(
+        self,
+        root: Path,
+        context: CaptureContext,
+        *,
+        queue_bytes: int,
+        segment_bytes: int,
+        max_record_bytes: int,
+        fsync_interval_s: float,
+    ):
         self.root, self.context = root, context
         self.emission_lock = asyncio.Lock()
         self._budget, self._segment_target = queue_bytes, segment_bytes
@@ -44,6 +52,7 @@ class CaptureWriter:
         self._queue: asyncio.Queue[tuple[int, bytes] | asyncio.Future[int] | None] = asyncio.Queue()
         self._next = self._written = self._fsynced = self._received = 0
         self._bytes = self._peak_bytes = 0
+        self._peak_lag_ns = self._lag_overruns = 0
         self._admitted: deque[tuple[int, int]] = deque()
         self._manifest = CaptureManifest(context=context)
         self._file: BinaryIO | None = None
@@ -57,14 +66,32 @@ class CaptureWriter:
         self._task: asyncio.Task[None] | None = None
 
     @classmethod
-    async def create(cls, root: Path, context: CaptureContext, *, queue_bytes: int = 32 << 20,
-                     segment_bytes: int = 256 << 20, max_record_bytes: int = 16 << 20,
-                     fsync_interval_s: float = 1.0) -> CaptureWriter:
-        if (queue_bytes < 1 or segment_bytes <= len(FILE_HEADER) or max_record_bytes < 1
-                or max_record_bytes > 16 << 20 or not 0 < fsync_interval_s <= 1):
+    async def create(
+        cls,
+        root: Path,
+        context: CaptureContext,
+        *,
+        queue_bytes: int = 32 << 20,
+        segment_bytes: int = 256 << 20,
+        max_record_bytes: int = 16 << 20,
+        fsync_interval_s: float = 1.0,
+    ) -> CaptureWriter:
+        if (
+            queue_bytes < 1
+            or segment_bytes <= len(FILE_HEADER)
+            or max_record_bytes < 1
+            or max_record_bytes > 16 << 20
+            or not 0 < fsync_interval_s <= 1
+        ):
             raise ConfigError("Invalid raw capture byte budgets or fsync interval")
-        writer = cls(Path(root), context, queue_bytes=queue_bytes, segment_bytes=segment_bytes,
-                     max_record_bytes=max_record_bytes, fsync_interval_s=fsync_interval_s)
+        writer = cls(
+            Path(root),
+            context,
+            queue_bytes=queue_bytes,
+            segment_bytes=segment_bytes,
+            max_record_bytes=max_record_bytes,
+            fsync_interval_s=fsync_interval_s,
+        )
         try:
             await asyncio.to_thread(writer._initialize)
         except Exception as exc:
@@ -87,8 +114,12 @@ class CaptureWriter:
         self._file.flush()
         os.fsync(self._file.fileno())
         self._size, self._segment_first = len(FILE_HEADER), 0
-        self._manifest = CaptureManifest(context=self.context, segments=self._manifest.segments,
-                                         active_name=name, fsynced_ordinal=self._fsynced)
+        self._manifest = CaptureManifest(
+            context=self.context,
+            segments=self._manifest.segments,
+            active_name=name,
+            fsynced_ordinal=self._fsynced,
+        )
         save_manifest(self.root, self._manifest)
 
     def _check(self) -> None:
@@ -112,8 +143,10 @@ class CaptureWriter:
         if isinstance(event, MarketFrame):
             self._received += 1
         try:
-            payload = encode_record(JournalRecord(ordinal=self._next + 1, event=event),
-                                    max_record_bytes=self._max_record)
+            payload = encode_record(
+                JournalRecord(ordinal=self._next + 1, event=event),
+                max_record_bytes=self._max_record,
+            )
             if self._bytes + len(payload) > self._budget:
                 raise CaptureError("Raw capture byte queue overflow")
         except Exception as exc:
@@ -145,9 +178,12 @@ class CaptureWriter:
             return
         self._file.flush()
         os.fsync(self._file.fileno())
-        manifest = CaptureManifest(context=self.context, segments=self._manifest.segments,
-                                   active_name=self._manifest.active_name,
-                                   fsynced_ordinal=self._written)
+        manifest = CaptureManifest(
+            context=self.context,
+            segments=self._manifest.segments,
+            active_name=self._manifest.active_name,
+            fsynced_ordinal=self._written,
+        )
         save_manifest(self.root, manifest)
         self._manifest = manifest
 
@@ -155,9 +191,14 @@ class CaptureWriter:
         if self._written == self._fsynced:
             self._last_sync = time.monotonic()
             return
-        if self.stats().durable_lag_ns > int(self._interval * 1_000_000_000):
-            log.warning("Raw capture durable lag exceeded configured fsync interval")
         await asyncio.to_thread(self._sync_disk)
+        # Include time spent syncing: the durable watermark has not advanced
+        # until this operation finishes. Retain overruns after current lag resets.
+        lag = self.stats().durable_lag_ns
+        self._peak_lag_ns = max(self._peak_lag_ns, lag)
+        if lag > int(self._interval * 1_000_000_000):
+            self._lag_overruns += 1
+            log.warning("Raw capture durable lag exceeded configured fsync interval")
         self._fsynced = self._written
         while self._admitted and self._admitted[0][0] <= self._fsynced:
             self._admitted.popleft()
@@ -181,13 +222,19 @@ class CaptureWriter:
         # Publish a second name before the manifest switches: a process crash
         # always leaves the previous active name or the new sealed name readable.
         os.link(partial, sealed)
-        info = SegmentInfo(name=sealed.name, size_bytes=self._size,
-                           first_ordinal=self._segment_first,
-                           last_ordinal=self._written if self._segment_first else 0,
-                           sha256=checksum(sealed))
-        self._manifest = CaptureManifest(context=self.context,
-            segments=(*self._manifest.segments, info), fsynced_ordinal=self._fsynced,
-            stats=self.stats())
+        info = SegmentInfo(
+            name=sealed.name,
+            size_bytes=self._size,
+            first_ordinal=self._segment_first,
+            last_ordinal=self._written if self._segment_first else 0,
+            sha256=checksum(sealed),
+        )
+        self._manifest = CaptureManifest(
+            context=self.context,
+            segments=(*self._manifest.segments, info),
+            fsynced_ordinal=self._fsynced,
+            stats=self.stats(),
+        )
         save_manifest(self.root, self._manifest)
         partial.unlink()
 
@@ -198,7 +245,7 @@ class CaptureWriter:
     async def _run(self) -> None:
         try:
             while self._error is None:
-                remaining = max(.001, self._interval - (time.monotonic() - self._last_sync))
+                remaining = max(0.001, self._interval - (time.monotonic() - self._last_sync))
                 try:
                     item = await asyncio.wait_for(self._queue.get(), remaining)
                 except TimeoutError:
@@ -233,8 +280,11 @@ class CaptureWriter:
         assert self._task is not None
         await self._task
         self._check()
-        return CaptureSummary(context=self.context, stats=self.stats(),
-                              sealed_segment_count=len(self._manifest.segments))
+        return CaptureSummary(
+            context=self.context,
+            stats=self.stats(),
+            sealed_segment_count=len(self._manifest.segments),
+        )
 
     async def close(self) -> CaptureSummary:
         if self._close_task is None:
@@ -252,9 +302,18 @@ class CaptureWriter:
 
     def stats(self) -> CaptureStats:
         lag = time.monotonic_ns() - self._admitted[0][1] if self._admitted else 0
-        return CaptureStats(received_frames=self._received, queued_records=self._next,
-            written_records=self._written, fsynced_records=self._fsynced,
-            queued_ordinal=self._next, written_ordinal=self._written,
-            fsynced_ordinal=self._fsynced, queued_bytes=self._bytes,
-            peak_queued_bytes=self._peak_bytes, durable_lag_ns=max(0, lag),
-            failed=self._error is not None)
+        return CaptureStats(
+            received_frames=self._received,
+            queued_records=self._next,
+            written_records=self._written,
+            fsynced_records=self._fsynced,
+            queued_ordinal=self._next,
+            written_ordinal=self._written,
+            fsynced_ordinal=self._fsynced,
+            queued_bytes=self._bytes,
+            peak_queued_bytes=self._peak_bytes,
+            durable_lag_ns=max(0, lag),
+            peak_durable_lag_ns=max(self._peak_lag_ns, lag),
+            durable_lag_overruns=self._lag_overruns,
+            failed=self._error is not None,
+        )
