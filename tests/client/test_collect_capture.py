@@ -4,7 +4,7 @@ import pytest
 
 from crocodile.core.capture.schema import CaptureContext, RegistryCheckpoint
 from crocodile.core.capture.writer import CaptureWriter
-from crocodile.core.errors import CaptureError
+from crocodile.core.errors import CaptureError, FatalConnectorError
 from crocodile.core.sink.memory import MemorySink
 from crocodile.crypto.client.collect import collect
 
@@ -27,6 +27,17 @@ class ClosingSink(MemorySink):
 
     async def close(self):
         self.closed = True
+
+
+@pytest.mark.parametrize("mode", ["sbe", "raw"])
+async def test_explicit_fast_feed_failure_without_capture_is_not_success(mode):
+    source = Stub(FatalConnectorError("Required feed authorization rejected"))
+    source.wire_format = mode if mode == "sbe" else "json"
+    source.interval = mode if mode == "raw" else "100ms"
+    sink = ClosingSink()
+    with pytest.raises(FatalConnectorError, match="authorization"):
+        await asyncio.wait_for(collect([source, Stub(idle=True)], sink), 1)
+    assert sink.closed
 
 
 @pytest.mark.asyncio

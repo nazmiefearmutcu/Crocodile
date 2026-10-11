@@ -58,6 +58,9 @@ class DeribitSession:
         self._pending: dict[int, PendingRequest] = {}
         self._epoch = self._next_id = 0
         self._ready = False
+        self._blocked_symbols: set[str] = set()
+        self._subscription_id: int | None = None
+        self._book_subscription_ids: dict[str, int] = {}
         self._access_token: str | None = None
         self._refresh_token: str | None = None
         self._expires_ns: int | None = None
@@ -122,6 +125,9 @@ class DeribitSession:
 
     def _invalidate(self) -> None:
         self._ready = False
+        self._blocked_symbols.clear()
+        self._subscription_id = None
+        self._book_subscription_ids.clear()
         self._access_token = self._refresh_token = None
         self._expires_ns = self._refresh_ns = None
         self._pending.clear()
@@ -195,9 +201,27 @@ class DeribitSession:
                 and set(pending.channels).issubset(result)
             ):
                 self._fatal("Deribit subscription acknowledgement is incomplete")
-            self._ready = True
-            self.state = SessionState.SNAPSHOT_PENDING
-            await self._send("public/set_heartbeat", {"interval": self._heartbeat_interval})
+            if pending.symbol is not None:
+                self._blocked_symbols.discard(pending.symbol)
+                self._book_subscription_ids[pending.symbol] = pending.request_id
+            else:
+                self._ready = True
+                self._subscription_id = pending.request_id
+                self.state = SessionState.SNAPSHOT_PENDING
+                await self._send("public/set_heartbeat", {"interval": self._heartbeat_interval})
+        elif pending.method == "public/unsubscribe":
+            if not (
+                isinstance(result, list)
+                and all(isinstance(c, str) for c in result)
+                and set(pending.channels).issubset(result)
+            ):
+                self._fatal("Deribit unsubscribe acknowledgement is incomplete")
+            await self._send(
+                "public/subscribe",
+                {"channels": list(pending.channels)},
+                channels=pending.channels,
+                symbol=pending.symbol,
+            )
         elif pending.method == "public/set_heartbeat":
             if result != "ok":
                 self._fatal("Deribit heartbeat acknowledgement is invalid")
@@ -206,6 +230,27 @@ class DeribitSession:
                 self._fatal("Deribit test acknowledgement is invalid")
         self._wake.set()
         return True
+
+    def ready_for_symbol(self, symbol_raw: str) -> bool:
+        return self.ready_for_market and symbol_raw not in self._blocked_symbols
+
+    def generation_for_symbol(self, symbol_raw: str | None = None) -> int | None:
+        return (
+            self._book_subscription_ids.get(symbol_raw, self._subscription_id)
+            if (symbol_raw is not None)
+            else self._subscription_id
+        )
+
+    async def resubscribe_symbol(self, symbol_raw: str) -> None:
+        if symbol_raw in self._blocked_symbols:
+            return
+        channels = tuple(c for c in self.channels if c == f"book.{symbol_raw}.{self.interval}")
+        if not channels:
+            self._fatal("Deribit book recovery has no configured channel")
+        self._blocked_symbols.add(symbol_raw)
+        await self._send(
+            "public/unsubscribe", {"channels": list(channels)}, channels=channels, symbol=symbol_raw
+        )
 
     async def tick(self) -> None:
         now = self._clock_ns()

@@ -57,6 +57,8 @@ class ProcessedInput:
     origin_ordinal: int | None
     frame: RawFrame
     local_ts: int
+    admitted: bool = True
+    generation: int | None = None
 
 
 def backoff_delays(
@@ -126,6 +128,7 @@ class Connector(ABC):
         self.capture: CaptureWriter | None = None
         self.capture_stream_id: str | None = None
         self._origin_ordinal: int | None = None
+        self._received_generation: int | None = None
         self._processor_budget = 32 << 20
 
     @property
@@ -253,6 +256,12 @@ class Connector(ABC):
     async def _handle_control_message(self, msg: object, frame: RawFrame) -> bool:
         return False
 
+    def _market_ready(self, frame: RawFrame, msg: object | None) -> bool:
+        return True
+
+    def _market_generation(self, msg: object | None) -> int | None:
+        return None
+
     async def _on_connection_close(self) -> None:
         return None
 
@@ -335,14 +344,26 @@ class Connector(ABC):
                     error_type = CaptureError if self.capture is not None else FatalConnectorError
                     raise error_type("Market processor byte queue overflow")
                 pending_bytes += size
-                queue.put_nowait(ProcessedInput(origin, frame, local_ts))
+                queue.put_nowait(
+                    ProcessedInput(
+                        origin,
+                        frame,
+                        local_ts,
+                        self._market_ready(frame, msg),
+                        self._market_generation(msg),
+                    )
+                )
             queue.put_nowait(None)
 
         async def process() -> None:
             nonlocal pending_bytes
             while (item := await queue.get()) is not None:
                 self._origin_ordinal = item.origin_ordinal
+                self._received_generation = item.generation
                 try:
+                    if not item.admitted:
+                        await self._emit_records([], action="drop", reason="not_ready")
+                        continue
                     msg = self._decode_frame(item.frame)
                     await self._handle_message(msg, item.local_ts)
                 except (FatalConnectorError, CaptureError):
@@ -358,6 +379,7 @@ class Connector(ABC):
                 finally:
                     pending_bytes -= len(item.frame.payload) + 256
                     self._origin_ordinal = None
+                    self._received_generation = None
 
         try:
             async with asyncio.TaskGroup() as group:
@@ -423,9 +445,16 @@ class Connector(ABC):
                     )
                 await transport.connect()
                 if self.capture is not None:
-                    await self.capture.append(ControlMetadata(stream_id=self._stream_id(),
-                        kind="connected", connection_id=getattr(transport, "_connection_id", None),
-                        request_id=None, status="connected", observed_utc_ns=now_ns()))
+                    await self.capture.append(
+                        ControlMetadata(
+                            stream_id=self._stream_id(),
+                            kind="connected",
+                            connection_id=getattr(transport, "_connection_id", None),
+                            request_id=None,
+                            status="connected",
+                            observed_utc_ns=now_ns(),
+                        )
+                    )
                 await self._run_connection(transport)
                 break
 

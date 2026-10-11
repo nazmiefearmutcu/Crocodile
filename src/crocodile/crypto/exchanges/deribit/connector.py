@@ -10,15 +10,16 @@ from typing import Any, Literal
 
 from crocodile.core.capture.schema import RawFrame
 from crocodile.core.connector import Connector
-from crocodile.core.errors import ConfigError
+from crocodile.core.errors import ConfigError, TransientConnectorError
 from crocodile.core.ingest.transport import Transport
 from crocodile.core.schema.records import Record
 from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import ms_to_ns
 from crocodile.crypto.instruments.registry import Instrument, InstrumentRegistry, Kind
 
+from .book import DeribitBookGate, DeribitProtocolError, validate_book
 from .normalize import normalize_message
-from .session import DeribitSession
+from .session import DeribitSession, SessionState
 
 log = logging.getLogger(__name__)
 
@@ -176,6 +177,7 @@ class DeribitConnector(Connector):
             refresh_margin_seconds=refresh_margin_seconds,
         )
         self._session_enabled = self._mixed_controls = interval == "raw"
+        self._book = DeribitBookGate()
 
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]:
         if isinstance(msg, dict):
@@ -226,12 +228,68 @@ class DeribitConnector(Connector):
 
     async def _prepare_connection(self) -> None:
         await self._control.close()
+        self._book.reset()
 
     async def _on_connection_close(self) -> None:
         await self._control.close()
+
+    def _market_ready(self, frame: RawFrame, msg: object | None) -> bool:
+        if not self._session_enabled:
+            return True
+        if isinstance(msg, dict):
+            params = msg.get("params")
+            if isinstance(params, dict) and str(params.get("channel", "")).startswith("book."):
+                data = params.get("data")
+                if isinstance(data, dict) and isinstance(data.get("instrument_name"), str):
+                    return self._control.ready_for_symbol(data["instrument_name"])
+        return self._control.ready_for_market
+
+    async def _handle_message(self, msg: object, local_ts: int) -> None:
+        if self._session_enabled and isinstance(msg, dict):
+            params = msg.get("params")
+            if not isinstance(params, dict) or params.get("channel") not in self._sub_channels:
+                raise DeribitProtocolError("Deribit notification channel was not subscribed")
+            if not self._control.ready_for_market:
+                await self._emit_records([], action="drop", reason="not_ready")
+                return
+            if isinstance(params, dict) and str(params.get("channel", "")).startswith("book."):
+                data = params.get("data")
+                if not isinstance(data, dict):
+                    raise DeribitProtocolError("Deribit book payload is invalid")
+                validate_book(data)
+                if params["channel"] != f"book.{data['instrument_name']}.{self.interval}":
+                    raise DeribitProtocolError("Deribit book instrument/channel mismatch")
+                symbol = data.get("instrument_name")
+                if not self._control.ready_for_symbol(symbol) or (
+                    self._received_generation != self._control.generation_for_symbol(symbol)
+                ):
+                    await self._emit_records([], action="drop", reason="not_ready")
+                    return
+                normalized = list(self.normalize(msg, local_ts))
+                action = self._book.evaluate(data)
+                records = normalized if action in ("snapshot", "apply") else []
+                await self._emit_records(records, action=action, reason="deribit_book")
+                if action == "gap":
+                    await self._control.resubscribe_symbol(data["instrument_name"])
+                elif action == "snapshot":
+                    self._control.state = SessionState.LIVE
+                return
+        await super()._handle_message(msg, local_ts)
+
+    def _market_generation(self, msg: object | None) -> int | None:
+        symbol = None
+        if isinstance(msg, dict) and isinstance(params := msg.get("params"), dict):
+            data = params.get("data")
+            if str(params.get("channel", "")).startswith("book.") and isinstance(data, dict):
+                symbol = data.get("instrument_name")
+        return self._control.generation_for_symbol(symbol)
 
     async def _watch_market_failure(self) -> None:
         if self._session_enabled:
             await self._control._watchdog()
         else:
             await super()._watch_market_failure()
+
+    async def _drain_market(self) -> None:
+        if self._session_enabled and not self._control.ready_for_market:
+            raise TransientConnectorError("Deribit connection ended before subscription was ready")

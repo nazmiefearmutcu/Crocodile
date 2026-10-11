@@ -4,10 +4,8 @@
 ``asyncio.TaskGroup``, each fully supervised (reconnect logic lives inside
 ``Connector.run()``).  SIGINT / ``CancelledError`` → graceful ``sink.close()``.
 
-Each connector task is individually isolated: an unhandled exception from one
-connector is caught, logged, and does **not** cancel the other tasks.  This is
-achieved by wrapping each ``connector.run()`` call in a shielded helper that
-swallows non-cancellation exceptions.
+Ordinary connectors retain independent failure isolation. Required capture and
+explicit SBE/raw authorization or protocol failures end the run after cleanup.
 
 Design notes
 ------------
@@ -36,7 +34,7 @@ from pathlib import Path
 
 from crocodile.core.capture.writer import CaptureWriter
 from crocodile.core.connector import Connector
-from crocodile.core.errors import CaptureError
+from crocodile.core.errors import CaptureError, ConnectorError, FatalConnectorError
 from crocodile.core.ingest.deadletter import report_drained_dlqs
 from crocodile.core.sink.base import Sink
 
@@ -54,6 +52,11 @@ async def _run_isolated(connector: Connector, max_reconnects: int) -> None:
     except Exception as exc:
         if getattr(connector, "capture", None) is not None:
             raise CaptureError("Captured market source failed") from exc
+        if isinstance(exc, ConnectorError) and (
+            getattr(connector, "wire_format", None) == "sbe"
+            or getattr(connector, "interval", None) == "raw"
+        ):
+            raise
         log.error(
             "Connector %r raised an unhandled exception (isolated): %s",
             getattr(connector, "name", repr(connector)),
@@ -130,7 +133,7 @@ async def collect(
         log.warning("Could not initialize ParquetCompactor service: %s", e)
 
     _cancelled = False
-    failure: CaptureError | None = None
+    failure: Exception | None = None
     try:
         async with asyncio.TaskGroup() as tg:
             watcher = tg.create_task(capture.wait_failure()) if capture is not None else None
@@ -153,12 +156,19 @@ async def collect(
             return CaptureError("Required raw capture failed")
 
         failure = first_error(eg)
+    except* ConnectorError as eg:
+
+        def first_fatal(group):
+            for error in group.exceptions:
+                if isinstance(error, ConnectorError):
+                    return error
+                if isinstance(error, BaseExceptionGroup):
+                    return first_fatal(error)
+            return FatalConnectorError("Required fast feed failed")
+
+        failure = failure or first_fatal(eg)
     except* Exception as eg:
-        # All non-cancelled exceptions have already been swallowed inside
-        # _run_isolated; this branch is a safety net that should never trigger
-        # in normal operation.
-        for exc in eg.exceptions:
-            log.error("Unexpected group-level exception from collect(): %s", exc, exc_info=True)
+        failure = failure or eg
     finally:
 
         async def cleanup():

@@ -388,10 +388,15 @@ Parquet semantics. Replay constructs no live connector and preserves source time
 ```python
 from pathlib import Path
 from crocodile.core.capture import CaptureReader, RawReplay
-from crocodile.crypto.exchanges.binance.replay import BinanceReplayDecoder
+from crocodile.crypto.exchanges.binance.replay import BinanceReplayDecoder, BinanceSbeReplayDecoder
+from crocodile.crypto.exchanges.deribit.replay import DeribitReplayDecoder
 
 reader = CaptureReader(Path("data/raw-capture/<capture_id>"))
-replay = RawReplay(reader, {"binance-json": BinanceReplayDecoder()})
+replay = RawReplay(reader, {
+    "binance-json": BinanceReplayDecoder(),
+    "binance-sbe": BinanceSbeReplayDecoder(),
+    "deribit-json": DeribitReplayDecoder(),
+})
 records = list(replay.records())  # consume the iterator incrementally for large captures
 ```
 
@@ -420,6 +425,17 @@ there is no silent fallback when authorization fails. The default remains anonym
 `100ms`. Raw book updates use 1 ms aggregation and are L2 price levels, without L3
 order identities. Contract amount units come from the instrument registry; an absent
 unit is not inferred. `collect-market` rejects explicit raw mode before querying a universe.
+Each new socket authenticates afresh. Request correlation, monotonic token refresh and
+application heartbeats run independently of market processing. A book sequence gap
+invalidates only that symbol; unsubscribe/subscribe acknowledgements and a fresh snapshot
+are required before accepting its deltas again. Explicit SBE/raw failures are surfaced
+even when raw capture is disabled. Replay requires no API credentials.
+
+To benchmark a capture offline, run
+`python -m scripts.benchmark_raw_capture data/raw-capture/<capture_id> --repeats 3`
+from the repository with the package installed. The report counts new depth changes
+separately from BBO and duplicate frames. Replay throughput is not live receive cadence;
+the manifest contains seal-time queue/durability telemetry.
 
 ## Contributing
 

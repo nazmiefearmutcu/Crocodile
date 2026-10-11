@@ -161,7 +161,7 @@ module = ["crocodile.crypto.*", "crocodile.equity.*"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["crocodile.crypto.exchanges.binance.book_session", "crocodile.crypto.exchanges.binance.replay", "crocodile.crypto.exchanges.binance.sbe", "crocodile.crypto.exchanges.binance.normalize_sbe"]
+module = ["crocodile.crypto.exchanges.binance.book_session", "crocodile.crypto.exchanges.binance.replay", "crocodile.crypto.exchanges.binance.sbe", "crocodile.crypto.exchanges.binance.normalize_sbe", "crocodile.crypto.exchanges.deribit.book", "crocodile.crypto.exchanges.deribit.session", "crocodile.crypto.exchanges.deribit.replay"]
 ignore_errors = false
 
 [tool.hatch.build]

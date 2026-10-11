@@ -8,16 +8,21 @@ import time
 from pathlib import Path
 
 from crocodile.core.capture.reader import CaptureReader
-from crocodile.core.capture.replay import RawReplay
+from crocodile.core.capture.replay import RawReplay, ReplayDecoder
 from crocodile.core.capture.schema import ApplicationDecision, SnapshotRequest
 from crocodile.core.schema.records import BookDelta, BookTicker
 from crocodile.crypto.exchanges.binance.replay import BinanceReplayDecoder, BinanceSbeReplayDecoder
+from crocodile.crypto.exchanges.deribit.replay import DeribitReplayDecoder
 
 
 def benchmark_capture(reader: CaptureReader, *, repeats: int = 1) -> dict[str, int | float | str]:
     if repeats < 1:
         raise ValueError("repeats must be positive")
-    decoders = {"binance-json": BinanceReplayDecoder(), "binance-sbe": BinanceSbeReplayDecoder()}
+    decoders: dict[str, ReplayDecoder] = {
+        "binance-json": BinanceReplayDecoder(),
+        "binance-sbe": BinanceSbeReplayDecoder(),
+        "deribit-json": DeribitReplayDecoder(),
+    }
     limits = []
     stale = journal_count = 0
     for record in reader.records():
@@ -26,7 +31,7 @@ def benchmark_capture(reader: CaptureReader, *, repeats: int = 1) -> dict[str, i
             limits.append(int(record.event.params["limit"]))
         if (
             isinstance(record.event, ApplicationDecision)
-            and record.event.reason == "book_sync"
+            and record.event.reason in ("book_sync", "deribit_book")
             and record.event.action == "drop"
         ):
             stale += 1
@@ -52,7 +57,11 @@ def benchmark_capture(reader: CaptureReader, *, repeats: int = 1) -> dict[str, i
         "stale_or_duplicate_depth_frames": stale,
         "book_ticker_records": bbo,
         "snapshot_limit_per_side": max(limits) if limits else "not REST anchored",
-        "book_coverage": "REST seed plus observed changed levels; not entire market liquidity",
+        "book_coverage": (
+            "REST seed plus observed changed levels; not entire market liquidity"
+            if limits
+            else "venue snapshot plus continuous accepted L2 changes"
+        ),
         "precision": "raw bytes; SBE int64 mantissa/signed exponent; canonical float64",
         "fsynced_records": reader.manifest.fsynced_ordinal,
     }

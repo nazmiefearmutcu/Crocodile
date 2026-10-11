@@ -19,6 +19,8 @@ from crocodile.core.schema.records import (
 from crocodile.core.util.time import ms_to_ns
 from crocodile.crypto.instruments.registry import InstrumentRegistry
 
+from .book import validate_levels
+
 EXCHANGE = "deribit"
 
 log = logging.getLogger(__name__)
@@ -45,10 +47,7 @@ _OPT_DATE_RE = re.compile(r"^(\d{1,2})([A-Z]{3})(\d{2})$")
 
 
 def _levels(rows: list[list[Any]]) -> list[tuple[float, float]]:
-    out = []
-    for action, price, amount in rows:
-        out.append((float(price), 0.0 if action == "delete" else float(amount)))
-    return out
+    return validate_levels(rows)
 
 
 def _side(direction: str) -> Side:
@@ -117,7 +116,7 @@ def normalize_message(
     channel: str = params.get("channel", "")
     data: Any = params.get("data")
     if channel.startswith("trades."):
-        for t in (data or []):
+        for t in data or []:
             sym = t["instrument_name"]
             side = _side(t["direction"])
             yield Trade(
