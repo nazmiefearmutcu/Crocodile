@@ -7,8 +7,13 @@ transport used by the ``collect`` CLI command.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
+import time
+import uuid
+from collections.abc import AsyncIterator, Mapping
 from typing import Any, Protocol, runtime_checkable
+
+from crocodile.core.capture.schema import RawFrame
+from crocodile.core.errors import TransientConnectorError
 
 
 @runtime_checkable
@@ -48,6 +53,19 @@ class FakeTransport:
         self._connected = False
 
 
+async def iter_transport_frames(transport: Transport) -> AsyncIterator[RawFrame]:
+    """Prefer observed frame metadata; legacy fixtures explicitly lack it."""
+    iterator = getattr(transport, "iter_frames", None)
+    if iterator is not None:
+        async for frame in iterator():
+            yield frame
+    else:
+        async for payload in transport:
+            yield RawFrame(payload=payload, frame_kind="unknown", received_utc_ns=None,
+                           received_monotonic_ns=None, connection_id=None,
+                           receive_ordinal=None)
+
+
 class AiohttpWsTransport:
     """Live WebSocket transport backed by ``aiohttp``.
 
@@ -64,12 +82,17 @@ class AiohttpWsTransport:
             as-is.
     """
 
-    def __init__(self, url: str, *, ssl: Any = None) -> None:
+    def __init__(self, url: str, *, ssl: Any = None,
+                 headers: Mapping[str, str] | None = None) -> None:
         self._url = url
         self._ssl = ssl  # None → resolve at connect(); False/SSLContext explicit
         # Typed as Any to avoid importing aiohttp at module level (lazy import).
         self._session: Any = None  # aiohttp.ClientSession
         self._ws: Any = None  # aiohttp.ClientWebSocketResponse
+        self._headers = dict(headers) if headers is not None else None
+        self._connection_id = uuid.uuid4().hex
+        self._receive_ordinal = 0
+        self._reading = False
 
     def _resolve_ssl(self) -> Any:
         if self._ssl is not None:
@@ -95,7 +118,8 @@ class AiohttpWsTransport:
         connector = aiohttp.TCPConnector(ssl=ssl_arg)
         session = aiohttp.ClientSession(connector=connector)
         try:
-            ws = await session.ws_connect(self._url, heartbeat=20.0, ssl=ssl_arg)
+            options = {} if self._headers is None else {"headers": self._headers}
+            ws = await session.ws_connect(self._url, heartbeat=20.0, ssl=ssl_arg, **options)
         except Exception:
             try:
                 await session.close()
@@ -104,22 +128,41 @@ class AiohttpWsTransport:
             raise
         self._session = session
         self._ws = ws
+        self._connection_id = uuid.uuid4().hex
+        self._receive_ordinal = 0
 
     def __aiter__(self) -> AsyncIterator[bytes]:
         return self._iter()
 
     async def _iter(self) -> AsyncIterator[bytes]:
+        async for frame in self.iter_frames():
+            yield frame.payload
+
+    async def iter_frames(self) -> AsyncIterator[RawFrame]:
         import aiohttp
 
+        if self._reading:
+            raise RuntimeError("WebSocket already has an active reader")
         if self._ws is None:
-            return
-        async for msg in self._ws:
-            if msg.type == aiohttp.WSMsgType.TEXT:
-                yield msg.data.encode()
-            elif msg.type == aiohttp.WSMsgType.BINARY:
-                yield msg.data
-            elif msg.type in (aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.ERROR):
-                break
+            raise TransientConnectorError("WebSocket is not connected")
+        self._reading = True
+        try:
+            async for msg in self._ws:
+                if msg.type not in (aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.BINARY):
+                    if msg.type in (aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.ERROR):
+                        break
+                    continue
+                self._receive_ordinal += 1
+                is_text = msg.type == aiohttp.WSMsgType.TEXT
+                yield RawFrame(
+                    payload=msg.data.encode("utf-8") if is_text else msg.data,
+                    frame_kind="text" if is_text else "binary",
+                    received_utc_ns=time.time_ns(), received_monotonic_ns=time.monotonic_ns(),
+                    connection_id=self._connection_id, receive_ordinal=self._receive_ordinal,
+                )
+            raise TransientConnectorError("WebSocket closed")
+        finally:
+            self._reading = False
 
     async def send(self, data: bytes) -> None:
         if self._ws is not None:
