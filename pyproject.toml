@@ -160,6 +160,10 @@ ignore_missing_imports = true
 module = ["crocodile.crypto.*", "crocodile.equity.*"]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = ["crocodile.crypto.exchanges.binance.book_session", "crocodile.crypto.exchanges.binance.replay"]
+ignore_errors = false
+
 [tool.hatch.build]
 exclude = [
   "/.venv",

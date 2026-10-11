@@ -51,6 +51,12 @@ class Settings(msgspec.Struct, frozen=True):
     data_dir: Path = Path("data")
     """Root of the local lake."""
 
+    raw_capture: bool = False
+    """Preserve public market frames and snapshot anchors; capture failure ends the run."""
+
+    raw_capture_queue_bytes: str = "33554432"
+    """Encoded raw journal admission budget, validated before live collection."""
+
     home: str | None = None
     """State directory for payment records and IPC files. ``None`` means ``~/.crocodile``.
 
@@ -211,6 +217,8 @@ class Settings(msgspec.Struct, frozen=True):
 
 _VARS: Final[Mapping[str, str]] = {
     "data_dir": "DATA_DIR",
+    "raw_capture": "RAW_CAPTURE",
+    "raw_capture_queue_bytes": "RAW_CAPTURE_QUEUE_BYTES",
     "home": "HOME",
     "alpaca_api_key": "ALPACA_API_KEY",
     "alpaca_api_secret": "ALPACA_API_SECRET",

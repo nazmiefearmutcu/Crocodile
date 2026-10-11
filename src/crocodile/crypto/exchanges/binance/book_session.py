@@ -6,7 +6,7 @@ import asyncio
 import json
 import uuid
 from collections import deque
-from typing import Literal, NoReturn
+from typing import Any, Literal, NoReturn
 
 import msgspec
 
@@ -33,7 +33,7 @@ class BinanceDepthEvent(msgspec.Struct, frozen=True, kw_only=True):
     asks: tuple[tuple[float, float], ...]
 
 
-def json_depth(msg: dict, *, timestamp_scale: int = 1_000_000) -> BinanceDepthEvent:
+def json_depth(msg: dict[str, Any], *, timestamp_scale: int = 1_000_000) -> BinanceDepthEvent:
     data = msg.get("data", msg)
     return BinanceDepthEvent(
         symbol_raw=data["s"],
@@ -154,7 +154,13 @@ class BinanceBookSession:
         self, event: BinanceDepthEvent, origin: int | None, local_ts: int
     ) -> SyncResult:
         result, records = self.states[event.symbol_raw].accept_depth(event, local_ts=local_ts)
-        action = "gap" if result == SyncResult.RESYNC else result.value
+        action: Literal["apply", "drop", "gap", "snapshot"] = (
+            "gap"
+            if result == SyncResult.RESYNC
+            else "drop"
+            if result == SyncResult.DROP
+            else "apply"
+        )
         await self._emit(origin, records, action=action)
         return result
 

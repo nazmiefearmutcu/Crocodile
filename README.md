@@ -361,6 +361,47 @@ maintained by hand.
 - **Not magic.** Options analytics need options data — point `iv-surface` at a lake with
   Deribit snapshots in it, not an empty directory.
 
+## Raw market capture and offline replay
+
+Set `CROCODILE_RAW_CAPTURE=true` to preserve native Binance or Deribit market frames,
+public instrument metadata, REST depth response bytes and book application decisions:
+
+```powershell
+$env:CROCODILE_RAW_CAPTURE = "true"
+crocodile collect --asset-class crypto --sources binance --symbols BTCUSDT --channels book_delta --duration-seconds 60
+```
+
+Captures are written beneath the configured lake at `raw-capture/<capture_id>/`.
+Authentication payloads, API headers and refresh tokens are excluded. Unknown or malformed
+Deribit control messages retain only metadata, because that socket carries credentials.
+The raw byte queue includes encoding and in-flight writes, defaults to 32 MiB, and can be
+lowered with `CROCODILE_RAW_CAPTURE_QUEUE_BYTES`. Records are limited to 16 MiB; segments
+target 256 MiB. Admission, written and fsynced counters differ: the default fsync interval
+is at most one second, with explicit durable-lag reporting. An admitted unsynced tail may
+be lost on process crash. Queue, disk or fsync failures end required capture and return an
+error after cleanup. This supports process-crash recovery; power-loss guarantees depend
+on the filesystem and hardware.
+
+Raw replay is a separate library API. The existing normalized `replay` command keeps its
+Parquet semantics. Replay constructs no live connector and preserves source timestamps:
+
+```python
+from pathlib import Path
+from crocodile.core.capture import CaptureReader, RawReplay
+from crocodile.crypto.exchanges.binance.replay import BinanceReplayDecoder
+
+reader = CaptureReader(Path("data/raw-capture/<capture_id>"))
+replay = RawReplay(reader, {"binance-json": BinanceReplayDecoder()})
+records = list(replay.records())  # consume the iterator incrementally for large captures
+```
+
+`recover_active_tail=True` permits only an incomplete final record in the active partial
+segment; complete-record CRC errors and sealed segment mismatches remain integrity errors.
+`await replay.run(sink, pacing="original")` needs actual monotonic receive metadata. Legacy
+byte-only transports cannot provide that pacing; `pacing="fast"` works without inventing it.
+`collect-market` uses unified CCXT symbols and rejects raw capture; use native symbols
+through `collect` for these feeds. Missing contract units remain missing in the registry.
+
 ## Contributing
 
 PRs welcome. Skim [`CHANGELOG.md`](CHANGELOG.md) for direction, keep the `mypy --strict` and

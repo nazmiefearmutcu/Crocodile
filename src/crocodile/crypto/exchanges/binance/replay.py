@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
+from typing import Literal
 
 from crocodile.core.capture.schema import (
     ApplicationDecision,
@@ -26,9 +27,9 @@ from crocodile.crypto.instruments.registry import InstrumentRegistry
 class BinanceReplayDecoder:
     version = 1
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.source = "binance-spot"
-        self.venue = "spot"
+        self.venue: Literal["spot", "futures"] = "spot"
         self.states: dict[str, BinanceBookState] = {}
         self.requests: dict[str, SnapshotRequest] = {}
 

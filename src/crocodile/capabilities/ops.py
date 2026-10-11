@@ -88,6 +88,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import itertools
+import uuid
 from collections.abc import Callable, Coroutine, Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -106,6 +107,7 @@ from crocodile.core.capability import (
 )
 from crocodile.core.config import Settings
 from crocodile.core.connector import Connector
+from crocodile.core.errors import ConfigError
 from crocodile.core.replay.merge import replay as merge_replay
 from crocodile.core.resample.ohlcv import resample_ohlcv
 from crocodile.core.schema.provenance import Provenance
@@ -563,9 +565,7 @@ GAS_VOL = declare(
         params=GasVolParams,
         returns=ReturnKind.SCALAR,
         impls={
-            AssetClass.CRYPTO: Impl(
-                fn=gas_vol, prov=Provenance.DERIVED, basis="caller_supplied"
-            ),
+            AssetClass.CRYPTO: Impl(fn=gas_vol, prov=Provenance.DERIVED, basis="caller_supplied"),
         },
     )
 )
@@ -712,6 +712,11 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
     """
     _refuse_readonly(ctx, "collect")
     _require_collect_inputs(params)
+    capture_budget = _capture_budget(ctx)
+    if ctx.settings.raw_capture and any(s not in {"binance", "deribit"} for s in params.sources):
+        raise ConfigError(
+            "Raw capture currently supports native binance and deribit collect sources"
+        )
 
     from crocodile.core.ingest.transport import AiohttpWsTransport
     from crocodile.crypto.exchanges.factory import make_connector
@@ -733,12 +738,49 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
         connectors.append(connector)
 
     async def begin() -> None:
+        capture = None
+        if ctx.settings.raw_capture:
+            from crocodile.core.capture.schema import CaptureContext, StreamContext
+            from crocodile.core.capture.writer import CaptureWriter
+
+            capture_id = uuid.uuid4().hex
+            try:
+                for connector in connectors:
+                    for instrument in await connector.list_instruments():
+                        registry.add(instrument)
+                streams = []
+                for i, connector in enumerate(connectors):
+                    stream_id = f"s{i + 1}"
+                    connector.capture_stream_id = stream_id
+                    streams.append(
+                        StreamContext(
+                            stream_id=stream_id,
+                            source=getattr(connector, "_venue", connector.name),
+                            market=getattr(connector, "market", "derivatives"),
+                            symbols=tuple(connector.symbols),
+                            endpoint_id=f"{connector.name}-public",
+                            decoder_id=getattr(connector, "decoder_id", f"{connector.name}-json"),
+                            decoder_version=1,
+                        )
+                    )
+                capture = await CaptureWriter.create(
+                    ctx.settings.data_dir / "raw-capture" / capture_id,
+                    CaptureContext(capture_id=capture_id, streams=tuple(streams)),
+                    queue_bytes=capture_budget,
+                )
+            except BaseException:
+                await sink.close()
+                for connector in connectors:
+                    if connector._session is not None:
+                        await connector._session.close()
+                raise
         await collect_crypto(
             connectors,
             sink,
             max_reconnects=params.max_reconnects,
             dlq_report_path=params.dlq_report_path,
             data_dir=ctx.settings.data_dir,
+            capture=capture,
         )
 
     return Subscription(
@@ -747,6 +789,20 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
         duration_seconds=params.duration_seconds,
         begin=begin,
     )
+
+
+def _capture_budget(ctx: CapabilityContext) -> int:
+    if not ctx.settings.raw_capture:
+        return 32 << 20
+    try:
+        budget = int(ctx.settings.raw_capture_queue_bytes)
+        if not 1 <= budget <= 32 << 20:
+            raise ValueError
+        return budget
+    except (ValueError, TypeError) as exc:
+        raise ConfigError(
+            "CROCODILE_RAW_CAPTURE_QUEUE_BYTES expects an integer from 1 to 33554432"
+        ) from exc
 
 
 def collect_equities(ctx: CapabilityContext, params: CollectParams) -> Subscription:
@@ -847,6 +903,9 @@ def collect_market(ctx: CapabilityContext, params: CollectMarketParams) -> Subsc
     a subscription exists rather than on first await.
     """
     _refuse_readonly(ctx, "collect-market")
+    if ctx.settings.raw_capture:
+        _capture_budget(ctx)
+        raise ConfigError("Raw capture requires collect with native symbols; use collect")
 
     from crocodile.crypto.instruments.registry import Kind
 
@@ -876,9 +935,7 @@ def collect_market(ctx: CapabilityContext, params: CollectMarketParams) -> Subsc
         resolved: dict[str, list[str]] = {}
         for source in params.sources:
             if params.top is not None:
-                symbols = await top_symbols_by_volume(
-                    source, params.top, quote=quote, kinds=kinds
-                )
+                symbols = await top_symbols_by_volume(source, params.top, quote=quote, kinds=kinds)
             else:
                 instruments = await exchange_instruments(source)
                 matched = filter_instruments(instruments, kinds=kinds, quote=quote)
@@ -1002,12 +1059,8 @@ def collect_market_equities(ctx: CapabilityContext, params: CollectMarketParams)
         from crocodile.equity.providers.factory import make_provider
         from crocodile.equity.reference.registry import InstrumentRegistry
 
-        evidence = await reference.fetch_bulk_evidence(
-            as_of_ns=now_ns(), sec_user_agent=user_agent
-        )
-        listings = reference.filter_listings(
-            evidence.merged(), kinds=kinds, currency=currency
-        )
+        evidence = await reference.fetch_bulk_evidence(as_of_ns=now_ns(), sec_user_agent=user_agent)
+        listings = reference.filter_listings(evidence.merged(), kinds=kinds, currency=currency)
         volumes = reference.volume_by_symbol(ctx.query, channels=ctx.catalog.list_channels())
         if params.top is not None and not volumes:
             raise ValueError(
@@ -1438,9 +1491,7 @@ BACKFILL = declare(
         returns=ReturnKind.SCALAR,
         impls={
             AssetClass.CRYPTO: Impl(fn=backfill, prov=Provenance.NATIVE, basis="native"),
-            AssetClass.EQUITY: Impl(
-                fn=backfill_equities, prov=Provenance.NATIVE, basis="native"
-            ),
+            AssetClass.EQUITY: Impl(fn=backfill_equities, prov=Provenance.NATIVE, basis="native"),
         },
     )
 )

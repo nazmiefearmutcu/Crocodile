@@ -10,18 +10,18 @@ def test_defaults_need_no_environment():
 
 def test_prefixed_variables_win():
     s = Settings.from_env({"CROCODILE_DATA_DIR": "/tmp/lake"})
-    assert str(s.data_dir) == "/tmp/lake"
+    assert s.data_dir.as_posix() == "/tmp/lake"
 
 
 def test_legacy_names_are_accepted_with_a_warning():
     with pytest.warns(DeprecationWarning, match="CRYPCODILE_DATA_DIR"):
         s = Settings.from_env({"CRYPCODILE_DATA_DIR": "/tmp/old"})
-    assert str(s.data_dir) == "/tmp/old"
+    assert s.data_dir.as_posix() == "/tmp/old"
 
 
 def test_prefixed_name_beats_legacy_without_warning(recwarn):
     s = Settings.from_env({"CROCODILE_DATA_DIR": "/tmp/new", "STOCKODILE_DATA_DIR": "/tmp/old"})
-    assert str(s.data_dir) == "/tmp/new"
+    assert s.data_dir.as_posix() == "/tmp/new"
     assert not [w for w in recwarn if issubclass(w.category, DeprecationWarning)]
 
 
@@ -33,7 +33,7 @@ def test_conflicting_legacy_names_are_an_error():
 def test_agreeing_legacy_names_are_not_an_error():
     with pytest.warns(DeprecationWarning):
         s = Settings.from_env({"CRYPCODILE_DATA_DIR": "/same", "STOCKODILE_DATA_DIR": "/same"})
-    assert str(s.data_dir) == "/same"
+    assert s.data_dir.as_posix() == "/same"
 
 
 def test_known_names_are_enumerable():
