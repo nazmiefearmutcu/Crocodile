@@ -13,8 +13,9 @@ Usage::
         market="usdm",          # forwarded as **kw to BinanceConnector
     )
 
-Valid exchange names: ``base_onchain``, ``binance``, ``bybit``, ``coinbase``,
-``coingecko``, ``deribit``, ``derive``, ``gmx_synthetix``, ``okx``, ``superchain``.
+Valid exchange names: ``base_onchain``, ``binance``, ``bitfinex``, ``bybit``, ``coinbase``,
+``coingecko``, ``deribit``, ``derive``, ``dydx``, ``gmx_synthetix``, ``kraken``,
+``okx``, ``superchain``.
 That list is ``_REGISTRY`` below spelled out, and
 ``tests/conformance/test_prose_counts.py`` asserts the two agree, because the
 version of this sentence that omitted ``coingecko`` read as a complete
@@ -38,6 +39,9 @@ from crocodile.crypto.instruments.registry import InstrumentRegistry
 # for another's dependency tree (e.g. derive -> analytics -> numpy).
 _REGISTRY: dict[str, tuple[str, str]] = {
     "binance": ("crocodile.crypto.exchanges.binance.connector", "BinanceConnector"),
+    "bitfinex": ("crocodile.crypto.exchanges.bitfinex.connector", "BitfinexConnector"),
+    "kraken": ("crocodile.crypto.exchanges.kraken.connector", "KrakenConnector"),
+    "dydx": ("crocodile.crypto.exchanges.dydx.connector", "DydxConnector"),
     "bybit": ("crocodile.crypto.exchanges.bybit.connector", "BybitConnector"),
     "coinbase": ("crocodile.crypto.exchanges.coinbase.connector", "CoinbaseConnector"),
     "deribit": ("crocodile.crypto.exchanges.deribit.connector", "DeribitConnector"),
@@ -120,8 +124,8 @@ def make_connector(
     ----------
     exchange:
         Lowercase exchange name.  Valid values: ``base_onchain``, ``binance``,
-        ``bybit``, ``coinbase``, ``coingecko``, ``deribit``, ``derive``,
-        ``gmx_synthetix``, ``okx``, ``superchain``.  Any other name falls
+        ``bitfinex``, ``bybit``, ``coinbase``, ``coingecko``, ``deribit``, ``derive``,
+        ``dydx``, ``gmx_synthetix``, ``kraken``, ``okx``, ``superchain``.  Any other name falls
         through to the universal ccxt connector rather than raising here.
     symbols:
         List of symbol strings to subscribe to (exchange-native format).
@@ -150,6 +154,17 @@ def make_connector(
         kw.setdefault("interval", settings.deribit_interval)
         kw.setdefault("client_id", settings.deribit_client_id)
         kw.setdefault("client_secret", settings.deribit_client_secret)
+    if settings is not None and exchange == "coinbase":
+        kw.setdefault("mode", settings.coinbase_mode)
+    if settings is not None and exchange == "bybit":
+        kw.setdefault("book_mode", settings.bybit_book_mode)
+        if settings.bybit_book_depth is not None:
+            kw.setdefault("book_depth", _depth(settings.bybit_book_depth))
+    if settings is not None and exchange == "kraken":
+        kw.setdefault("mode", settings.kraken_mode)
+        kw.setdefault("depth", _depth(settings.kraken_depth))
+        kw.setdefault("api_key", settings.kraken_api_key)
+        kw.setdefault("api_secret", settings.kraken_api_secret)
     entry = _REGISTRY.get(exchange)
     if entry is None:
         # Not a native connector — fall through to the universal ccxt venue set.
@@ -175,6 +190,15 @@ def make_connector(
         registry=registry,
         **kw,
     )
+
+
+def _depth(value: str) -> int:
+    from crocodile.core.errors import ConfigError
+
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        raise ConfigError("Native book depth must be an integer") from None
 
 
 def _make_ccxt_connector(

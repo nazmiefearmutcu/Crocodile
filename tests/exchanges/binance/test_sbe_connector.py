@@ -82,7 +82,7 @@ async def test_sbe_transport_sends_only_key_header():
         "wss://stream-sbe.binance.com/ws",
         heartbeat=20.0,
         ssl=ANY,
-        headers={"X-MBX-APIKEY": "fixture-key"},
+        headers={"X-MBX-APIKEY": "fixture-key"}, max_msg_size=4 << 20,
     )
 
 

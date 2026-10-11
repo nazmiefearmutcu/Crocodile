@@ -88,7 +88,8 @@ class AiohttpWsTransport:
     """
 
     def __init__(
-        self, url: str, *, ssl: Any = None, headers: Mapping[str, str] | None = None
+        self, url: str, *, ssl: Any = None, headers: Mapping[str, str] | None = None,
+        max_msg_size: int = 4 << 20,
     ) -> None:
         self._url = url
         self._ssl = ssl  # None → resolve at connect(); False/SSLContext explicit
@@ -96,6 +97,9 @@ class AiohttpWsTransport:
         self._session: Any = None  # aiohttp.ClientSession
         self._ws: Any = None  # aiohttp.ClientWebSocketResponse
         self._headers = dict(headers) if headers is not None else None
+        if not 0 < max_msg_size <= 16 << 20:
+            raise ValueError('WebSocket message limit must be within 1..16 MiB')
+        self._max_msg_size = max_msg_size
         self._connection_id = uuid.uuid4().hex
         self._receive_ordinal = 0
         self._reading = False
@@ -125,7 +129,8 @@ class AiohttpWsTransport:
         session = aiohttp.ClientSession(connector=connector)
         try:
             options: dict[str, Any] = {} if self._headers is None else {"headers": self._headers}
-            ws = await session.ws_connect(self._url, heartbeat=20.0, ssl=ssl_arg, **options)
+            ws = await session.ws_connect(self._url, heartbeat=20.0, ssl=ssl_arg,
+                                          max_msg_size=self._max_msg_size, **options)
         except Exception as exc:
             try:
                 await session.close()

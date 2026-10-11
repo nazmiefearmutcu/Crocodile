@@ -36,6 +36,7 @@ _EXPECTED_BASES = frozenset(
         "sec_form4",
         "treasury_carry",
         "unavailable",
+        "visible_l3_sum",
         "yahoo_1m_vap",
     }
 )
@@ -71,12 +72,27 @@ def _shipped_bases() -> frozenset[str]:
         for name, registered in _REGISTRY.items()
         if getattr(registered.fn, "__module__", "").startswith("crocodile.")
     )
+
+
 _SESSION_BARS = 390
 
 
 def test_native_basis_is_certain():
     assert confidence_for("native", {}) == 1.0
     assert level_for("native") is Provenance.NATIVE
+
+
+def test_visible_l3_sum_confidence_requires_observed_boolean_synchronization():
+    load_all_bases()
+    assert confidence_for("visible_l3_sum", {"synchronized": True}) == 1.0
+    assert confidence_for("visible_l3_sum", {"synchronized": False}) == 0.0
+    assert level_for("visible_l3_sum") is Provenance.DERIVED
+    assert provenance_fields("visible_l3_sum", {"synchronized": True}).prov_inputs == ["raw_l3"]
+    for value in [None, 1, 0, "true"]:
+        with pytest.raises(ConfidenceInputError):
+            confidence_for("visible_l3_sum", {"synchronized": value})
+    with pytest.raises(ConfidenceInputError):
+        confidence_for("visible_l3_sum", {})
 
 
 def test_unavailable_basis_is_zero():
@@ -577,9 +593,7 @@ def test_a_quote_bar_is_synthetic_and_a_trade_bar_is_not():
 
     assert provenance_fields("ohlcv_from_trades").prov_inputs == ["trade"]
     assert provenance_fields("ohlcv_from_quotes").prov_inputs == ["quote"]
-    assert (
-        provenance_fields("ohlcv_from_ohlcv", _FULL_BUCKET).prov_inputs == ["ohlcv"]
-    )
+    assert provenance_fields("ohlcv_from_ohlcv", _FULL_BUCKET).prov_inputs == ["ohlcv"]
 
 
 def test_none_of_the_bar_aggregations_claims_a_venue_reported_it():
@@ -669,13 +683,9 @@ def test_coverage_and_adequacy_are_not_interchangeable():
 
 def test_re_bucketing_rejects_a_bucket_with_no_width():
     with pytest.raises(ConfidenceInputError):
-        confidence_for(
-            "ohlcv_from_ohlcv", {"covered_ns": 1, "sampled_ns": 1, "tradeable_ns": 0}
-        )
+        confidence_for("ohlcv_from_ohlcv", {"covered_ns": 1, "sampled_ns": 1, "tradeable_ns": 0})
     with pytest.raises(ConfidenceInputError):
-        confidence_for(
-            "ohlcv_from_ohlcv", {"covered_ns": -1, "sampled_ns": 0, "tradeable_ns": 1}
-        )
+        confidence_for("ohlcv_from_ohlcv", {"covered_ns": -1, "sampled_ns": 0, "tradeable_ns": 1})
 
 
 def test_re_bucketing_rejects_an_instant_sampled_better_than_it_is_covered():
@@ -695,8 +705,7 @@ def test_worst_provenance_orders_the_levels_by_trust():
         is Provenance.SYNTHETIC
     )
     assert (
-        worst_provenance([Provenance.SYNTHETIC, Provenance.UNAVAILABLE])
-        is Provenance.UNAVAILABLE
+        worst_provenance([Provenance.SYNTHETIC, Provenance.UNAVAILABLE]) is Provenance.UNAVAILABLE
     )
 
 
@@ -850,6 +859,8 @@ def test_neither_filing_basis_is_the_flat_native_one_they_would_otherwise_have_u
     assert confidence_for("native", {}) == 1.0
     assert confidence_for("sec_form4", {"n_reported_amounts": 1}) < confidence_for("native", {})
     assert confidence_for("sec_13f_hr", {"disclosure_lag_days": 45}) < confidence_for("native", {})
+
+
 # reference_merge — the basis the equity universe M3 resolves rests on
 # ---------------------------------------------------------------------------
 

@@ -670,7 +670,7 @@ def test_gate3_no_source_file_emits_an_unregistered_basis():
     assert seen, "no basis is named anywhere in the tree; this gate has stopped looking"
 
 
-_SCANNER_FIXTURE = '''
+_SCANNER_FIXTURE = """
 BASIS_CONSTANT = "constant_basis"
 LATER: Final = "annotated_basis"
 
@@ -681,7 +681,7 @@ def build(tail):
     c = provenance_fields(LATER)
     d = provenance_fields(pick())
     return OHLCV(prov_basis=tail.prov_basis), OHLCV(prov_basis="hand_written")
-'''
+"""
 
 
 def test_the_basis_scanner_reads_every_shape_the_tree_uses():
@@ -948,7 +948,7 @@ FABRICATES_MEASUREMENTS: dict[str, tuple[tuple[tuple[str, float], ...], str]] = 
         "which is the truth about how much volume a scrape contributes; the 1.0 it "
         "replaced made SELECT sum(amount) return the poll count as share volume, growing "
         "with the scrape interval rather than with trading. prov_basis names the method "
-        "and scraped_last_price scores it 0.0, so nothing here reads as measured."
+        "and scraped_last_price scores it 0.0, so nothing here reads as measured.",
     ),
     "equity/resample/ohlcv.py": (
         (("volume", 0.0),),
@@ -957,7 +957,7 @@ FABRICATES_MEASUREMENTS: dict[str, tuple[tuple[tuple[str, float], ...], str]] = 
         "the zero is structural rather than a measurement of nothing traded, and the "
         "ohlcv_from_quotes registration argues exactly that as the reason the basis is "
         "SYNTHETIC rather than DERIVED. The sample size that *is* observable is on the "
-        "record as num_trades, the quote count."
+        "record as num_trades, the quote count.",
     ),
 }
 """Modules that write a constant number into a required measurement field: which, and why.
@@ -1345,8 +1345,10 @@ def _fold_subscript(
             if isinstance(dict_key, ast.Constant) and dict_key.value == key:
                 return _fold_constant(dict_value, bindings, seen)
         return False, None
-    if isinstance(key, int) and not isinstance(key, bool) and -len(container.elts) <= key < len(
-        container.elts
+    if (
+        isinstance(key, int)
+        and not isinstance(key, bool)
+        and -len(container.elts) <= key < len(container.elts)
     ):
         return _fold_constant(container.elts[key], bindings, seen)
     return False, None
@@ -1482,9 +1484,7 @@ def _fabrications_in(
     tree: ast.AST, fields: dict[str, frozenset[str]], relative: str
 ) -> list[_Fabrication]:
     """Return one offence per constant number standing in a measurement position."""
-    parents = {
-        child: parent for parent in ast.walk(tree) for child in ast.iter_child_nodes(parent)
-    }
+    parents = {child: parent for parent in ast.walk(tree) for child in ast.iter_child_nodes(parent)}
     cache: dict[int, dict[str, list[ast.expr | None]]] = {}
 
     def bindings_for(node: ast.AST) -> dict[str, list[ast.expr | None]]:
@@ -1552,8 +1552,7 @@ def test_gate3b_no_module_fabricates_a_measurement_without_declaring_it():
         str(offence)
         for module, offences in _fabricated_measurements().items()
         for offence in offences
-        if (offence.field, offence.value)
-        not in FABRICATES_MEASUREMENTS.get(module, ((), ""))[0]
+        if (offence.field, offence.value) not in FABRICATES_MEASUREMENTS.get(module, ((), ""))[0]
     ]
     assert not offenders, (
         f"constant numbers in required measurement fields: {sorted(offenders)}. "
@@ -2039,13 +2038,16 @@ why the value is asserted rather than taken on trust — the same discipline
 :data:`crocodile.core.capability.IRREDUCIBLE` carries for the symmetry gate.
 """
 
-_PROBE_VALUES = (0, 1, 2, 3, 4, 391, 1_000_000)
-"""Ints to feed a formula. Non-negative, because every formula in the registry validates
+_PROBE_VALUES = (False, True, 0, 1, 2, 3, 4, 391, 1_000_000)
+"""Boolean and integer observations to feed a formula. Non-negative numeric probes,
+because every formula in the registry validates
 its inputs and a probe that only ever trips validation measures nothing — but not all
 small. The first version stopped at 3, so a key read only behind a guard that rejects
 everything below 4 was never reached at all, and a formula could hide a whole branch
 from the probe by validating its way past it. 391 is one bar past a full US session,
-which is the smallest input that separates a saturating formula from a linear one."""
+which is the smallest input that separates a saturating formula from a linear one.
+Boolean observations cover strict protocol states such as synchronization; integer
+1 must not be mistaken for a boolean True by a formula that validates its inputs."""
 
 
 class _KeyRecorder(Mapping[str, object]):
@@ -2195,9 +2197,7 @@ def _probe_results(basis: str, keys: list[str]) -> set[float]:
     return results
 
 
-@pytest.mark.parametrize(
-    "basis", sorted(set(_shipped_registry()) - set(CONSTANT_BY_DEFINITION))
-)
+@pytest.mark.parametrize("basis", sorted(set(_shipped_registry()) - set(CONSTANT_BY_DEFINITION)))
 def test_gate3c_a_registered_formula_varies_with_its_inputs(basis: str) -> None:
     """Every input a formula declares must move its answer, not merely one of them."""
     _assert_every_declared_input_moves_the_answer(basis, _shipped_registry()[basis].fn)

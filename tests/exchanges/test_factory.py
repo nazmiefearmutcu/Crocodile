@@ -17,10 +17,11 @@ from crocodile.crypto.instruments.registry import InstrumentRegistry
 def _make(exchange: str, **kw):  # type: ignore[no-untyped-def]
     from crocodile.crypto.exchanges.factory import make_connector
 
+    book_symbols = {'bitfinex': 'tBTCUSD', 'kraken': 'BTC/USD', 'dydx': 'BTC-USD'}
     return make_connector(
         exchange=exchange,
-        symbols=["BTCUSDT"],
-        channels=["trade"],
+        symbols=[book_symbols.get(exchange, 'BTCUSDT')],
+        channels=['book_delta'] if exchange in book_symbols else ['trade'],
         out=MemorySink(),
         registry=InstrumentRegistry(),
         **kw,
@@ -40,12 +41,15 @@ def test_list_exchanges_sorted() -> None:
     assert names == [
         "base_onchain",
         "binance",
+        "bitfinex",
         "bybit",
         "coinbase",
         "coingecko",
         "deribit",
         "derive",
+        "dydx",
         "gmx_synthetix",
+        "kraken",
         "okx",
         "superchain",
     ]

@@ -1,4 +1,4 @@
-"""Coinbase Advanced Trade connector — wiring (REST products + WS subscribe build).
+"""Coinbase public Exchange (default) and Advanced Trade (explicit mode).
 
 Appendix §7:
 - WS public: ``wss://ws-feed.exchange.coinbase.com``
@@ -22,21 +22,23 @@ import logging
 from collections.abc import Iterable
 from typing import Any
 
-import aiohttp
-
-from crocodile.core.connector import Connector
+from crocodile.core.capture.schema import RawFrame
+from crocodile.core.errors import ConfigError
 from crocodile.core.ingest.transport import Transport
 from crocodile.core.schema.records import Record
 from crocodile.core.sink.base import Sink
+from crocodile.crypto.exchanges.public_books import GatedConnector, PublicBookError
 from crocodile.crypto.instruments.registry import Instrument, InstrumentRegistry, Kind
 
+from .advanced import CoinbaseAdvancedGate
 from .normalize import normalize_message
+from .replay import CoinbaseExchangeGate
 
 log = logging.getLogger(__name__)
 
 EXCHANGE = "coinbase"
 WS_URL = "wss://ws-feed.exchange.coinbase.com"
-REST_BASE = "https://api.coinbase.com/api/v1/brokerage"
+REST_BASE = "https://api.exchange.coinbase.com"
 
 # Mapping from canonical channel names to Coinbase WS channel strings.
 # Multiple canonical channels can map to the same Coinbase channel; deduplication
@@ -92,11 +94,11 @@ def parse_products(raw: dict[str, Any]) -> list[Instrument]:
     products: list[dict[str, Any]] = raw.get("products") or []
     for item in products:
         product_id: str = item["product_id"]
-        base: str = item.get("base_currency", "")
-        quote: str = item.get("quote_currency", "")
+        base: str = item.get("base_currency_id", item.get("base_currency", ""))
+        quote: str = item.get("quote_currency_id", item.get("quote_currency", ""))
 
         tick_size: float | None = None
-        qi_raw = item.get("quote_increment")
+        qi_raw = item.get("price_increment", item.get("quote_increment"))
         if qi_raw:
             try:
                 tick_size = float(qi_raw)
@@ -117,30 +119,18 @@ def parse_products(raw: dict[str, Any]) -> list[Instrument]:
     return out
 
 
-class CoinbaseConnector(Connector):
-    """Coinbase Advanced Trade WebSocket connector (spot only).
+class CoinbaseConnector(GatedConnector):
+    """Public spot feeds with distinct protocol and replay identities.
 
-    Subscribes to ``matches`` (trades), ``level2`` (order book), and ``ticker``
-    (best bid/ask).  No funding, OI, or liquidation channels exist on Coinbase.
-
-    The ``/products`` endpoint is used to populate the InstrumentRegistry;
-    ``product_id`` is the canonical symbol on this exchange.
-
-    Book gap counter (deferred)
-    ---------------------------
-    Coinbase ``level2`` wire messages do not carry book sequence fields:
-    snapshots omit any sequence id, and ``l2update`` deltas have no
-    ``seq`` / ``prev_seq`` (normalizer sets ``sequence_id`` / ``seq_id`` /
-    ``prev_seq_id`` to ``None``).  Without contiguous sequence anchors there
-    is nothing to detect gaps against, so a book sequence-gap counter metric
-    (and Binance/OKX-style :class:`~crocodile.core.ingest.gap_bridge.BookResyncBridge`
-    wiring) is deferred until Coinbase exposes a sequenced book channel or
-    we adopt an alternate continuity signal.
+    Exchange preserves its unsequenced L2 protocol. Advanced tracks the public
+    envelope counter across every subscribed channel and reconnects on gaps.
+    Neither protocol's counter is fabricated into a canonical per-book ID.
     """
 
     name = EXCHANGE
     ws_url = WS_URL
     rest_url = REST_BASE
+    quantity_unit = "base_asset"
 
     def __init__(
         self,
@@ -148,29 +138,70 @@ class CoinbaseConnector(Connector):
         channels: list[str],
         out: Sink,
         registry: InstrumentRegistry,
+        *,
+        mode: str = "exchange",
     ) -> None:
+        if mode not in {"exchange", "advanced"}:
+            raise ConfigError("Coinbase mode expects exchange or advanced")
         super().__init__(symbols=symbols, channels=channels, out=out, registry=registry)
+        self.mode = mode
+        self.market = "spot"
+        self.required_feed = mode == "advanced"
+        self.capture_endpoint_id = f"coinbase-{mode}"
+        self.decoder_id = "coinbase-json"
+        self.gate = CoinbaseAdvancedGate() if mode == "advanced" else CoinbaseExchangeGate()
+        self.ws_url = "wss://advanced-trade-ws.coinbase.com" if mode == "advanced" else WS_URL
+        self.coverage = {
+            "kind": "visible_l2",
+            "cadence": None,
+            "trade_batch_ms": 250 if mode == "advanced" else None,
+        }
         self._sub_channels = build_channels(symbols, channels)
 
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]:
+        if self.mode == "advanced":
+            yield from super().normalize(msg, local_ts)
+            return
         if isinstance(msg, dict):
             yield from normalize_message(msg, local_ts=local_ts, registry=self.registry)
 
-    async def list_instruments(self) -> list[Instrument]:  # pragma: no cover
-        """Fetch products from Coinbase REST API and parse them.
+    async def list_instruments(self) -> list[Instrument]:
+        """Fetch the selected protocol's public spot product catalogue."""
+        if self.mode == "exchange":
+            items = await self.http_get(f"{REST_BASE}/products")
+            if not isinstance(items, list):
+                raise PublicBookError("Coinbase Exchange product query rejected")
+            return parse_products(
+                {"products": [{**item, "product_id": item["id"]} for item in items]}
+            )
+        instruments: list[Instrument] = []
+        offset = 0
+        for _ in range(100):
+            data = await self.http_get(
+                "https://api.coinbase.com/api/v3/brokerage/market/products",
+                params={"product_type": "SPOT", "limit": 1000, "offset": offset},
+            )
+            if not isinstance(data, dict) or not isinstance(data.get("products"), list):
+                raise PublicBookError("Coinbase Advanced product query rejected")
+            instruments.extend(parse_products(data))
+            count = len(data["products"])
+            offset += count
+            if count < 1000 or offset >= data.get("num_products", offset + 1):
+                return instruments
+        raise PublicBookError("Coinbase Advanced product pagination exceeds budget")
 
-        Uses ``GET /products`` (public, no auth required).
-        Populates the registry with spot instruments; ``product_id`` is canonical.
-        """
-        async with aiohttp.ClientSession() as session:
-            url = f"{REST_BASE}/products"
-            async with session.get(url) as resp:
-                resp.raise_for_status()
-                data: dict[str, Any] = await resp.json()
-        return parse_products(data)
+    def make_transport(self) -> Transport:
+        from crocodile.core.ingest.transport import AiohttpWsTransport
+
+        # BTC's Advanced snapshot currently exceeds aiohttp's 4 MiB default.
+        # Keep it inside the connector reader's bounded 8 MiB queue.
+        return AiohttpWsTransport(self.ws_url, max_msg_size=8 << 20)
 
     def subscribe_channels(self) -> list[str]:
         """Return the list of Coinbase channel strings this connector subscribes to."""
+        if self.mode == "advanced":
+            mapping = {"matches": "market_trades", "level2": "level2", "ticker": "ticker"}
+            return sorted({mapping[c] for c in self._sub_channels} | {"heartbeats"})
         return self._sub_channels
 
     async def _subscribe(self, transport: Transport) -> None:  # pragma: no cover
@@ -185,6 +216,13 @@ class CoinbaseConnector(Connector):
             }
         """
         channels = self.subscribe_channels()
+        if self.mode == "advanced":
+            for channel in channels:
+                request: dict[str, Any] = {"type": "subscribe", "channel": channel}
+                if channel != "heartbeats":
+                    request["product_ids"] = self.symbols
+                await transport.send(json.dumps(request).encode())
+            return
         if channels and self.symbols:
             frame = json.dumps(
                 {
@@ -194,3 +232,21 @@ class CoinbaseConnector(Connector):
                 }
             ).encode()
             await transport.send(frame)
+
+    async def _handle_message(self, msg: object, local_ts: int) -> None:
+        if self.mode == "advanced" or self.capture is not None:
+            await super()._handle_message(msg, local_ts)
+        else:
+            # Existing Exchange byte-only consumers retain their normalizer contract.
+            await self._emit_records(list(self.normalize(msg, local_ts)))
+
+    async def _handle_control_message(self, msg: object, frame: RawFrame) -> bool:
+        if isinstance(msg, dict) and (msg.get("type") == "error" or msg.get("error")):
+            raise PublicBookError("Coinbase public subscription rejected")
+        return True
+
+    async def _drain_market(self) -> None:
+        if (self.mode == "advanced" or self.capture is not None) and any(
+            c in {"book_delta", "book_snapshot"} for c in self.channels
+        ):
+            await super()._drain_market()

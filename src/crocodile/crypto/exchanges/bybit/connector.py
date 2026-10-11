@@ -10,20 +10,25 @@ Appendix §7:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import uuid
 from collections.abc import Iterable
+from decimal import Decimal
 from typing import Any
 
-import aiohttp
-
-from crocodile.core.connector import Connector
+from crocodile.core.capture.schema import RawFrame, SnapshotRequest
+from crocodile.core.capture.snapshots import HttpSnapshotProvider, SnapshotProvider
+from crocodile.core.errors import ConfigError, TransientConnectorError
 from crocodile.core.ingest.transport import Transport
 from crocodile.core.schema.records import Record
 from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import ms_to_ns
+from crocodile.crypto.exchanges.public_books import GatedConnector, PublicBookError
 from crocodile.crypto.instruments.registry import Instrument, InstrumentRegistry, Kind
 
+from .book import BybitBookGate
 from .normalize import normalize_message
 
 log = logging.getLogger(__name__)
@@ -39,7 +44,7 @@ _CHANNEL_MAP: dict[str, str] = {
     "book_snapshot": "orderbook.50.{sym}",
     "derivative_ticker": "tickers.{sym}",
     "options_chain": "tickers.{sym}",
-    "funding": "tickers.{sym}",    # live funding derived from ticker stream
+    "funding": "tickers.{sym}",  # live funding derived from ticker stream
     "book_ticker": "tickers.{sym}",
     "liquidation": "liquidation.{sym}",
 }
@@ -53,7 +58,14 @@ _CATEGORY_WS_URL: dict[str, str] = {
 }
 
 
-def build_channels(symbols: list[str], channels: list[str], category: str = "linear") -> list[str]:
+def build_channels(
+    symbols: list[str],
+    channels: list[str],
+    category: str = "linear",
+    *,
+    book_mode: str = "fast",
+    book_depth: int | None = None,
+) -> list[str]:
     """Return Bybit topic strings for the given symbols and channel kinds.
 
     Deduplicates: multiple canonical channels that map to the same Bybit topic
@@ -65,6 +77,13 @@ def build_channels(symbols: list[str], channels: list[str], category: str = "lin
         for ch in channels:
             pattern = _CHANNEL_MAP.get(ch)
             if pattern is not None:
+                if ch in {"book_delta", "book_snapshot"}:
+                    depth = (
+                        book_depth
+                        if book_depth is not None
+                        else (25 if category == "option" else 50)
+                    )
+                    pattern = f"orderbook.{'full' if book_mode == 'full' else depth}.{{sym}}"
                 result.add(pattern.format(sym=sym))
     return sorted(result)
 
@@ -155,30 +174,21 @@ def parse_instruments(raw: dict[str, Any], category: str = "linear") -> list[Ins
     return out
 
 
-class BybitConnector(Connector):
+class BybitConnector(GatedConnector):
     """Bybit V5 WebSocket connector.
 
     ``category`` selects the public WS endpoint:
     ``spot`` | ``linear`` | ``inverse`` | ``option``.
     Defaults to ``linear`` (USDT-margined perpetuals).
 
-    Book resync (deferred)
-    ----------------------
-    Bybit WS orderbooks carry update id ``u`` (and cross-seq ``seq``), but
-    :class:`~crocodile.crypto.exchanges.binance.book.OrderBookSync` has no Bybit
-    venue, and :class:`~crocodile.core.ingest.gap_bridge.BookResyncBridge` REST
-    replay assumes REST ``sequence_id`` shares the WS stream.  Bybit REST
-    ``GET /v5/market/orderbook`` ``u`` aligns only with **orderbook.1000**,
-    while this connector streams **orderbook.50** — so REST-anchored delta
-    filtering would be incorrect.  Bybit's documented recovery is a fresh
-    WS snapshot (re-subscribe / exchange re-push), not Binance-style REST
-    bootstrap.  Shared filter helpers live in
-    :mod:`crocodile.core.ingest.book_sync` for a future port (switch to
-    depth-1000, or re-subscribe resync).
+    Fast mode uses fresh WebSocket snapshots. Full mode independently buffers
+    deltas until a recorded REST full snapshot matches both ``seq`` and ``u``.
+    A full counter gap or reset reconnects and obtains a fresh REST anchor.
     """
 
     name = EXCHANGE
     rest_url = REST_BASE
+    gate: BybitBookGate
 
     def __init__(
         self,
@@ -187,16 +197,60 @@ class BybitConnector(Connector):
         out: Sink,
         registry: InstrumentRegistry,
         category: str = "linear",
+        *,
+        book_mode: str = "fast",
+        book_depth: int | None = None,
+        snapshot_provider: SnapshotProvider | None = None,
+        bootstrap_timeout: float = 10.0,
     ) -> None:
+        if category not in _CATEGORY_WS_URL or book_mode not in {"fast", "full"}:
+            raise ConfigError("Bybit category/book_mode is not supported")
+        depth = book_depth if book_depth is not None else (25 if category == "option" else 50)
+        if depth not in ({25, 100} if category == "option" else {1, 50, 200, 1000}):
+            raise ConfigError("Bybit depth is not supported for category")
+        if book_mode == "full" and category == "option":
+            raise ConfigError("Bybit full does not support options")
+        if not 0 < bootstrap_timeout <= 30:
+            raise ConfigError("Bybit bootstrap timeout expects 0 < seconds <= 30")
         super().__init__(symbols=symbols, channels=channels, out=out, registry=registry)
         self.category = category
+        self.quantity_unit = (
+            "quote_contracts"
+            if category == "inverse"
+            else "native_contracts"
+            if category == "option"
+            else "base_asset"
+        )
+        self.market = category
+        self.book_mode, self.book_depth = book_mode, depth
+        self.required_feed = book_mode == "full"
+        self.capture_endpoint_id = f"bybit-{category}-{book_mode}-{depth}"
+        self.decoder_id = "bybit-json"
+        self.gate = BybitBookGate(mode=book_mode, depth=depth)
+        self.coverage = {
+            "price_levels_per_side": None if book_mode == "full" else depth,
+            "documented_initial_snapshot_limit_per_side": 10000 if book_mode == "full" else None,
+            "cadence_ms": 200
+            if book_mode == "full"
+            else {1: 10, 25: 20, 50: 20, 100: 100, 200: 100, 1000: 200}[depth],
+            "far_unchanged_levels_unknown": book_mode == "full",
+        }
+        self._snapshot_provider = snapshot_provider
+        self._bootstrap_timeout = bootstrap_timeout
+        self._book_lock = asyncio.Lock()
+        self._pending: list[tuple[dict[str, Any], int, int | None, int]] = []
+        self._pending_bytes = 0
+        self._pending_event = asyncio.Event()
         self.ws_url = _CATEGORY_WS_URL.get(category, _CATEGORY_WS_URL["linear"])
-        self._sub_topics = build_channels(symbols, channels, category=category)
+        self._sub_topics = build_channels(
+            symbols, channels, category=category, book_mode=book_mode, book_depth=depth
+        )
 
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]:
         if isinstance(msg, dict):
-            yield from normalize_message(msg, local_ts=local_ts, venue=self.name,
-                                         registry=self.registry)
+            yield from normalize_message(
+                msg, local_ts=local_ts, venue=self.name, registry=self.registry
+            )
 
     async def list_instruments(self) -> list[Instrument]:  # pragma: no cover
         """Fetch instruments from Bybit REST API for this connector's category."""
@@ -208,6 +262,8 @@ class BybitConnector(Connector):
                 params["cursor"] = cursor
             url = f"{REST_BASE}/market/instruments-info"
             data = await self.http_get(url, params=params)
+            if data.get("retCode") != 0:
+                raise PublicBookError("Bybit instrument query rejected")
             instruments.extend(parse_instruments(data, category=self.category))
             next_cursor: str = (data.get("result") or {}).get("nextPageCursor", "")
             if not next_cursor:
@@ -224,3 +280,139 @@ class BybitConnector(Connector):
         if topics:
             frame = json.dumps({"op": "subscribe", "args": topics}).encode()
             await transport.send(frame)
+        if self.book_mode == "full" and any(
+            c in {"book_delta", "book_snapshot"} for c in self.channels
+        ):
+            await self._bootstrap_full()
+
+    async def _prepare_connection(self) -> None:
+        await super()._prepare_connection()
+        self._pending.clear()
+        self._pending_bytes = 0
+        self._pending_event.clear()
+
+    async def _handle_control_message(self, msg: object, frame: RawFrame) -> bool:
+        if isinstance(msg, dict) and (msg.get("success") is False or msg.get("retCode", 0) != 0):
+            raise PublicBookError("Bybit public subscription rejected")
+        return True
+
+    async def _handle_message(self, msg: object, local_ts: int) -> None:
+        async with self._book_lock:
+            if (
+                self.book_mode == "full"
+                and isinstance(msg, dict)
+                and str(msg.get("topic", "")).startswith("orderbook.full.")
+                and (msg.get("data") or {}).get("s") not in self.gate.ready
+            ):
+                self._apply_public(msg, local_ts)
+                if msg["data"]["s"] not in self.symbols:
+                    raise PublicBookError("Bybit full symbol is outside the subscription")
+                size = len(repr(msg).encode()) + 256
+                if self._pending_bytes + size > 8 << 20 or len(self._pending) >= 4096:
+                    raise PublicBookError("Bybit full bootstrap buffer overflow")
+                self._pending.append((msg, local_ts, self._origin_ordinal, size))
+                self._pending_bytes += size
+                self._pending_event.set()
+                return
+            await super()._handle_message(msg, local_ts)
+
+    def telemetry(self) -> dict[str, object]:
+        return {
+            **super().telemetry(),
+            "known_book_levels": {
+                symbol: {
+                    "bids": len(self.gate.bids.get(symbol, {})),
+                    "asks": len(self.gate.asks.get(symbol, {})),
+                }
+                for symbol in self.gate.ready
+            },
+            "book_states": {
+                symbol: "available"
+                if self.gate.bids.get(symbol) or self.gate.asks.get(symbol)
+                else "no_book"
+                for symbol in self.gate.ready
+            },
+        }
+
+    async def _bootstrap_full(self) -> None:
+        provider = self._snapshot_provider or HttpSnapshotProvider(
+            self.http_session, self.capture, base_url="https://api.bybit.com"
+        )
+        for symbol in self.symbols:
+            async with asyncio.timeout(self._bootstrap_timeout):
+                while True:
+                    async with self._book_lock:
+                        buffered = [x for x in self._pending if x[0]["data"]["s"] == symbol]
+                        self._pending_event.clear()
+                    if buffered:
+                        break
+                    await self._pending_event.wait()
+                for _ in range(8):
+                    request = SnapshotRequest(
+                        request_id=uuid.uuid4().hex,
+                        stream_id=self._stream_id() if self.capture else "live",
+                        source="bybit",
+                        symbol_raw=symbol,
+                        path="/v5/market/full_orderbook",
+                        params={"category": self.category, "symbol": symbol},
+                    )
+                    response = await provider.fetch(request)
+                    raw = json.loads(response.response.payload, parse_float=Decimal)
+                    if raw.get("retCode") != 0 or not isinstance(raw.get("result"), dict):
+                        raise PublicBookError("Bybit full snapshot API rejected")
+                    snapshot = raw["result"]
+                    if snapshot.get("s") != symbol:
+                        raise PublicBookError("Bybit full snapshot symbol mismatch")
+                    while True:
+                        async with self._book_lock:
+                            buffered = [x for x in self._pending if x[0]["data"]["s"] == symbol]
+                            matching = [
+                                x
+                                for x in buffered
+                                if x[0]["data"].get("seq") == snapshot.get("seq")
+                                and x[0]["data"].get("u") == snapshot.get("u")
+                            ]
+                            if matching:
+                                result = self.gate.anchor(
+                                    snapshot, response.response.received_utc_ns, self.registry
+                                )
+                                self._count(result, raw_frame=False)
+                                await self._emit_records(
+                                    list(result.records),
+                                    action="snapshot",
+                                    reason="bybit_full_anchor",
+                                    origin_ordinal=response.origin_ordinal,
+                                )
+                                for msg, ts, origin, _size in buffered:
+                                    result = self._apply_public(msg, ts)
+                                    self._count(result)
+                                    await self._emit_records(
+                                        list(result.records),
+                                        action=result.action,
+                                        reason="public_book",
+                                        origin_ordinal=origin,
+                                    )
+                                    if result.action == "gap":
+                                        raise TransientConnectorError(
+                                            "Bybit full buffered delta gap"
+                                        )
+                                self._pending = [
+                                    x for x in self._pending if x[0]["data"]["s"] != symbol
+                                ]
+                                self._pending_bytes = sum(x[3] for x in self._pending)
+                                break
+                            # If WS passed this anchor it cannot subsequently match.
+                            # Keep a future REST anchor while waiting for WS to catch up.
+                            passed = any(x[0]["data"]["seq"] >= snapshot["seq"] for x in buffered)
+                            self._pending_event.clear()
+                        if passed:
+                            break
+                        await self._pending_event.wait()
+                    if matching:
+                        break
+                else:
+                    raise TransientConnectorError("Bybit full anchor did not match stream")
+
+    async def _drain_market(self) -> None:
+        if any(c in {"book_delta", "book_snapshot"} for c in self.channels):
+            await super()._drain_market()

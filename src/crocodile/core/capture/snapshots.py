@@ -30,14 +30,21 @@ class HttpSnapshotProvider:
         self.session, self.capture, self.base_url = session, capture, base_url
 
     async def fetch(self, request: SnapshotRequest) -> CapturedSnapshot:
-        if (
+        binance = (
             request.path not in {"/api/v3/depth", "/fapi/v1/depth", "/dapi/v1/depth"}
             or set(request.params) != {"symbol", "limit"}
             or not isinstance(request.params["symbol"], str)
             or not str(request.params["symbol"]).isalnum()
             or not isinstance(request.params["limit"], int)
             or not 1 <= request.params["limit"] <= 5000
-        ):
+        )
+        bybit = (request.source == "bybit" and request.path == "/v5/market/full_orderbook"
+                 and set(request.params) == {"category", "symbol"}
+                 and request.params["category"] in {"spot", "linear", "inverse"}
+                 and isinstance(request.params["symbol"], str)
+                 and request.params["symbol"] == request.symbol_raw
+                 and str(request.params["symbol"]).replace("-", "").isalnum())
+        if binance and not bybit:
             raise ConfigError("Only public depth snapshot requests may be captured")
         if self.capture is not None:
             await self.capture.append(request)

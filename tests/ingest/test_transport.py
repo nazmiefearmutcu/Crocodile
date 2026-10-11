@@ -110,6 +110,6 @@ class TestAiohttpWsTransportConnect:
         # (certifi CA bootstrap from the visualizer line); the session is still
         # created once and kept on success (ralph leak-safety line).
         fake_session.ws_connect.assert_awaited_once_with(
-            "wss://fake.example.com/ws", heartbeat=20.0, ssl=ANY
+            "wss://fake.example.com/ws", heartbeat=20.0, ssl=ANY, max_msg_size=4 << 20
         )
         fake_session.close.assert_not_awaited()

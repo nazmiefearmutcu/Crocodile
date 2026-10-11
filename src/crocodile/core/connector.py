@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 import aiohttp
 
-from crocodile.core.capture.classification import FrameClass, classify_frame
+from crocodile.core.capture.classification import FrameClass, classify_frame, public_control_data
 from crocodile.core.capture.emitter import CaptureEmitter
 from crocodile.core.capture.schema import (
     ApplicationDecision,
@@ -317,6 +317,7 @@ class Connector(ABC):
                                 request_id=request_id,
                                 status="received",
                                 observed_utc_ns=local_ts,
+                                public_data=public_control_data(self.name, msg),
                             )
                         )
                     handled = await self._handle_control_message(msg, frame)
@@ -366,7 +367,7 @@ class Connector(ABC):
                         continue
                     msg = self._decode_frame(item.frame)
                     await self._handle_message(msg, item.local_ts)
-                except (FatalConnectorError, CaptureError):
+                except (FatalConnectorError, CaptureError, TransientConnectorError):
                     raise
                 except Exception as exc:
                     await self._dlq.put(

@@ -713,9 +713,10 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
     _refuse_readonly(ctx, "collect")
     _require_collect_inputs(params)
     capture_budget = _capture_budget(ctx)
-    if ctx.settings.raw_capture and any(s not in {"binance", "deribit"} for s in params.sources):
+    from crocodile.core.capture.native import SUPPORTED_RAW_SOURCES, stream_context
+    if ctx.settings.raw_capture and any(s not in SUPPORTED_RAW_SOURCES for s in params.sources):
         raise ConfigError(
-            "Raw capture currently supports native binance and deribit collect sources"
+            "Raw capture requires a supported native public source"
         )
 
     from crocodile.crypto.exchanges.factory import make_connector
@@ -740,7 +741,7 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
     async def begin() -> None:
         capture = None
         if ctx.settings.raw_capture:
-            from crocodile.core.capture.schema import CaptureContext, StreamContext
+            from crocodile.core.capture.schema import CaptureContext
             from crocodile.core.capture.writer import CaptureWriter
 
             capture_id = uuid.uuid4().hex
@@ -752,21 +753,7 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
                 for i, connector in enumerate(connectors):
                     stream_id = f"s{i + 1}"
                     connector.capture_stream_id = stream_id
-                    streams.append(
-                        StreamContext(
-                            stream_id=stream_id,
-                            source=getattr(connector, "_venue", connector.name),
-                            market=getattr(connector, "market", "derivatives"),
-                            symbols=tuple(connector.symbols),
-                            endpoint_id=getattr(
-                                connector, "capture_endpoint_id", f"{connector.name}-public"
-                            ),
-                            decoder_id=getattr(connector, "decoder_id", f"{connector.name}-json"),
-                            decoder_version=1,
-                            schema_id=getattr(connector, "capture_schema_id", None),
-                            schema_version=getattr(connector, "capture_schema_version", None),
-                        )
-                    )
+                    streams.append(stream_context(connector, stream_id))
                 capture = await CaptureWriter.create(
                     ctx.settings.data_dir / "raw-capture" / capture_id,
                     CaptureContext(capture_id=capture_id, streams=tuple(streams)),

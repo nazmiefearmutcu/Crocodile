@@ -75,6 +75,7 @@ class ControlMetadata(msgspec.Struct, tag="control", frozen=True, kw_only=True):
     request_id: str | None
     status: str
     observed_utc_ns: int
+    public_data: dict[str, str | int] | None = None
 
 
 CaptureEvent = (

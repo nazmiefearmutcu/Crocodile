@@ -63,6 +63,13 @@ class Settings(msgspec.Struct, frozen=True):
     deribit_interval: str = "100ms"
     deribit_client_id: str | None = None
     deribit_client_secret: str | None = None
+    coinbase_mode: str = 'exchange'
+    bybit_book_mode: str = 'fast'
+    bybit_book_depth: str | None = None
+    kraken_mode: str = 'book'
+    kraken_depth: str = '10'
+    kraken_api_key: str | None = None
+    kraken_api_secret: str | None = None
 
     home: str | None = None
     """State directory for payment records and IPC files. ``None`` means ``~/.crocodile``.
@@ -225,6 +232,13 @@ class Settings(msgspec.Struct, frozen=True):
 _VARS: Final[Mapping[str, str]] = {
     "data_dir": "DATA_DIR",
     "raw_capture": "RAW_CAPTURE",
+    "coinbase_mode": "COINBASE_MODE",
+    "bybit_book_mode": "BYBIT_BOOK_MODE",
+    "bybit_book_depth": "BYBIT_BOOK_DEPTH",
+    "kraken_mode": "KRAKEN_MODE",
+    "kraken_depth": "KRAKEN_DEPTH",
+    "kraken_api_key": "KRAKEN_API_KEY",
+    "kraken_api_secret": "KRAKEN_API_SECRET",
     "raw_capture_queue_bytes": "RAW_CAPTURE_QUEUE_BYTES",
     "binance_market": "BINANCE_MARKET",
     "binance_wire_format": "BINANCE_WIRE_FORMAT",

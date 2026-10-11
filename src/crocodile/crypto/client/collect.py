@@ -55,6 +55,7 @@ async def _run_isolated(connector: Connector, max_reconnects: int) -> None:
         if isinstance(exc, ConnectorError) and (
             getattr(connector, "wire_format", None) == "sbe"
             or getattr(connector, "interval", None) == "raw"
+            or getattr(connector, "required_feed", False)
         ):
             raise
         log.error(

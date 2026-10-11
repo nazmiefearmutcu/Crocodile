@@ -192,7 +192,10 @@ async def test_bybit_registration_matches_live_lookup() -> None:
     _patch_http_get(
         conn,
         {
+            "retCode": 0,
+            "retMsg": "OK",
             "result": {
+                "category": "linear",
                 "list": [
                     {
                         "symbol": "BTCUSDT",
@@ -204,7 +207,7 @@ async def test_bybit_registration_matches_live_lookup() -> None:
                     }
                 ],
                 "nextPageCursor": "",
-            }
+            },
         },
     )
     for inst in await conn.list_instruments():
@@ -272,33 +275,9 @@ async def test_deribit_registration_matches_live_lookup() -> None:
     assert inst.tick_size == 0.5
 
 
-async def test_coinbase_registration_matches_live_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Coinbase enumerates over its own ``aiohttp`` session, so the session is faked."""
+async def test_coinbase_registration_matches_live_lookup() -> None:
+    """The default Exchange catalogue returns an array, unlike Advanced products."""
     from crocodile.crypto.exchanges.coinbase import connector as cb
-
-    products = _load("coinbase", "fixtures", "products.json")
-
-    class _FakeResponse:
-        def raise_for_status(self) -> None: ...
-
-        async def json(self) -> Any:
-            return products
-
-        async def __aenter__(self) -> _FakeResponse:
-            return self
-
-        async def __aexit__(self, *exc: object) -> None: ...
-
-    class _FakeSession:
-        def get(self, url: str, **kw: Any) -> _FakeResponse:
-            return _FakeResponse()
-
-        async def __aenter__(self) -> _FakeSession:
-            return self
-
-        async def __aexit__(self, *exc: object) -> None: ...
-
-    monkeypatch.setattr(cb.aiohttp, "ClientSession", lambda *a, **k: _FakeSession())
 
     registry = InstrumentRegistry()
     conn = cb.CoinbaseConnector(
@@ -307,6 +286,23 @@ async def test_coinbase_registration_matches_live_lookup(monkeypatch: pytest.Mon
         out=MemorySink(),
         registry=registry,
     )
+
+    async def fake_http_get(url: str, params: dict[str, Any] | None = None, **kw: Any) -> Any:
+        assert url == "https://api.exchange.coinbase.com/products"
+        assert params is None
+        return [
+            {
+                "id": "BTC-USD",
+                "base_currency": "BTC",
+                "quote_currency": "USD",
+                "base_increment": "0.00000001",
+                "quote_increment": "0.01",
+                "status": "online",
+                "trading_disabled": False,
+            }
+        ]
+
+    conn.http_get = fake_http_get  # type: ignore[method-assign]
     for inst in await conn.list_instruments():
         registry.add(inst)
 
@@ -314,6 +310,7 @@ async def test_coinbase_registration_matches_live_lookup(monkeypatch: pytest.Mon
     records = list(conn.normalize(msg, local_ts=1))
     inst = _assert_live_lookup_resolves(registry, records, expect_raw="BTC-USD")
     assert inst.tick_size == 0.01
+    assert (inst.base, inst.quote) == ("BTC", "USD")
 
 
 async def test_coingecko_poll_cycle_resolves_its_own_registration(
@@ -345,9 +342,7 @@ async def test_coingecko_poll_cycle_resolves_its_own_registration(
 
     registry = InstrumentRegistry()
     sink = MemorySink()
-    conn = cg.CoinGeckoConnector(
-        symbols=[], channels=["ohlcv"], out=sink, registry=registry
-    )
+    conn = cg.CoinGeckoConnector(symbols=[], channels=["ohlcv"], out=sink, registry=registry)
     written = await conn._poll_once()
     assert written == 1
     _assert_live_lookup_resolves(registry, list(sink.records), expect_raw="bitcoin")
