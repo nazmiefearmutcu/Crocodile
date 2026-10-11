@@ -8,8 +8,7 @@ import math
 from collections.abc import Iterable
 from typing import Any, Literal
 
-import aiohttp
-
+from crocodile.core.capture.schema import RawFrame
 from crocodile.core.connector import Connector
 from crocodile.core.errors import ConfigError
 from crocodile.core.ingest.transport import Transport
@@ -19,6 +18,7 @@ from crocodile.core.util.time import ms_to_ns
 from crocodile.crypto.instruments.registry import Instrument, InstrumentRegistry, Kind
 
 from .normalize import normalize_message
+from .session import DeribitSession
 
 log = logging.getLogger(__name__)
 
@@ -166,6 +166,16 @@ class DeribitConnector(Connector):
         self.capture_endpoint_id = f"deribit-{interval}-ws"
         self.capture_decoder_id = "deribit-json"
         self.capture_decoder_version = 1
+        self._control = DeribitSession(
+            interval=interval,
+            client_id=client_id,
+            client_secret=client_secret,
+            channels=tuple(self._sub_channels),
+            request_timeout_seconds=request_timeout_seconds,
+            heartbeat_interval_seconds=heartbeat_interval_seconds,
+            refresh_margin_seconds=refresh_margin_seconds,
+        )
+        self._session_enabled = self._mixed_controls = interval == "raw"
 
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]:
         if isinstance(msg, dict):
@@ -189,6 +199,15 @@ class DeribitConnector(Connector):
 
     async def _subscribe(self, transport: Transport) -> None:  # pragma: no cover
         """Send a Deribit JSON-RPC 2.0 ``public/subscribe`` frame."""
+        # Byte-only public adapters retain their existing fixture contract. Live
+        # transports and captures always correlate subscription acknowledgements.
+        self._session_enabled = (
+            self.interval == "raw" or self.capture is not None or hasattr(transport, "iter_frames")
+        )
+        self._mixed_controls = self._session_enabled
+        if self._session_enabled:
+            await self._control.begin(transport)
+            return
         channels = self.subscribe_channels()
         if channels:
             frame = json.dumps(
@@ -199,3 +218,20 @@ class DeribitConnector(Connector):
                 }
             ).encode()
             await transport.send(frame)
+
+    async def _handle_control_message(self, msg: object, frame: RawFrame) -> bool:
+        if self._session_enabled and isinstance(msg, dict):
+            return await self._control.handle_control(msg)
+        return False
+
+    async def _prepare_connection(self) -> None:
+        await self._control.close()
+
+    async def _on_connection_close(self) -> None:
+        await self._control.close()
+
+    async def _watch_market_failure(self) -> None:
+        if self._session_enabled:
+            await self._control._watchdog()
+        else:
+            await super()._watch_market_failure()
