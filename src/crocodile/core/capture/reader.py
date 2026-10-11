@@ -24,7 +24,9 @@ class CaptureReader:
         self._indexed = False
         expected = 1
         discarded = 0
-        segments: list[tuple[str, SegmentInfo | None]] = [(s.name, s) for s in self.manifest.segments]
+        segments: list[tuple[str, SegmentInfo | None]] = [
+            (s.name, s) for s in self.manifest.segments
+        ]
         if self.manifest.active_name:
             segments.append((self.manifest.active_name, None))
         for name, info in segments:
