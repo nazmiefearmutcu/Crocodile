@@ -28,7 +28,7 @@ Her planın adımları kendi test döngüsü ve küçük commit'iyle tamamlanır
 - `binance-spot:BTCUSDT` aynı instrument olarak kalır. SBE taşıma biçimi session metadata'sıdır.
 - Writer kuyruğu başlangıçta 32 MiB byte bütçelidir; her kayıt uzunluğu sınırı 16 MiB'dir.
 - Segment hedefi 256 MiB; kayıt segment sınırında bölünmez.
-- Fsync aralığı varsayılan en fazla 1 saniyedir; sınır sağlayamayan writer durable-lag ihlali bildirir.
+- Fsync zamanlama hedefi varsayılan 1 saniyedir; yavaş disk/fsync bu hedefi aşabilir. Writer aşımı sync öncesi ve sonrası bildirir, tepe gecikmeyi ve aşım sayısını saklar.
 - Kuyruğa alınma durability değildir. Donanım write-cache/power-loss için evrensel garanti verilmez.
 - Credentials/token journal, manifest veya log'a yazılmaz. Yetkili canlı ölçüm için mevcut yerel credentials gerekir.
 - Deribit interval varsayılan `100ms`, opt-in `raw`; Binance wire format varsayılan `json`, opt-in Spot `sbe`.
@@ -56,16 +56,37 @@ Uygulama başlangıcında aynı seçim bir kez baseline olarak çalıştırılı
 
 ## Son entegrasyon ve kabul
 
-- [ ] Üç alt planın focused testleri ve ortak connector/collect regresyonları yeşil olmalı.
-- [ ] Bir capture fixture'ı tamamen ağsız replay edilerek canonical sıra/bytes ve kapsam içindeki son defter eşitliği kanıtlanmalı.
-- [ ] Queue overflow, short write ve fsync fault'ta CLI nonzero failure; SIGINT'te drain/close ve cancellation semantiği doğrulanmalı.
-- [ ] `Settings` repr, günlükler, journal/manifest ve DLQ raporu örnek credentials/token içermemeli.
-- [ ] Aktif ve sakin sembol ölçümleri gerçek source event, receive/write/fsync sayıları ve gap sayısını ayrı raporlamalı. Credentials yoksa canlı SBE/raw sonucu ölçülmedi diye belirtilmeli.
-- [ ] Değişen yeni core modülleri ruff ve strict mypy'dan geçmeli; mevcut crypto override'ına yeni modül ekleyerek hatalar gizlenmemeli.
-- [ ] İşlevsel planlar geçtikten sonra tek bağımsız bütün değişiklik incelemesi; source-only test sonucu FlowMap native FPS kanıtı sayılmamalı.
+- [x] Üç alt planın focused testleri ve ortak connector/collect regresyonları yeşil olmalı.
+- [x] Bir capture fixture'ı tamamen ağsız replay edilerek canonical sıra/bytes ve kapsam içindeki son defter eşitliği kanıtlanmalı.
+- [x] Queue overflow, short write ve fsync fault'ta CLI nonzero failure; SIGINT'te drain/close ve cancellation semantiği doğrulanmalı.
+- [x] `Settings` repr, günlükler, journal/manifest ve DLQ raporu örnek credentials/token içermemeli.
+- [x] Aktif ve sakin sembol ölçümleri gerçek source event, receive/write/fsync sayıları ve gap sayısını ayrı raporlamalı. Credentials yoksa canlı SBE/raw sonucu ölçülmedi diye belirtilmeli.
+- [x] Değişen yeni core modülleri ruff ve strict mypy'dan geçmeli; mevcut crypto override'ına yeni modül ekleyerek hatalar gizlenmemeli.
+- [x] İşlevsel planlar geçtikten sonra tek bağımsız bütün değişiklik incelemesi; source-only test sonucu FlowMap native FPS kanıtı sayılmamalı.
 
 FlowMap history overview piramidi, eski coarse verinin tahmin modeli, diğer borsalar ve büyük arşiv indirme bu ilk pakette uygulanmaz. Ayrıntılı ücretsiz kaynaklar ve matematiksel devam yolu [araştırma raporunda](../research/crocodile-ucretsiz-l2-arastirmasi-2026-10-11.md) bulunur.
 
 ## Süreç ve durum
 
-Onaylanan ilk paket tasarımı kaynak checkout'a kaydedildi. Plan, [upstream writing-plans becerisi](https://github.com/obra/superpowers/blob/main/skills/writing-plans/SKILL.md) kullanılarak tamamlandı; yerel eksik beceri engeli bu kaynakla çözüldü. Henüz uygulama kodu yazılmadı veya yeni protokol/capture testleri çalıştırılmadı. Üç alt plan self-review'dan geçti: 15 test edilebilir görev, shared interfaces/fixture ownership, snapshot/sequence/control/cleanup koşulları netleştirildi. Plan/spec incelemesinin ardından uygulama başlar. Görev başına bağımsız incelemeyle aynı oturumda yürütme önerilir; ortak transport/capture/book arayüzleri nedeniyle bir görevin hatası diğer akışlara taşınabilir.
+Onaylanan üç alt plandaki 15 görev tamamlandı. Uygulama izole
+`codex/free-l2` dalında yürütüldü. Kullanıcının doğrudan uygulama ve sonunda
+inceleme seçimiyle tek bağımsız son inceleme yapıldı; üç bulgu tek düzeltme
+geçişinde giderildi (`35450bf`). Görev başına test/commit kayıtları,
+kararlar ve baseline dışlamaları
+[yürütme kaydında](../reports/2026-10-11-free-l2-execution.md) korunur.
+
+Son ilgili seçim 652 passed; geniş Windows'ta çalışabilir seçim
+3667 passed /1 skipped. Bu sonuç, 41 eski collection dosyası ve 164
+ana dalda doğrulanan runtime vakası dışlandığında geçerlidir; tam depo
+Windows desteği iddiası değildir. Strict mypy Linux platformunda 254
+modül için temiz; yeni modüller ve zero-debt Ruff kontrolleri temiz.
+
+10.000 SBE fixture olayının capture/replay sonucunda canonical hash ve son
+defter birebir eşittir. Yerel capture yaklaşık 4.735 frame/sn, replay
+8.924 record/sn; fsync hedefi iki kez aşıldı, tepe lag 1,937 sn.
+Canlı anahtar bulunmadığından yetkili erişim/cadence ölçülmedi; ilgili
+kabul maddesinin koşullu sonucu bu açıklamadır.
+
+Doğrulanan temiz `main` fork'una yerel fast-forward entegrasyon seçildi.
+Remote pull/push veya PR bu işin parçası değildir. Dal ve worktree
+korunur; kesin birleşmiş-checkout sonucu chat'in teslim raporunda tutulur.

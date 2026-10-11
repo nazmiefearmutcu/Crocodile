@@ -28,7 +28,7 @@ Yeni `binance/sbe.py` yalnız wire parsing; `binance/normalize_sbe.py` canonical
 
 **Interfaces:** `decode_sbe_frame(payload: bytes) -> SbeMessage`; `SbeMessage = SbeTrades | SbeBestBidAsk | SbeDepthSnapshot | SbeDepthDiff`. Typed immutable event'ler symbol_raw/event_time_us taşır; price_exponent/qty_exponent signed int8; level fiyat/miktarı int64 mantissa olarak kalır. SbeTrades transact_time_us ve `trades: tuple[SbeTrade, ...]`; SbeTrade trade_id/price_mantissa/qty_mantissa/is_buyer_maker. BBO book_update_id, bid/ask mantissa fields; snapshot book_update_id+bids/asks; diff first_update_id/final_update_id+bids/asks. `SbeProtocolError(FatalConnectorError)`, `UnsupportedSbeTemplate(SbeProtocolError)` exact typed errors.
 
-- [ ] **Test yaz:** Dört bağımsız fixture beklenen integer alanlarla eşit. Trades group `<HI>` count uint32/25-byte element; snapshot/diff grupları `<HH>`/16-byte. Header8 `<HHHH>`, root block lengths 18/50/18/26. UTF8 symbol length bytes sayar. Positive/negative exponent, empty side, qty zero, çoklu trade, root/group extension bytes, header/root/group/symbol her truncation prefix'i. Unknown schema/version/template typed failure. Group count büyükken allocation yapılmadan bounds failure.
+- [x] **Test yaz:** Dört bağımsız fixture beklenen integer alanlarla eşit. Trades group `<HI>` count uint32/25-byte element; snapshot/diff grupları `<HH>`/16-byte. Header8 `<HHHH>`, root block lengths 18/50/18/26. UTF8 symbol length bytes sayar. Positive/negative exponent, empty side, qty zero, çoklu trade, root/group extension bytes, header/root/group/symbol her truncation prefix'i. Unknown schema/version/template typed failure. Group count büyükken allocation yapılmadan bounds failure.
 
 Fixture `trades.bin`: symbol BTCUSDT, event_time_us=1700000000000000, transact_time_us=1700000000001000, exponents -2/-3, tek trade ID1/price3000012/qty1250/buyer-makerTrue. `sbe_fixture` test fixture fonksiyonu adı verilen fixture bytes'ı döndürür.
 
@@ -41,10 +41,10 @@ def test_trades_10000_preserves_integer_precision(sbe_fixture):
     assert event.trades[0].price_mantissa == 3000012
     assert event.trades[0].qty_mantissa == 1250
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_sbe_decoder.py`; import failure bekle.
-- [ ] **Implement:** Resmî `stream_1_0.xml`, schemaId1/version0 little-endian. Fixture metadata upstream commit `bed5d358dbe98bfa4722b6c00c27be1e8f0ba40b` taşır. Cursor bounds her read'den önce; offsets incoming root/group blockLength ile ilerler. Desteklenen version extension bytes atlanır, minimum alan boyundan küçük blockLength reddedilir. Symbol uint8 length/UTF8. Trade Bool yalnız0/1, bilinmeyen değer protocol error. Test fixture generator production decoder'ı import etmez, expected alanları XML field tablosundan elle denetlenir.
-- [ ] **GREEN:** Aynı komut PASS; fixture README byte offsets ve beklenen alanları gösterir.
-- [ ] **Commit:** `feat: decode Binance Spot SBE market frames`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_sbe_decoder.py`; import failure bekle.
+- [x] **Implement:** Resmî `stream_1_0.xml`, schemaId1/version0 little-endian. Fixture metadata upstream commit `bed5d358dbe98bfa4722b6c00c27be1e8f0ba40b` taşır. Cursor bounds her read'den önce; offsets incoming root/group blockLength ile ilerler. Desteklenen version extension bytes atlanır, minimum alan boyundan küçük blockLength reddedilir. Symbol uint8 length/UTF8. Trade Bool yalnız0/1, bilinmeyen değer protocol error. Test fixture generator production decoder'ı import etmez, expected alanları XML field tablosundan elle denetlenir.
+- [x] **GREEN:** Aynı komut PASS; fixture README byte offsets ve beklenen alanları gösterir.
+- [x] **Commit:** `feat: decode Binance Spot SBE market frames`.
 
 ## Task 2: Canonical adaptör ve ortak book session
 
@@ -52,7 +52,7 @@ def test_trades_10000_preserves_integer_precision(sbe_fixture):
 
 **Interfaces:** `normalize_sbe_message(event: SbeMessage, *, local_ts: int, registry: InstrumentRegistry) -> Iterable[Record]`; `to_depth_event(event: SbeDepthDiff) -> BinanceDepthEvent`. Existing BinanceConnector positional arguments korunur; keyword-only `wire_format: Literal["json", "sbe"] = "json"`, `api_key: str | None = None`, `snapshot_provider: SnapshotProvider | None = None`. JSON build_channels varsayılanı aynı; `build_sbe_channels(symbols: list[str], channels: list[str]) -> list[str]` new pure function.
 
-- [ ] **Test yaz:** canonical venue/source/symbol JSON ile aynı. Trade buyer-maker True→Side.SELL, False→Side.BUY; trade source_ts transact_time_us×1000, BBO/depth event_time_us×1000. Mantissa×10^exponent doğru; float overflow/NaN/Infinity failure. `book_delta`+`book_snapshot` tek `<sym>@depth`; trade `<sym>@trade`, ticker `<sym>@bestBidAsk`. Partial snapshot dispatch, geniş session'ı değiştirmez. U/u ortak BinanceDepthEvent'e eksiksiz geçer; qty0 delete korunur.
+- [x] **Test yaz:** canonical venue/source/symbol JSON ile aynı. Trade buyer-maker True→Side.SELL, False→Side.BUY; trade source_ts transact_time_us×1000, BBO/depth event_time_us×1000. Mantissa×10^exponent doğru; float overflow/NaN/Infinity failure. `book_delta`+`book_snapshot` tek `<sym>@depth`; trade `<sym>@trade`, ticker `<sym>@bestBidAsk`. Partial snapshot dispatch, geniş session'ı değiştirmez. U/u ortak BinanceDepthEvent'e eksiksiz geçer; qty0 delete korunur.
 
 ```python
 def test_buyer_maker_trade_has_sell_aggressor_side(sbe_fixture):
@@ -64,10 +64,10 @@ def test_buyer_maker_trade_has_sell_aggressor_side(sbe_fixture):
     assert rec.price == 30000.12
     assert rec.amount == 1.25
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_sbe_connector.py`; mode/API assertions FAIL.
-- [ ] **Implement:** SBE binary frame `_decode_frame` override; TEXT yalnız JSON control. DepthDiff canonical doğrudan sink'e atılmaz, raw planın BinanceBookSession'ına verilir. Other typed events normalizer adaptörüne gider. Integer/exponent raw journal/decoded events'te kalır; canonical floats mevcut contract'tır. Top20 snapshot sadece kapsamlı ayrı partial subscription isteyen caller için decode edilebilir; ilk paket canonical channel mapping buna bağlanmaz. Geniş state'e yanlış template dispatch typed failure'dır. Unknown canonical channel SBE'de başlamadan ConfigError, sessiz boş subscription yoktur.
-- [ ] **GREEN:** Yukarıdaki test + `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_connector.py tests/exchanges/binance/test_normalize_spot.py tests/exchanges/binance/test_normalize_usdm.py tests/exchanges/binance/test_book_session.py` PASS.
-- [ ] **Commit:** `feat: ingest SBE through the existing Spot book identity`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_sbe_connector.py`; mode/API assertions FAIL.
+- [x] **Implement:** SBE binary frame `_decode_frame` override; TEXT yalnız JSON control. DepthDiff canonical doğrudan sink'e atılmaz, raw planın BinanceBookSession'ına verilir. Other typed events normalizer adaptörüne gider. Integer/exponent raw journal/decoded events'te kalır; canonical floats mevcut contract'tır. Top20 snapshot sadece kapsamlı ayrı partial subscription isteyen caller için decode edilebilir; ilk paket canonical channel mapping buna bağlanmaz. Geniş state'e yanlış template dispatch typed failure'dır. Unknown canonical channel SBE'de başlamadan ConfigError, sessiz boş subscription yoktur.
+- [x] **GREEN:** Yukarıdaki test + `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_connector.py tests/exchanges/binance/test_normalize_spot.py tests/exchanges/binance/test_normalize_usdm.py tests/exchanges/binance/test_book_session.py` PASS.
+- [x] **Commit:** `feat: ingest SBE through the existing Spot book identity`.
 
 ## Task 3: Settings, factory ve doğru transport
 
@@ -83,7 +83,7 @@ def test_buyer_maker_trade_has_sell_aggressor_side(sbe_fixture):
 
 `make_connector(..., *, settings: Settings | None = None, **kw: Any) -> Connector`: settings factory tarafından tüketilir; explicit constructor kwargs override eder; yalnız ilgili native connector'a ilgili değerler verilir. `collect` context.settings geçirir. Connector `make_transport() -> Transport` hook'u kullanır; generic default AiohttpWsTransport, SBE override URL+header taşır. Bu hook raw plan transport'un headers API'sini tüketir.
 
-- [ ] **Test yaz:** injected mapping env alanları yüklenir; repr secret key içermez. SBE+USDM/COINM, empty key ve invalid mode network öncesi ConfigError. SBE ws_connect key header alır ve signature/private key parametresi yoktur. Factory explicit kw Settings'i override eder; diğer venue'ye settings aktarılmaz. Collect configured transport'u ezmez. Collect-market SBE seçili Binance kaynağında universe/network çağırmadan ConfigError; JSON default halen CCXT yolunu kullanabilir.
+- [x] **Test yaz:** injected mapping env alanları yüklenir; repr secret key içermez. SBE+USDM/COINM, empty key ve invalid mode network öncesi ConfigError. SBE ws_connect key header alır ve signature/private key parametresi yoktur. Factory explicit kw Settings'i override eder; diğer venue'ye settings aktarılmaz. Collect configured transport'u ezmez. Collect-market SBE seçili Binance kaynağında universe/network çağırmadan ConfigError; JSON default halen CCXT yolunu kullanabilir.
 
 ```python
 def test_sbe_mode_rejects_non_spot_market_before_connect():
@@ -92,10 +92,10 @@ def test_sbe_mode_rejects_non_spot_market_before_connect():
                          InstrumentRegistry(), market="usdm",
                          wire_format="sbe", api_key="fixture-key")
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/conformance/test_config.py tests/exchanges/test_factory.py tests/capabilities/test_ops.py`; yeni tests FAIL.
-- [ ] **Implement:** Factory/constructor enum ve required key validation; Settings.from_env'in string parsing kuralını değiştirme. Key tipini string'den tahmin etme; yanlış key/access borsa response'u sanitized fatal rejection'dır. Endpoint `wss://stream-sbe.binance.com/ws`; subscription JSON text. `collect-market` raw/SBE için ilk sürümde native-symbol `collect` yönlendirme mesajı verir, otomatik CCXT fallback yapmaz. Secrets CLI/REST/MCP params içine eklenmez. README iki env mode örneği ve Ed25519 key şartı.
-- [ ] **GREEN:** Yukarıdaki test PASS; `.\.venv\Scripts\python.exe -m pytest tests/surfaces/test_cli_arguments.py tests/surfaces/test_unknown_parameters.py tests/conformance/test_phase2_surface_parity.py` generated surface regressions PASS.
-- [ ] **Commit:** `feat: configure Spot SBE without changing collect defaults`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/conformance/test_config.py tests/exchanges/test_factory.py tests/capabilities/test_ops.py`; yeni tests FAIL.
+- [x] **Implement:** Factory/constructor enum ve required key validation; Settings.from_env'in string parsing kuralını değiştirme. Key tipini string'den tahmin etme; yanlış key/access borsa response'u sanitized fatal rejection'dır. Endpoint `wss://stream-sbe.binance.com/ws`; subscription JSON text. `collect-market` raw/SBE için ilk sürümde native-symbol `collect` yönlendirme mesajı verir, otomatik CCXT fallback yapmaz. Secrets CLI/REST/MCP params içine eklenmez. README iki env mode örneği ve Ed25519 key şartı.
+- [x] **GREEN:** Yukarıdaki test PASS; `.\.venv\Scripts\python.exe -m pytest tests/surfaces/test_cli_arguments.py tests/surfaces/test_unknown_parameters.py tests/conformance/test_phase2_surface_parity.py` generated surface regressions PASS.
+- [x] **Commit:** `feat: configure Spot SBE without changing collect defaults`.
 
 ## Task 4: Shutdown, SBE replay ve ölçüm
 
@@ -103,7 +103,7 @@ def test_sbe_mode_rejects_non_spot_market_before_connect():
 
 **Interfaces:** Decoder ID `binance-sbe`, decoder version1, upstream schema1/version0, stream metadata. `BinanceSbeReplayDecoder` raw planın `ReplayDecoder.apply/observe` API'sini uygular; pure canonical adaptör ve aynı sequence engine'i kullanır. Benchmark `benchmark_capture(reader: CaptureReader, *, repeats: int = 1) -> dict[str, int | float | str]` read-only saved fixture üzerinde throughput/counter üretir. CLI script capture_dir positional; key/env output yoktur.
 
-- [ ] **Test yaz:** binary SBE capture + raw REST snapshot offline live canonical serialized output/final book eşit; all network calls forbidden. UTC rollback/snapshot in-flight order korunur. `serverShutdown`→reconnect→registry/snapshot reset; live close retry, fixture EOF normal bitiş. Unknown depth template raw bytes korunur, session continuity iddiası/fresh output yoktur. BBO autoculling/new depth count farklı; duplicate/heartbeat depth counters'ı artırmaz. Benchmark received/queued/written/fsynced ve known coverage raporlar.
+- [x] **Test yaz:** binary SBE capture + raw REST snapshot offline live canonical serialized output/final book eşit; all network calls forbidden. UTC rollback/snapshot in-flight order korunur. `serverShutdown`→reconnect→registry/snapshot reset; live close retry, fixture EOF normal bitiş. Unknown depth template raw bytes korunur, session continuity iddiası/fresh output yoktur. BBO autoculling/new depth count farklı; duplicate/heartbeat depth counters'ı artırmaz. Benchmark received/queued/written/fsynced ve known coverage raporlar.
 
 `recorded_sbe_session` fixture'ı bağımsız binary/REST scripted run'dan reader, decoder mapping ve expected Record listesi döndürür; raw planın network_forbidden fixture'ı kullanılır.
 
@@ -114,11 +114,38 @@ def test_sbe_capture_replay_matches_output(recorded_sbe_session, network_forbidd
     assert [msgspec.msgpack.encode(r) for r in actual] == [
         msgspec.msgpack.encode(r) for r in expected]
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_sbe_replay.py tests/capture/test_benchmark_counters.py`; missing replay decoder assertions FAIL.
-- [ ] **Implement:** serverShutdown sanitized control router transient failure; her socket reset sonrası snapshot eşitlenmesi. Unsupported binary template capture edilir ama decoder session fatal durumu görünür olur. Replay live transport/auth oluşturmaz. Fixture benchmark exact source event counts + wall throughput ayrı; credentials varsa active/sakin sembol canlı ölçümü farklı raporda, yoksa fixture-only sonucu. 20 ms interval ölçülmüş receive cadence yerine yazılmaz.
-- [ ] **GREEN:** Yeni testler + ana plan connector/collect selection PASS; `.\.venv\Scripts\python.exe -m ruff check src/crocodile/crypto/exchanges/binance/sbe.py src/crocodile/crypto/exchanges/binance/normalize_sbe.py scripts/benchmark_raw_capture.py`.
-- [ ] **Commit:** `feat: replay and validate SBE captures`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_sbe_replay.py tests/capture/test_benchmark_counters.py`; missing replay decoder assertions FAIL.
+- [x] **Implement:** serverShutdown sanitized control router transient failure; her socket reset sonrası snapshot eşitlenmesi. Unsupported binary template capture edilir ama decoder session fatal durumu görünür olur. Replay live transport/auth oluşturmaz. Fixture benchmark exact source event counts + wall throughput ayrı; credentials varsa active/sakin sembol canlı ölçümü farklı raporda, yoksa fixture-only sonucu. 20 ms interval ölçülmüş receive cadence yerine yazılmaz.
+- [x] **GREEN:** Yeni testler + ana plan connector/collect selection PASS; `.\.venv\Scripts\python.exe -m ruff check src/crocodile/crypto/exchanges/binance/sbe.py src/crocodile/crypto/exchanges/binance/normalize_sbe.py scripts/benchmark_raw_capture.py`.
+- [x] **Commit:** `feat: replay and validate SBE captures`.
 
 ## Self-review
 
 Pure decode, normalization/units, shared sequence/bootstrap, source identity, key transport, factory/default routing, lifecycle/replay ve ölçüm görevlerle kapsandı. Shared book_session oluşturma raw plana aittir; burada ikinci state machine yoktur. dördüncü decoder template desteği, geniş deftere partial snapshot uygulanacağı anlamına gelmez. Gerçek erişim/live cadence hazır credentials olmadan doğrulanmış sayılmaz.
+
+## Uygulama tamamlanma kaydı — 11 Ekim 2026
+
+Bu planın görevleri testler önce başarısız olacak şekilde yazılarak, sonra
+uygulama ve başarılı doğrulama ile tamamlandı. İşaretler yürütmenin durumunu
+gösterir; eski komutlardaki platform engelleri aşağıdaki son doğrulamada
+açıkça ayrıldı. Kullanıcının seçimi doğrultusunda görev başına bağımsız
+inceleme yerine bütün değişiklik üzerinde tek bağımsız son inceleme yapıldı.
+İki önemli bulgu ve önemli olarak yeniden derecelendirilen fsync gözlemi
+aynı düzeltme geçişinde testlerle giderildi (`35450bf`). Ertelenen küçük
+bulgu kalmadı.
+
+Son ilgili seçim 652 passed /111 baseline deselected; geniş Windows'ta
+çalışabilir seçim 3667 passed /1 skipped /164 baseline deselected.
+41 değişmemiş baseline collection dosyası dışarıda tutuldu. Aynı hata
+dosyaları ve başarısız runtime vakaları değişmemiş ana checkout'ta doğrulandı.
+Tüm depo Windows testleri yeşil değildir. Yeni modüller ve zero-debt kökler
+Ruff'tan; strict mypy Linux platformunda 254 modül ve benchmark ayrı ayrı
+geçti. Windows mypy'da eski iki `resource` hatası kalır.
+
+Yetkili canlı SBE/raw anahtarları bulunmadığından gerçek borsa erişimi ve
+aktif/sakin sembol cadence ölçülmedi. Fixture benchmark ve offline replay
+eşitliği doğrulandı; bunlar canlı receive Hz'i veya FlowMap FPS'i değildir.
+Tam görev, karar ve doğrulama kayıtları
+[yürütme kaydında](../reports/2026-10-11-free-l2-execution.md) saklandı.
+
+Görev commitleri: `25a1360`, `d36f695`, `870c04f`, `4d55ef2`.

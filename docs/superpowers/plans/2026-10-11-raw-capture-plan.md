@@ -57,7 +57,7 @@ JournalRecord(ordinal: int, event: CaptureEvent)
 
 **Interfaces:** `Transport.__aiter__() -> AsyncIterator[bytes]` korunur. Yeni `AiohttpWsTransport.iter_frames() -> AsyncIterator[RawFrame]`; `iter_transport_frames(transport: Transport) -> AsyncIterator[RawFrame]`; constructor'a keyword-only `headers: Mapping[str, str] | None = None`. Headers None iken mevcut ws_connect test çağrısı korunur. Aynı socket aynı anda iki iterator ile okunamaz.
 
-- [ ] **Test yaz:** `test_iter_frames_preserves_text_binary_and_receive_metadata`: TEXT UTF8 bytes ve BINARY bytes eşit, iki receive ordinal 1/2, aynı connection_id, receive clock mock değerleri eşit. `test_legacy_bytes_transport_does_not_fabricate_receive_metadata`: tür unknown, receive fields None. `test_live_close_is_not_fixture_eof`: live iterator `TransientConnectorError`, FakeTransport boş iterator normal biter. Mevcut send_str testleri korunur.
+- [x] **Test yaz:** `test_iter_frames_preserves_text_binary_and_receive_metadata`: TEXT UTF8 bytes ve BINARY bytes eşit, iki receive ordinal 1/2, aynı connection_id, receive clock mock değerleri eşit. `test_legacy_bytes_transport_does_not_fabricate_receive_metadata`: tür unknown, receive fields None. `test_live_close_is_not_fixture_eof`: live iterator `TransientConnectorError`, FakeTransport boş iterator normal biter. Mevcut send_str testleri korunur.
 
 ```python
 async def test_legacy_bytes_transport_does_not_fabricate_receive_metadata():
@@ -67,10 +67,10 @@ async def test_legacy_bytes_transport_does_not_fabricate_receive_metadata():
     assert frame.received_utc_ns is None
     assert frame.received_monotonic_ns is None
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/ingest/test_transport.py tests/capture/test_schema.py`; yeni API yokken import/attribute failure bekle.
-- [ ] **Implement:** Zarf üretimi ws message alındığı anda; reconnect yeni connection_id/ordinal, monotonic clock UTC'den bağımsız. RawFrame ve public event/summary structs yukarıdaki exact alanlarla tanımla. Frame adapter yalnız gözlemlenen metadata'yı verir.
-- [ ] **GREEN:** Aynı komut; tüm testler PASS.
-- [ ] **Commit:** Yalnız görev dosyalarını stage ederek `feat: preserve inbound frame metadata`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/ingest/test_transport.py tests/capture/test_schema.py`; yeni API yokken import/attribute failure bekle.
+- [x] **Implement:** Zarf üretimi ws message alındığı anda; reconnect yeni connection_id/ordinal, monotonic clock UTC'den bağımsız. RawFrame ve public event/summary structs yukarıdaki exact alanlarla tanımla. Frame adapter yalnız gözlemlenen metadata'yı verir.
+- [x] **GREEN:** Aynı komut; tüm testler PASS.
+- [x] **Commit:** Yalnız görev dosyalarını stage ederek `feat: preserve inbound frame metadata`.
 
 ## Task 2: Format, manifest ve doğrulayan reader
 
@@ -78,7 +78,7 @@ async def test_legacy_bytes_transport_does_not_fabricate_receive_metadata():
 
 **Interfaces:** `encode_record(record: JournalRecord, *, max_record_bytes: int = 16 << 20) -> bytes`; `decode_record(data: bytes, *, max_record_bytes: int = 16 << 20) -> JournalRecord`. `CaptureReader(root: Path, *, recover_active_tail: bool = False)`; `records() -> Iterator[JournalRecord]`; `read_record(ordinal: int) -> JournalRecord`; `recovery_report() -> RecoveryReport`. `CaptureIntegrityError(StoreError)`; `CaptureError(SinkError)` ileride writer/live failure için.
 
-- [ ] **Test yaz:** JSON, malformed market bytes, empty payload ve non-UTF8 binary round trip bytes/fields tam eşit; UTC geri giden ikinci kayıt ordinal 2 kalır. `test_every_tail_byte_truncation_recovers_complete_prefix` her prefix için yalnız tam records verir, final partial'daki eksik bytes raporlanır. `test_middle_crc_corruption_fails`, `test_sealed_truncation_fails`, `test_manifest_segment_mismatch_fails` typed error assert eder. `test_record_length_is_checked_before_allocation` 16 MiB+1 prefix'inde payload read/allocation çağrılmadığını assert eder.
+- [x] **Test yaz:** JSON, malformed market bytes, empty payload ve non-UTF8 binary round trip bytes/fields tam eşit; UTC geri giden ikinci kayıt ordinal 2 kalır. `test_every_tail_byte_truncation_recovers_complete_prefix` her prefix için yalnız tam records verir, final partial'daki eksik bytes raporlanır. `test_middle_crc_corruption_fails`, `test_sealed_truncation_fails`, `test_manifest_segment_mismatch_fails` typed error assert eder. `test_record_length_is_checked_before_allocation` 16 MiB+1 prefix'inde payload read/allocation çağrılmadığını assert eder.
 
 ```python
 def test_raw_bytes_and_metadata_round_trip():
@@ -89,10 +89,10 @@ def test_raw_bytes_and_metadata_round_trip():
         stream_id="s1", frame=frame, observed_utc_ns=101, observed_monotonic_ns=8))
     assert decode_record(encode_record(rec)) == rec
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/capture/test_format.py tests/capture/test_reader.py`; yeni modül import failure.
-- [ ] **Implement:** File magic `CRCLRAW\0`, uint16 little-endian format version 1. Record uint32 length + MsgPack JournalRecord + uint32 CRC32; CRC MsgPack bytes üzerindedir, length body'nin boyutudur. Manifest version/context, sealed segment byte/ordinal bounds, SHA256 ve durable watermark taşır. Record ordinal'leri ardışık; sealed dosyanın tamamı doğrulanır. Reader read-only'dir; recovery dosya kesmez, yalnız son active partial'ın incomplete tail'ini raporlar. CRC hatalı tam kaydı tail diye gizlemez. Ordinal→segment offset index payload cache büyütmez.
-- [ ] **GREEN:** Aynı komut PASS; version/oversize/CRC/missing segment ayrı error testleri.
-- [ ] **Commit:** `feat: add validated raw journal format and reader`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/capture/test_format.py tests/capture/test_reader.py`; yeni modül import failure.
+- [x] **Implement:** File magic `CRCLRAW\0`, uint16 little-endian format version 1. Record uint32 length + MsgPack JournalRecord + uint32 CRC32; CRC MsgPack bytes üzerindedir, length body'nin boyutudur. Manifest version/context, sealed segment byte/ordinal bounds, SHA256 ve durable watermark taşır. Record ordinal'leri ardışık; sealed dosyanın tamamı doğrulanır. Reader read-only'dir; recovery dosya kesmez, yalnız son active partial'ın incomplete tail'ini raporlar. CRC hatalı tam kaydı tail diye gizlemez. Ordinal→segment offset index payload cache büyütmez.
+- [x] **GREEN:** Aynı komut PASS; version/oversize/CRC/missing segment ayrı error testleri.
+- [x] **Commit:** `feat: add validated raw journal format and reader`.
 
 ## Task 3: Writer, byte sınırı ve durability
 
@@ -115,7 +115,7 @@ class CaptureWriter:
     async def wait_failure(self) -> NoReturn: ...
 ```
 
-- [ ] **Test yaz:** append ordinal 1/2, flush watermark 2; queue budget encoded framing/envelope ve inflight bytes'ı kapsar. Overflow'da sonraki append/flush/close da CaptureError üretir. Short write, disk full ve fsync mock failure watermark ilerletmez; wait_failure uyanır. Idle fsync mocked monotonic 1.0 s tick'te ilerler. 256 MiB rotation küçük test budget ile record bölünmeden kanıtlanır. Cancelled close drain tamamlar veya açık capture failure bildirir; başarısız cleanup başarı sayılmaz.
+- [x] **Test yaz:** append ordinal 1/2, flush watermark 2; queue budget encoded framing/envelope ve inflight bytes'ı kapsar. Overflow'da sonraki append/flush/close da CaptureError üretir. Short write, disk full ve fsync mock failure watermark ilerletmez; wait_failure uyanır. Idle fsync mocked monotonic 1.0 s tick'te ilerler. 256 MiB rotation küçük test budget ile record bölünmeden kanıtlanır. Cancelled close drain tamamlar veya açık capture failure bildirir; başarısız cleanup başarı sayılmaz.
 
 `tests/capture/conftest.py` içine `capture_context` fixture'ı ekle: UUID sentinel, tek s1/binance-spot stream, BTCUSDT, public endpoint adı, binance-json decoder version1; secrets yoktur.
 
@@ -127,10 +127,10 @@ async def test_flush_advances_only_durable_watermark(tmp_path, capture_context):
     assert writer.stats().fsynced_ordinal == 1
     assert (await writer.close()).stats.fsynced_records == 1
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/capture/test_writer.py`; missing writer/API failure.
-- [ ] **Implement:** Tek writer task ordinal ve manifest yönetir. Disk I/O tek serialized worker ile event loop dışındadır. Queue admission bekleyip veri yutmaz; overflow sticky failure. Testte kısa write progress denetlenir, zero-progress/failure açık hata; başarılı partial writes tüm record tamamlanana kadar written sayılmaz. Flush+fsync timer idle'da da çalışır; durable lag ihlali raporlanır. close idempotent, seal drain/fsync ardından atomik replace; manifest uyumu recovery'de kontrol edilir.
-- [ ] **GREEN:** Aynı komut PASS; timer tests gerçek 1 s sleep kullanmaz, fake clock/event ile deterministik.
-- [ ] **Commit:** `feat: add bounded durable raw capture writer`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/capture/test_writer.py`; missing writer/API failure.
+- [x] **Implement:** Tek writer task ordinal ve manifest yönetir. Disk I/O tek serialized worker ile event loop dışındadır. Queue admission bekleyip veri yutmaz; overflow sticky failure. Testte kısa write progress denetlenir, zero-progress/failure açık hata; başarılı partial writes tüm record tamamlanana kadar written sayılmaz. Flush+fsync timer idle'da da çalışır; durable lag ihlali raporlanır. close idempotent, seal drain/fsync ardından atomik replace; manifest uyumu recovery'de kontrol edilir.
+- [x] **GREEN:** Aynı komut PASS; timer tests gerçek 1 s sleep kullanmaz, fake clock/event ile deterministik.
+- [x] **Commit:** `feat: add bounded durable raw capture writer`.
 
 ## Task 4: Reader/control router ve ayrı market processor
 
@@ -140,7 +140,7 @@ async def test_flush_advances_only_durable_watermark(tmp_path, capture_context):
 
 `CaptureEmitter(writer: CaptureWriter, out: Sink)`; `async emit(decision: ApplicationDecision, records: Sequence[Record]) -> None`. Her capture'ın tek emitter'ı ordered emission lock'u paylaşır; decision append ve ilgili canonical batch sink'e verme tek sıralı işlem olur. Generic JSON normalizer emission'ları da ApplicationDecision taşır; yalnız Binance book callbacks ile sınırlı değildir. Sink delivery hatası canonical materialization'dan ayrı başarısızlıktır; replay source'tan yeniden materialize edilen canonical event'leri doğrular, dış sink'e başarılı delivery iddiası yapmaz.
 
-- [ ] **Test yaz:** normalize/sink henüz beklerken journal market frame'i içerir; sonraki control ack processor kuyruğunda takılmaz. CaptureError DLQ'ya yazılmaz/reconnect edilmez. Idle socket sırasında writer failure session'ı durdurur. Authentication/refresh token örnekleri journal, caplog ve DLQ'da yoktur. Bilinmeyen/malformed Deribit mixed-control bytes yerine metadata bulunur; Binance market-only malformed bytes birebir saklanır. Processor queue byte overflow açık failure olur, drop-oldest yoktur.
+- [x] **Test yaz:** normalize/sink henüz beklerken journal market frame'i içerir; sonraki control ack processor kuyruğunda takılmaz. CaptureError DLQ'ya yazılmaz/reconnect edilmez. Idle socket sırasında writer failure session'ı durdurur. Authentication/refresh token örnekleri journal, caplog ve DLQ'da yoktur. Bilinmeyen/malformed Deribit mixed-control bytes yerine metadata bulunur; Binance market-only malformed bytes birebir saklanır. Processor queue byte overflow açık failure olur, drop-oldest yoktur.
 
 Test-local `runloop_harness` fixture'ı scripted transport, blocking normalizer, capture reader ve failure injector sunar; `run(fail_capture: bool=False)` connector.run(max_reconnects=2)'yi sürer, `connect_count` ve `dlq_records` izlenir.
 
@@ -151,10 +151,10 @@ async def test_capture_failure_is_not_dead_lettered_or_reconnected(runloop_harne
     assert runloop_harness.connect_count == 1
     assert runloop_harness.dlq_records == []
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/ingest/test_capture_runloop.py tests/exchanges/test_base_run_loop.py`; capture/routing assertions FAIL.
-- [ ] **Implement:** connect/subscription/reader/processor/watchdog lifecycle tek TaskGroup sahibinde. JSON için yalnız control classification'ın ihtiyaç duyduğu parse önce; market raw append canonical decode/normalization'dan önce. Dar sınıflandırma bilinmeyen payload'ı loglamaz. Decode errors mevcut DLQ davranışını sürdürür, control secret errors DLQ dışında sanitized kalır. Writer failure ve processor fatal error birbirini iptal eder; reconnect yeni connection context/book reset ister. Processor queue için ayrıca 32 MiB encoded input bütçesi; duraklayan sink sonsuz RAM oluşturamaz.
-- [ ] **GREEN:** Aynı komut PASS; cancel ve fixture EOF eski semantiklerini korur.
-- [ ] **Commit:** `feat: route control and capture before market processing`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/ingest/test_capture_runloop.py tests/exchanges/test_base_run_loop.py`; capture/routing assertions FAIL.
+- [x] **Implement:** connect/subscription/reader/processor/watchdog lifecycle tek TaskGroup sahibinde. JSON için yalnız control classification'ın ihtiyaç duyduğu parse önce; market raw append canonical decode/normalization'dan önce. Dar sınıflandırma bilinmeyen payload'ı loglamaz. Decode errors mevcut DLQ davranışını sürdürür, control secret errors DLQ dışında sanitized kalır. Writer failure ve processor fatal error birbirini iptal eder; reconnect yeni connection context/book reset ister. Processor queue için ayrıca 32 MiB encoded input bütçesi; duraklayan sink sonsuz RAM oluşturamaz.
+- [x] **GREEN:** Aynı komut PASS; cancel ve fixture EOF eski semantiklerini korur.
+- [x] **Commit:** `feat: route control and capture before market processing`.
 
 ## Task 5: Snapshot anchor ve Binance JSON sequence oturumu
 
@@ -166,7 +166,7 @@ async def test_capture_failure_is_not_dead_lettered_or_reconnected(runloop_harne
 
 Pure `BinanceBookState.accept_snapshot(snapshot: BookSnapshot) -> tuple[Record, ...]`; `accept_depth(event: BinanceDepthEvent, *, local_ts: int) -> tuple[SyncResult, tuple[Record, ...]]`. Aynı dosyadaki bu engine network/sink içermez; live session wrapper ve offline ReplayDecoder ortak engine'i tüketir.
 
-- [ ] **Test yaz:** HTTP response özgün bytes ve receive clocks kayıtlı; request/response/apply ref ayrı ordinal. Registry checkpoint ilk normalize'dan önce. REST future açıkken iki WS frame capture edilir. Spot anchor 100 sonrası U=99,u=101 APPLY, duplicate u=101 DROP, U=102,u=103 APPLY, U=105 gap. Resync buffer içindeki gap emit edilmez; her event yeniden feed edilir. Missing snapshot ID failure; futures anchor/subsequent pu kuralları mevcut fixture testleriyle değişmez.
+- [x] **Test yaz:** HTTP response özgün bytes ve receive clocks kayıtlı; request/response/apply ref ayrı ordinal. Registry checkpoint ilk normalize'dan önce. REST future açıkken iki WS frame capture edilir. Spot anchor 100 sonrası U=99,u=101 APPLY, duplicate u=101 DROP, U=102,u=103 APPLY, U=105 gap. Resync buffer içindeki gap emit edilmez; her event yeniden feed edilir. Missing snapshot ID failure; futures anchor/subsequent pu kuralları mevcut fixture testleriyle değişmez.
 
 ```python
 def test_overlapping_spot_range_and_duplicate():
@@ -177,10 +177,10 @@ def test_overlapping_spot_range_and_duplicate():
     assert sync.feed(U=100, u=103, pu=None) == SyncResult.APPLY
     assert sync.feed(U=105, u=106, pu=None) == SyncResult.RESYNC
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_capture_snapshots.py tests/exchanges/binance/test_book_session.py tests/exchanges/binance/test_book_sync.py`; missing provider/session veya eski overlap test failure.
-- [ ] **Implement:** HTTP body parse edilmeden capture, sanitized request params yalnız public depth request; registry checkpoint açık instrument listesiyle alınır. Binance bootstrap/resync tek symbol task, market input FIFO buffer; 32 MiB session buffer sınırı overflow fail-stop. Shared Spot sync stale/overlap/gap kuralları spec'e göre düzeltilir; futures pu değişmez. Binance bu yeni session yolunu kullanır; diğer venue'lerin shared bridge refactor'ı yapılmaz. Her apply/drop/snapshot/gap kararı raw origin ref ve canonical emission index'leriyle kaydedilir. Replay adapter aynı pure sequence engine'i kullanabilir; live REST scheduling ayrı wrapper'dır.
-- [ ] **GREEN:** Aynı komut ve `.\.venv\Scripts\python.exe -m pytest tests/ingest/test_gap_bridge.py tests/exchanges/binance/test_book_resync_bridge.py tests/equity/test_ingest.py`; legacy bridge ve equity shared sync regressions PASS.
-- [ ] **Commit:** `fix: preserve snapshot anchors and validate buffered depth ranges`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_capture_snapshots.py tests/exchanges/binance/test_book_session.py tests/exchanges/binance/test_book_sync.py`; missing provider/session veya eski overlap test failure.
+- [x] **Implement:** HTTP body parse edilmeden capture, sanitized request params yalnız public depth request; registry checkpoint açık instrument listesiyle alınır. Binance bootstrap/resync tek symbol task, market input FIFO buffer; 32 MiB session buffer sınırı overflow fail-stop. Shared Spot sync stale/overlap/gap kuralları spec'e göre düzeltilir; futures pu değişmez. Binance bu yeni session yolunu kullanır; diğer venue'lerin shared bridge refactor'ı yapılmaz. Her apply/drop/snapshot/gap kararı raw origin ref ve canonical emission index'leriyle kaydedilir. Replay adapter aynı pure sequence engine'i kullanabilir; live REST scheduling ayrı wrapper'dır.
+- [x] **GREEN:** Aynı komut ve `.\.venv\Scripts\python.exe -m pytest tests/ingest/test_gap_bridge.py tests/exchanges/binance/test_book_resync_bridge.py tests/equity/test_ingest.py`; legacy bridge ve equity shared sync regressions PASS.
+- [x] **Commit:** `fix: preserve snapshot anchors and validate buffered depth ranges`.
 
 ## Task 6: Deterministik ağsız replay
 
@@ -190,7 +190,7 @@ def test_overlapping_spot_range_and_duplicate():
 
 `CaptureReader.context` CaptureContext döndürür; dispatcher origin'in stream_id'sini context.streams ile eşleştirir ve decoder_id/version kontrolünden sonra uygun decoder instance'ını seçer. Aynı decoder türünün farklı stream'leri ayrı state instance'larıdır; book state paylaşılmaz.
 
-- [ ] **Test yaz:** live JSON fixture canonical output serialized bytes ve final book eşit; UTC rollback sıra değiştirmez. HTTP/WS constructor/request calls monkeypatch ile forbidden. Missing anchor, future/missing origin, unsupported decoder version typed CaptureIntegrityError. Original pacing monotonik farkı kullanır; reconnect monotonic metadata olmayan frame'lerde pacing unavailable açık durumdur, uydurulmuş receive-clock yoktur.
+- [x] **Test yaz:** live JSON fixture canonical output serialized bytes ve final book eşit; UTC rollback sıra değiştirmez. HTTP/WS constructor/request calls monkeypatch ile forbidden. Missing anchor, future/missing origin, unsupported decoder version typed CaptureIntegrityError. Original pacing monotonik farkı kullanır; reconnect monotonic metadata olmayan frame'lerde pacing unavailable açık durumdur, uydurulmuş receive-clock yoktur.
 
 `recorded_json_session` fixture'ı canlı scripted snapshot+WS+clock rollback run'ından reader, registered replay decoder mapping ve saved expected Record listesi döndürür. Network constructors fixture tamamlandıktan sonra `network_forbidden` fixture'ı tarafından AssertionError üretecek şekilde patch edilir.
 
@@ -201,10 +201,10 @@ def test_replay_matches_live_canonical_records(recorded_json_session, network_fo
     assert [msgspec.msgpack.encode(r) for r in actual] == [
         msgspec.msgpack.encode(r) for r in expected]
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/capture/test_replay.py`; missing replay API failure.
-- [ ] **Implement:** Journal ordinal yürü; karar önceki raw origin'i reader index ile çözer. Decoder action/indices ve sequence'ı yeniden doğrular; uygulanmış state'leri gelecekteki anchor ile onarmaz. ReplayDecoder kayıtlı registry/source precision bilgisiyle pure materialization yapar. Pacing execute-time'ı ayrı alandır; kaynak/receive timestamp'ları değiştirilmez. Payload cache bounded; network disabled; captured control secrets olmadan book replay mümkündür.
-- [ ] **GREEN:** Aynı komut ve mevcut `tests/client/test_replay.py` PASS.
-- [ ] **Commit:** `feat: replay captured market data without network access`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/capture/test_replay.py`; missing replay API failure.
+- [x] **Implement:** Journal ordinal yürü; karar önceki raw origin'i reader index ile çözer. Decoder action/indices ve sequence'ı yeniden doğrular; uygulanmış state'leri gelecekteki anchor ile onarmaz. ReplayDecoder kayıtlı registry/source precision bilgisiyle pure materialization yapar. Pacing execute-time'ı ayrı alandır; kaynak/receive timestamp'ları değiştirilmez. Payload cache bounded; network disabled; captured control secrets olmadan book replay mümkündür.
+- [x] **GREEN:** Aynı komut ve mevcut `tests/client/test_replay.py` PASS.
+- [x] **Commit:** `feat: replay captured market data without network access`.
 
 ## Task 7: Collect/config/CLI ve kullanıcı dokümanı
 
@@ -212,7 +212,7 @@ def test_replay_matches_live_canonical_records(recorded_json_session, network_fo
 
 **Interfaces:** `collect(..., capture: CaptureWriter | None = None)` keyword-only. Settings'e `raw_capture: bool = False` / `CROCODILE_RAW_CAPTURE`, `raw_capture_queue_bytes: str = "33554432"` / `CROCODILE_RAW_CAPTURE_QUEUE_BYTES`; queue config int validation collect başlamadan. Public caller output path almaz: capture root `{settings.data_dir}/raw-capture/{capture_id}`. Fast source mode config'leri sonraki alt planların görevidir. Mevcut generated CLI `collect` route'u kullanılır; ayrı deprecated CLI eklenmez. RawReplay önce library API'dir; normalized `replay` komutu anlam değiştirmez.
 
-- [ ] **Test yaz:** CaptureError cleanup sonrası tek CrocodileError olarak çıkar; ordinary connector error eskisi gibi isolated. Writer/close fsync failure başarılı collect sayılmaz. CLI failure exit 1 ve başarı summary'si yok. Capture cancellation drain/close sonrası CancelledError reraises. Invalid/zero/negative queue byte config network açmadan ConfigError. Capture off iken mevcut collect output/CLI schema değişmez.
+- [x] **Test yaz:** CaptureError cleanup sonrası tek CrocodileError olarak çıkar; ordinary connector error eskisi gibi isolated. Writer/close fsync failure başarılı collect sayılmaz. CLI failure exit 1 ve başarı summary'si yok. Capture cancellation drain/close sonrası CancelledError reraises. Invalid/zero/negative queue byte config network açmadan ConfigError. Capture off iken mevcut collect output/CLI schema değişmez.
 
 Test-local `collect_capture_harness` ordinary/special failure inject eden fake connector, writer ve MemorySink içerir; run(failure) gerçek collect çağırır ve cleanup flags ölçer.
 
@@ -223,11 +223,38 @@ async def test_collect_capture_failure_propagates_after_cleanup(collect_capture_
     assert collect_capture_harness.sink_closed
     assert collect_capture_harness.writer_closed
 ```
-- [ ] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/client/test_collect_capture.py tests/surfaces/test_collect_capture_cli.py tests/client/test_collect.py`; swallowed error/config assertions FAIL.
-- [ ] **Implement:** `_run_isolated` yalnız CaptureError'ı dışarı bırakır. `except* Exception` safety net bu hatayı yutmaz; TaskGroup errors cleanup sonrası tek CaptureError'a map edilir. Shared writer failure bütün capture producers'ı durdurur; sink/writer ayrı cleanup hataları orijinal hatayı gizlemeden raporlanır. Close cancellation bounded cleanup watchdog 10 s; zaman aşımı açık CaptureError, başarılı sealing iddiası yok. README opt-in env, kayıt alanı/durability penceresi, library replay örneği ve secret exclusion anlatır.
-- [ ] **GREEN:** Yukarıdaki seçim ve ana plandaki 57 mevcut test PASS. `.\.venv\Scripts\python.exe -m ruff check src/crocodile/core/capture tests/capture`; `.\.venv\Scripts\python.exe -m mypy src/crocodile/core/capture`. Dokümandaki library çağrısı fixture capture üzerinde smoke-run edilir.
-- [ ] **Commit:** `feat: expose required raw capture in collect`.
+- [x] **RED:** `.\.venv\Scripts\python.exe -m pytest tests/client/test_collect_capture.py tests/surfaces/test_collect_capture_cli.py tests/client/test_collect.py`; swallowed error/config assertions FAIL.
+- [x] **Implement:** `_run_isolated` yalnız CaptureError'ı dışarı bırakır. `except* Exception` safety net bu hatayı yutmaz; TaskGroup errors cleanup sonrası tek CaptureError'a map edilir. Shared writer failure bütün capture producers'ı durdurur; sink/writer ayrı cleanup hataları orijinal hatayı gizlemeden raporlanır. Close cancellation bounded cleanup watchdog 10 s; zaman aşımı açık CaptureError, başarılı sealing iddiası yok. README opt-in env, kayıt alanı/durability penceresi, library replay örneği ve secret exclusion anlatır.
+- [x] **GREEN:** Yukarıdaki seçim ve ana plandaki 57 mevcut test PASS. `.\.venv\Scripts\python.exe -m ruff check src/crocodile/core/capture tests/capture`; `.\.venv\Scripts\python.exe -m mypy src/crocodile/core/capture`. Dokümandaki library çağrısı fixture capture üzerinde smoke-run edilir.
+- [x] **Commit:** `feat: expose required raw capture in collect`.
 
 ## Self-review
 
 Capture schema, queue/durability/recovery, safe control, snapshots/registry/application decisions, replay ve collect propagation görevlerle kapsandı. Canonical ve raw types ayrı. Provider dönüşü tüm görevlerde `CapturedSnapshot`; ham response metadata'sı `SnapshotResponse` içindedir. Yeni SBE/Deribit decoder'ları bu exact arayüzleri tüketir. Son canlı erişim ve native FlowMap performansı burada ölçülmez.
+
+## Uygulama tamamlanma kaydı — 11 Ekim 2026
+
+Bu planın görevleri testler önce başarısız olacak şekilde yazılarak, sonra
+uygulama ve başarılı doğrulama ile tamamlandı. İşaretler yürütmenin durumunu
+gösterir; eski komutlardaki platform engelleri aşağıdaki son doğrulamada
+açıkça ayrıldı. Kullanıcının seçimi doğrultusunda görev başına bağımsız
+inceleme yerine bütün değişiklik üzerinde tek bağımsız son inceleme yapıldı.
+İki önemli bulgu ve önemli olarak yeniden derecelendirilen fsync gözlemi
+aynı düzeltme geçişinde testlerle giderildi (`35450bf`). Ertelenen küçük
+bulgu kalmadı.
+
+Son ilgili seçim 652 passed /111 baseline deselected; geniş Windows'ta
+çalışabilir seçim 3667 passed /1 skipped /164 baseline deselected.
+41 değişmemiş baseline collection dosyası dışarıda tutuldu. Aynı hata
+dosyaları ve başarısız runtime vakaları değişmemiş ana checkout'ta doğrulandı.
+Tüm depo Windows testleri yeşil değildir. Yeni modüller ve zero-debt kökler
+Ruff'tan; strict mypy Linux platformunda 254 modül ve benchmark ayrı ayrı
+geçti. Windows mypy'da eski iki `resource` hatası kalır.
+
+Yetkili canlı SBE/raw anahtarları bulunmadığından gerçek borsa erişimi ve
+aktif/sakin sembol cadence ölçülmedi. Fixture benchmark ve offline replay
+eşitliği doğrulandı; bunlar canlı receive Hz'i veya FlowMap FPS'i değildir.
+Tam görev, karar ve doğrulama kayıtları
+[yürütme kaydında](../reports/2026-10-11-free-l2-execution.md) saklandı.
+
+Görev commitleri: `3b0f6b5`, `222cf8e`, `b779d03`, `aa93c76`, `2d97e75`, `7b44269`, `0decd4e`.
