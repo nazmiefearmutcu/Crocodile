@@ -35,7 +35,7 @@ from crocodile.core.capture.snapshots import HttpSnapshotProvider, SnapshotProvi
 from crocodile.core.connector import Connector
 from crocodile.core.errors import ConfigError
 from crocodile.core.ingest.gap_bridge import BookResyncBridge
-from crocodile.core.ingest.transport import Transport
+from crocodile.core.ingest.transport import AiohttpWsTransport, Transport
 from crocodile.core.schema.records import BookDelta, BookSnapshot, Record
 from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import now_ns
@@ -195,6 +195,9 @@ class BinanceConnector(Connector):
         super().__init__(symbols=symbols, channels=channels, out=out, registry=registry)
         self.wire_format, self._api_key = wire_format, api_key
         self.decoder_id = "binance-sbe" if wire_format == "sbe" else "binance-json"
+        self.capture_schema_id = 1 if wire_format == "sbe" else None
+        self.capture_schema_version = 0 if wire_format == "sbe" else None
+        self.capture_endpoint_id = f"binance-{market}-{wire_format}-ws"
         self.market = market
         self.ws_url = _MARKET_WS_URL.get(market, _MARKET_WS_URL["spot"])
         self.rest_url = _MARKET_REST_URL.get(market, _MARKET_REST_URL["spot"])
@@ -257,6 +260,12 @@ class BinanceConnector(Connector):
     def subscribe_channels(self) -> list[str]:
         """Return the list of Binance stream topic strings."""
         return self._sub_topics
+
+    def make_transport(self) -> Transport:
+        if self.wire_format == "sbe":
+            assert self._api_key is not None
+            return AiohttpWsTransport(self.ws_url, headers={"X-MBX-APIKEY": self._api_key})
+        return super().make_transport()
 
     def _decode_frame(self, frame: RawFrame) -> object:
         if self.wire_format == "sbe":

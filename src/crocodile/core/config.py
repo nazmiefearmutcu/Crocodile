@@ -57,6 +57,10 @@ class Settings(msgspec.Struct, frozen=True):
     raw_capture_queue_bytes: str = "33554432"
     """Encoded raw journal admission budget, validated before live collection."""
 
+    binance_market: str = "spot"
+    binance_wire_format: str = "json"
+    binance_sbe_api_key: str | None = None
+
     home: str | None = None
     """State directory for payment records and IPC files. ``None`` means ``~/.crocodile``.
 
@@ -219,6 +223,9 @@ _VARS: Final[Mapping[str, str]] = {
     "data_dir": "DATA_DIR",
     "raw_capture": "RAW_CAPTURE",
     "raw_capture_queue_bytes": "RAW_CAPTURE_QUEUE_BYTES",
+    "binance_market": "BINANCE_MARKET",
+    "binance_wire_format": "BINANCE_WIRE_FORMAT",
+    "binance_sbe_api_key": "BINANCE_SBE_API_KEY",
     "home": "HOME",
     "alpaca_api_key": "ALPACA_API_KEY",
     "alpaca_api_secret": "ALPACA_API_SECRET",

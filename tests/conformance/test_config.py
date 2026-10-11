@@ -83,3 +83,17 @@ def test_sec_user_agent_defaults_to_none_rather_than_a_fabricated_contact():
 def test_sec_user_agent_passes_through_when_set():
     s = Settings.from_env({"CROCODILE_SEC_USER_AGENT": "Acme/1.0 (ops@acme.example)"})
     assert s.sec_user_agent == "Acme/1.0 (ops@acme.example)"
+
+
+def test_binance_sbe_settings_and_key_redaction():
+    settings = Settings.from_env(
+        {
+            "CROCODILE_BINANCE_MARKET": "spot",
+            "CROCODILE_BINANCE_WIRE_FORMAT": "sbe",
+            "CROCODILE_BINANCE_SBE_API_KEY": "SENTINEL_KEY",
+        }
+    )
+    assert settings.binance_wire_format == "sbe"
+    assert settings.binance_market == "spot"
+    assert settings.binance_sbe_api_key == "SENTINEL_KEY"
+    assert "SENTINEL_KEY" not in repr(settings)

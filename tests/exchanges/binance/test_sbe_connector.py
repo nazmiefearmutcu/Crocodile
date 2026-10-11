@@ -58,3 +58,40 @@ async def test_partial_snapshot_cannot_reset_a_full_book(sbe_fixture):
     with pytest.raises(SbeProtocolError, match="partial"):
         await conn._handle_message(decode_sbe_frame(sbe_fixture("depth_snapshot.bin")), 1)
     assert conn.out.records == []
+
+
+@pytest.mark.asyncio
+async def test_sbe_transport_sends_only_key_header():
+    from unittest.mock import ANY, AsyncMock, MagicMock, patch
+
+    conn = BinanceConnector(
+        ["BTCUSDT"],
+        ["trade"],
+        MemorySink(),
+        InstrumentRegistry(),
+        wire_format="sbe",
+        api_key="fixture-key",
+    )
+    session = MagicMock()
+    session.ws_connect, session.close = AsyncMock(return_value=MagicMock()), AsyncMock()
+    with patch("aiohttp.ClientSession", return_value=session):
+        transport = conn.make_transport()
+        await transport.connect()
+        await transport.close()
+    session.ws_connect.assert_awaited_once_with(
+        "wss://stream-sbe.binance.com/ws",
+        heartbeat=20.0,
+        ssl=ANY,
+        headers={"X-MBX-APIKEY": "fixture-key"},
+    )
+
+
+@pytest.mark.parametrize(
+    "kwargs", [{"market": "usdm"}, {"market": "coinm"}, {"api_key": ""}, {"wire_format": "invalid"}]
+)
+def test_invalid_sbe_configuration_refuses_before_transport(kwargs):
+    from crocodile.core.errors import ConfigError
+
+    config = {"wire_format": "sbe", "api_key": "fixture-key"} | kwargs
+    with pytest.raises(ConfigError):
+        BinanceConnector(["BTCUSDT"], ["book_delta"], MemorySink(), InstrumentRegistry(), **config)

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from crocodile.crypto.instruments.registry import InstrumentRegistry
 from crocodile.core.sink.memory import MemorySink
+from crocodile.crypto.instruments.registry import InstrumentRegistry
 
 
 def _make(exchange: str, **kw):  # type: ignore[no-untyped-def]
@@ -82,6 +82,16 @@ def test_make_connector_binance() -> None:
 
     conn = _make("binance")
     assert isinstance(conn, BinanceConnector)
+
+
+def test_factory_consumes_settings_and_explicit_kwargs_override():
+    from crocodile.core.config import Settings
+
+    settings = Settings(binance_wire_format="sbe", binance_sbe_api_key="fixture-key")
+    conn = _make("binance", settings=settings)
+    assert conn.wire_format == "sbe"
+    assert _make("binance", settings=settings, wire_format="json").wire_format == "json"
+    assert _make("bybit", settings=settings).name == "bybit"
 
 
 def test_make_connector_bybit() -> None:
@@ -181,7 +191,6 @@ def test_make_connector_unknown_raises() -> None:
         "superchain",
     ):
         assert name in msg, f"Expected {name!r} in error message: {msg!r}"
-
 
 
 def test_make_connector_case_sensitive() -> None:

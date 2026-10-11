@@ -641,6 +641,40 @@ def test_collect_market_judges_everything_it_can_before_a_subscription_exists(
     assert sub.sources == ("binance",)
 
 
+def test_sbe_collect_market_refuses_before_universe_lookup(ctx):
+    fast = CapabilityContext(
+        catalog=ctx.catalog,
+        asset_class=AssetClass.CRYPTO,
+        settings=Settings(
+            data_dir=ctx.settings.data_dir,
+            binance_wire_format="sbe",
+            binance_sbe_api_key="fixture-key",
+        ),
+    )
+    with pytest.raises(ConfigError, match="native symbols"):
+        ops.collect_market(fast, _market_params())
+
+
+def test_collect_preserves_connector_supplied_transport(ctx, monkeypatch):
+    from crocodile.core.ingest.transport import FakeTransport
+    from crocodile.crypto.exchanges.binance.connector import BinanceConnector
+
+    custom = FakeTransport([])
+    created = []
+
+    def factory(**kwargs):
+        conn = BinanceConnector(
+            kwargs["symbols"], kwargs["channels"], kwargs["out"], kwargs["registry"]
+        )
+        conn.transport = custom
+        created.append(conn)
+        return conn
+
+    monkeypatch.setattr("crocodile.crypto.exchanges.factory.make_connector", factory)
+    ops.collect(ctx, _collect_params(sources=("binance",), symbols=("BTCUSDT",)))
+    assert created[0].transport is custom
+
+
 @pytest.mark.parametrize(
     ("params", "message"),
     [
@@ -997,9 +1031,7 @@ def test_backfill_returns_its_run_unstarted_so_the_surface_owns_the_loop(
 def test_backfill_refuses_an_inverted_time_range(ctx: CapabilityContext, adapter: str) -> None:
     """Not an empty result: the venue helpers page forward and answer differently to it."""
     with pytest.raises(ValueError, match="is after"):
-        getattr(ops, adapter)(
-            ctx, _backfill_params(start_ns=_BASE_NS + _1S, end_ns=_BASE_NS)
-        )
+        getattr(ops, adapter)(ctx, _backfill_params(start_ns=_BASE_NS + _1S, end_ns=_BASE_NS))
 
 
 @pytest.mark.parametrize("adapter", ["backfill", "backfill_equities"])

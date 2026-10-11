@@ -402,6 +402,17 @@ byte-only transports cannot provide that pacing; `pacing="fast"` works without i
 `collect-market` uses unified CCXT symbols and rejects raw capture; use native symbols
 through `collect` for these feeds. Missing contract units remain missing in the registry.
 
+For Binance Spot SBE (published depth interval 20 ms), set
+`CROCODILE_BINANCE_WIRE_FORMAT=sbe`, `CROCODILE_BINANCE_MARKET=spot` and
+`CROCODILE_BINANCE_SBE_API_KEY` locally. The key must be registered as Ed25519 on Binance;
+only its API key string is sent in `X-MBX-APIKEY`. Private keys and trading permissions
+are unnecessary for this feed. JSON remains the default. `book_delta` and `book_snapshot`
+both request the full-depth diff stream, anchored by REST; top-20 snapshots have a separate
+50 ms scope and cannot reset that book. The 20 ms publication interval is not a guarantee
+of 50 new changes per second on every symbol. REST seed coverage is limited to the chosen
+snapshot depth (default 1000, maximum 5000 per side), with additional changed levels learned
+afterwards. Source identity remains `binance-spot`, including in SBE captures.
+
 ## Contributing
 
 PRs welcome. Skim [`CHANGELOG.md`](CHANGELOG.md) for direction, keep the `mypy --strict` and

@@ -31,7 +31,7 @@ from crocodile.core.errors import (
     TransientConnectorError,
 )
 from crocodile.core.ingest.deadletter import DeadLetterQueue
-from crocodile.core.ingest.transport import Transport, iter_transport_frames
+from crocodile.core.ingest.transport import AiohttpWsTransport, Transport, iter_transport_frames
 from crocodile.core.schema.records import Record
 from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import now_ns
@@ -133,6 +133,9 @@ class Connector(ABC):
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession()
         return self._session
+
+    def make_transport(self) -> Transport:
+        return AiohttpWsTransport(self.ws_url)
 
     async def http_get(
         self,

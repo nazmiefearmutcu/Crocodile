@@ -29,9 +29,10 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
+from crocodile.core.config import Settings
 from crocodile.core.connector import Connector
-from crocodile.crypto.instruments.registry import InstrumentRegistry
 from crocodile.core.sink.base import Sink
+from crocodile.crypto.instruments.registry import InstrumentRegistry
 
 # Connectors are imported lazily so that pulling in one exchange never pays
 # for another's dependency tree (e.g. derive -> analytics -> numpy).
@@ -43,7 +44,10 @@ _REGISTRY: dict[str, tuple[str, str]] = {
     "derive": ("crocodile.crypto.exchanges.derive.connector", "DerivePollConnector"),
     "okx": ("crocodile.crypto.exchanges.okx.connector", "OKXConnector"),
     "base_onchain": ("crocodile.crypto.exchanges.base_onchain.connector", "BaseOnchainConnector"),
-    "gmx_synthetix": ("crocodile.crypto.exchanges.gmx_synthetix.connector", "GMXSynthetixConnector"),
+    "gmx_synthetix": (
+        "crocodile.crypto.exchanges.gmx_synthetix.connector",
+        "GMXSynthetixConnector",
+    ),
     "superchain": ("crocodile.crypto.exchanges.superchain.connector", "SuperchainConnector"),
     "coingecko": ("crocodile.crypto.exchanges.coingecko.connector", "CoinGeckoConnector"),
 }
@@ -106,6 +110,8 @@ def make_connector(
     channels: list[str],
     out: Sink,
     registry: InstrumentRegistry,
+    *,
+    settings: Settings | None = None,
     **kw: Any,
 ) -> Connector:
     """Instantiate and return the correct :class:`~.base.Connector` subclass.
@@ -136,6 +142,10 @@ def make_connector(
         If *exchange* is not a recognised name.  The error message lists all
         valid names.
     """
+    if settings is not None and exchange == "binance":
+        kw.setdefault("market", settings.binance_market)
+        kw.setdefault("wire_format", settings.binance_wire_format)
+        kw.setdefault("api_key", settings.binance_sbe_api_key)
     entry = _REGISTRY.get(exchange)
     if entry is None:
         # Not a native connector — fall through to the universal ccxt venue set.

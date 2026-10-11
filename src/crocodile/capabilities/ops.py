@@ -718,7 +718,6 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
             "Raw capture currently supports native binance and deribit collect sources"
         )
 
-    from crocodile.core.ingest.transport import AiohttpWsTransport
     from crocodile.crypto.exchanges.factory import make_connector
     from crocodile.crypto.instruments.registry import InstrumentRegistry
 
@@ -732,9 +731,10 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
             channels=list(params.channels),
             out=sink,
             registry=registry,
+            settings=ctx.settings,
         )
         if connector.transport is None:
-            connector.transport = AiohttpWsTransport(connector.ws_url)
+            connector.transport = connector.make_transport()
         connectors.append(connector)
 
     async def begin() -> None:
@@ -758,9 +758,13 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
                             source=getattr(connector, "_venue", connector.name),
                             market=getattr(connector, "market", "derivatives"),
                             symbols=tuple(connector.symbols),
-                            endpoint_id=f"{connector.name}-public",
+                            endpoint_id=getattr(
+                                connector, "capture_endpoint_id", f"{connector.name}-public"
+                            ),
                             decoder_id=getattr(connector, "decoder_id", f"{connector.name}-json"),
                             decoder_version=1,
+                            schema_id=getattr(connector, "capture_schema_id", None),
+                            schema_version=getattr(connector, "capture_schema_version", None),
                         )
                     )
                 capture = await CaptureWriter.create(
@@ -903,6 +907,8 @@ def collect_market(ctx: CapabilityContext, params: CollectMarketParams) -> Subsc
     a subscription exists rather than on first await.
     """
     _refuse_readonly(ctx, "collect-market")
+    if ctx.settings.binance_wire_format == "sbe" and "binance" in params.sources:
+        raise ConfigError("Spot SBE requires collect with native symbols; use collect")
     if ctx.settings.raw_capture:
         _capture_budget(ctx)
         raise ConfigError("Raw capture requires collect with native symbols; use collect")

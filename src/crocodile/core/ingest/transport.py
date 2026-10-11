@@ -13,7 +13,7 @@ from collections.abc import AsyncIterator, Mapping
 from typing import Any, Protocol, runtime_checkable
 
 from crocodile.core.capture.schema import RawFrame
-from crocodile.core.errors import TransientConnectorError
+from crocodile.core.errors import FatalConnectorError, TransientConnectorError
 
 
 @runtime_checkable
@@ -61,9 +61,14 @@ async def iter_transport_frames(transport: Transport) -> AsyncIterator[RawFrame]
             yield frame
     else:
         async for payload in transport:
-            yield RawFrame(payload=payload, frame_kind="unknown", received_utc_ns=None,
-                           received_monotonic_ns=None, connection_id=None,
-                           receive_ordinal=None)
+            yield RawFrame(
+                payload=payload,
+                frame_kind="unknown",
+                received_utc_ns=None,
+                received_monotonic_ns=None,
+                connection_id=None,
+                receive_ordinal=None,
+            )
 
 
 class AiohttpWsTransport:
@@ -82,8 +87,9 @@ class AiohttpWsTransport:
             as-is.
     """
 
-    def __init__(self, url: str, *, ssl: Any = None,
-                 headers: Mapping[str, str] | None = None) -> None:
+    def __init__(
+        self, url: str, *, ssl: Any = None, headers: Mapping[str, str] | None = None
+    ) -> None:
         self._url = url
         self._ssl = ssl  # None → resolve at connect(); False/SSLContext explicit
         # Typed as Any to avoid importing aiohttp at module level (lazy import).
@@ -120,11 +126,17 @@ class AiohttpWsTransport:
         try:
             options: dict[str, Any] = {} if self._headers is None else {"headers": self._headers}
             ws = await session.ws_connect(self._url, heartbeat=20.0, ssl=ssl_arg, **options)
-        except Exception:
+        except Exception as exc:
             try:
                 await session.close()
             except Exception:
                 pass
+            if (
+                self._headers is not None
+                and isinstance(exc, aiohttp.WSServerHandshakeError)
+                and exc.status in {400, 401, 403}
+            ):
+                raise FatalConnectorError("Authenticated WebSocket handshake rejected") from None
             raise
         self._session = session
         self._ws = ws
@@ -157,8 +169,10 @@ class AiohttpWsTransport:
                 yield RawFrame(
                     payload=msg.data.encode("utf-8") if is_text else msg.data,
                     frame_kind="text" if is_text else "binary",
-                    received_utc_ns=time.time_ns(), received_monotonic_ns=time.monotonic_ns(),
-                    connection_id=self._connection_id, receive_ordinal=self._receive_ordinal,
+                    received_utc_ns=time.time_ns(),
+                    received_monotonic_ns=time.monotonic_ns(),
+                    connection_id=self._connection_id,
+                    receive_ordinal=self._receive_ordinal,
                 )
             raise TransientConnectorError("WebSocket closed")
         finally:
