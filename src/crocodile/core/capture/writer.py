@@ -38,6 +38,7 @@ class CaptureWriter:
     def __init__(self, root: Path, context: CaptureContext, *, queue_bytes: int,
                  segment_bytes: int, max_record_bytes: int, fsync_interval_s: float):
         self.root, self.context = root, context
+        self.emission_lock = asyncio.Lock()
         self._budget, self._segment_target = queue_bytes, segment_bytes
         self._max_record, self._interval = max_record_bytes, fsync_interval_s
         self._queue: asyncio.Queue[tuple[int, bytes] | asyncio.Future[int] | None] = asyncio.Queue()

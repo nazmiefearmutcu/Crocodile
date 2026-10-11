@@ -4,21 +4,33 @@ import asyncio
 import json
 import logging
 import random
+import time
 import traceback
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Literal
 
 import aiohttp
 
+from crocodile.core.capture.classification import FrameClass, classify_frame
+from crocodile.core.capture.emitter import CaptureEmitter
+from crocodile.core.capture.schema import (
+    ApplicationDecision,
+    ControlMetadata,
+    MarketFrame,
+    RawFrame,
+)
+from crocodile.core.capture.writer import CaptureWriter
 from crocodile.core.errors import (
+    CaptureError,
     ConnectorError,
     FatalConnectorError,
     SinkError,
     TransientConnectorError,
 )
 from crocodile.core.ingest.deadletter import DeadLetterQueue
-from crocodile.core.ingest.transport import Transport
+from crocodile.core.ingest.transport import Transport, iter_transport_frames
 from crocodile.core.schema.records import Record
 from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import now_ns
@@ -37,6 +49,13 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class ProcessedInput:
+    origin_ordinal: int | None
+    frame: RawFrame
+    local_ts: int
 
 
 def backoff_delays(
@@ -103,6 +122,10 @@ class Connector(ABC):
         self.transport: Transport | None = None
         self._dlq: DeadLetterQueue = DeadLetterQueue()
         self._session: aiohttp.ClientSession | None = None
+        self.capture: CaptureWriter | None = None
+        self.capture_stream_id: str | None = None
+        self._origin_ordinal: int | None = None
+        self._processor_budget = 32 << 20
 
     @property
     def http_session(self) -> aiohttp.ClientSession:
@@ -180,16 +203,134 @@ class Connector(ABC):
         Called from :meth:`run` inside the normalize-error try block; exceptions
         here are DLQ'd and the loop continues.
         """
-        for rec in self.normalize(msg, local_ts):
-            try:
-                await self.out.put(rec)
-            except SinkError:
-                raise
-            except Exception as exc:
-                # A failed write says nothing about the frame that produced the
-                # record. Name it, so the DLQ tells "our output path is broken"
-                # apart from "the venue sent something we cannot parse".
-                raise SinkError(f"{self.name}: sink write failed: {exc}") from exc
+        await self._emit_records(list(self.normalize(msg, local_ts)))
+
+    async def _emit_records(self, records: list[Record], *,
+                            action: Literal["apply", "drop", "snapshot", "gap"] = "apply",
+                            reason: str = "market", origin_ordinal: int | None = None) -> None:
+        origin = self._origin_ordinal if origin_ordinal is None else origin_ordinal
+        try:
+            if self.capture is not None:
+                if origin is None:
+                    raise CaptureError("Canonical emission has no recorded origin")
+                decision = ApplicationDecision(origin_ordinal=origin,
+                    record_indices=tuple(range(len(records))), action=action, reason=reason)
+                await CaptureEmitter(self.capture, self.out).emit(decision, records)
+            else:
+                for record in records:
+                    await self.out.put(record)
+        except SinkError:
+            raise
+        except Exception as exc:
+            raise SinkError(f"{self.name}: sink write failed") from exc
+
+    def _decode_frame(self, frame: RawFrame) -> object:
+        return json.loads(frame.payload)
+
+    def _classify_frame(self, frame: RawFrame, msg: object | None) -> FrameClass:
+        source = self.name
+        if (source == "deribit" and self.capture is None
+                and not getattr(self, "_mixed_controls", False)):
+            source = "public-json"
+        return classify_frame(source, frame, msg)
+
+    async def _handle_control_message(self, msg: object, frame: RawFrame) -> bool:
+        return False
+
+    async def _on_connection_close(self) -> None:
+        return None
+
+    def _stream_id(self) -> str:
+        if self.capture is None:
+            raise CaptureError("Missing capture context")
+        if self.capture_stream_id is not None:
+            if self.capture_stream_id in {s.stream_id for s in self.capture.context.streams}:
+                return self.capture_stream_id
+            raise CaptureError("Unknown capture stream")
+        source = getattr(self, "_venue", self.name)
+        matches = [s.stream_id for s in self.capture.context.streams if s.source == source]
+        if len(matches) != 1:
+            raise CaptureError("Ambiguous capture stream")
+        return matches[0]
+
+    async def _run_connection(self, transport: Transport) -> None:
+        queue: asyncio.Queue[ProcessedInput | None] = asyncio.Queue()
+        pending_bytes = 0
+
+        async def read() -> None:
+            nonlocal pending_bytes
+            async for frame in iter_transport_frames(transport):
+                local_ts = frame.received_utc_ns if frame.received_utc_ns is not None else now_ns()
+                msg: object | None = None
+                if frame.frame_kind != "binary":
+                    try:
+                        msg = json.loads(frame.payload)
+                    except (ValueError, UnicodeDecodeError):
+                        pass
+                kind = self._classify_frame(frame, msg)
+                if kind != "market":
+                    if self.capture is not None:
+                        request_id = str(msg["id"]) if (isinstance(msg, dict) and
+                            isinstance(msg.get("id"), int)) else None
+                        await self.capture.append(ControlMetadata(stream_id=self._stream_id(),
+                            kind=kind, connection_id=frame.connection_id, request_id=request_id,
+                            status="received", observed_utc_ns=local_ts))
+                    handled = await self._handle_control_message(msg, frame)
+                    if not handled and isinstance(msg, dict) and msg.get("error") is not None:
+                        error = msg["error"]
+                        code = error.get("code") if isinstance(error, dict) else None
+                        log.warning("%s: exchange rejected request (code=%s)", self.name,
+                                    code if isinstance(code, int) else "unknown")
+                    continue
+                origin = None
+                if self.capture is not None:
+                    origin = await self.capture.append(MarketFrame(stream_id=self._stream_id(),
+                        frame=frame, observed_utc_ns=local_ts,
+                        observed_monotonic_ns=time.monotonic_ns()))
+                size = len(frame.payload) + 256
+                if pending_bytes + size > self._processor_budget:
+                    error_type = CaptureError if self.capture is not None else FatalConnectorError
+                    raise error_type("Market processor byte queue overflow")
+                pending_bytes += size
+                queue.put_nowait(ProcessedInput(origin, frame, local_ts))
+            queue.put_nowait(None)
+
+        async def process() -> None:
+            nonlocal pending_bytes
+            while (item := await queue.get()) is not None:
+                self._origin_ordinal = item.origin_ordinal
+                try:
+                    msg = self._decode_frame(item.frame)
+                    await self._handle_message(msg, item.local_ts)
+                except (FatalConnectorError, CaptureError):
+                    raise
+                except Exception as exc:
+                    await self._dlq.put(item.local_ts, item.frame.payload, type(exc).__name__,
+                                        traceback.format_exc())
+                    log.debug("DLQ: market processing failed (%s)", type(exc).__name__)
+                finally:
+                    pending_bytes -= len(item.frame.payload) + 256
+                    self._origin_ordinal = None
+
+        try:
+            async with asyncio.TaskGroup() as group:
+                reader = group.create_task(read())
+                processor = group.create_task(process())
+                watcher = group.create_task(self.capture.wait_failure()) if self.capture else None
+                await self._subscribe(transport)
+                await reader
+                await processor
+                if watcher is not None:
+                    watcher.cancel()
+        except ExceptionGroup as exc:
+            def leaves(group: BaseExceptionGroup) -> list[BaseException]:
+                return [leaf for e in group.exceptions
+                        for leaf in (leaves(e) if isinstance(e, BaseExceptionGroup) else [e])]
+            errors = leaves(exc)
+            for error in errors:
+                if isinstance(error, (CaptureError, FatalConnectorError)):
+                    raise error from None
+            raise errors[0] from None
 
     async def backfill(
         self,
@@ -221,43 +362,16 @@ class Connector(ABC):
                 raise RuntimeError("No transport configured; set conn.transport before run()")
             try:
                 await transport.connect()
-                await self._subscribe(transport)
-
-                async for raw in transport:
-                    local_ts = now_ns()
-                    try:
-                        msg = json.loads(raw)
-                    except Exception as exc:
-                        tb = traceback.format_exc()
-                        await self._dlq.put(local_ts, raw, type(exc).__name__, tb)
-                        log.debug("DLQ: unparseable frame: %s", exc)
-                        continue
-
-                    if isinstance(msg, dict) and msg.get("error") is not None:
-                        log.warning("%s: exchange rejected request: %s", self.name, msg["error"])
-                        continue
-
-                    try:
-                        await self._handle_message(msg, local_ts)
-                    except FatalConnectorError:
-                        # Not one bad frame: the channel or the credential is
-                        # wrong, so every later frame fails the same way. Let it
-                        # out of the frame loop rather than dead-lettering each.
-                        raise
-                    except Exception as exc:
-                        tb = traceback.format_exc()
-                        await self._dlq.put(local_ts, raw, type(exc).__name__, tb)
-                        log.debug("DLQ: normalize error: %s", exc)
-
-                # Transport exhausted normally (StopAsyncIteration) → done
+                await self._run_connection(transport)
                 break
 
-            except FatalConnectorError:
+            except (FatalConnectorError, CaptureError):
                 # Authentication or configuration is wrong. Reconnecting cannot fix
                 # it and would hammer the venue; surface it to the caller.
                 raise
             except Exception as exc:
-                log.warning("Connector %s error (attempt %d): %s", self.name, attempt, exc)
+                log.warning("Connector %s error (attempt %d, type=%s)", self.name,
+                            attempt, type(exc).__name__)
                 if max_reconnects == 0 or (max_reconnects > 0 and attempt >= max_reconnects):
                     raise
                 delay = backoff_delays(attempt, jitter=0.25, rand=random.random())
@@ -265,6 +379,7 @@ class Connector(ABC):
                 await asyncio.sleep(delay)
                 attempt += 1
             finally:
+                await self._on_connection_close()
                 await transport.close()
                 if self._session is not None and not self._session.closed:
                     await self._session.close()

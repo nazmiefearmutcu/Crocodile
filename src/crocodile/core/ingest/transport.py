@@ -118,7 +118,7 @@ class AiohttpWsTransport:
         connector = aiohttp.TCPConnector(ssl=ssl_arg)
         session = aiohttp.ClientSession(connector=connector)
         try:
-            options = {} if self._headers is None else {"headers": self._headers}
+            options: dict[str, Any] = {} if self._headers is None else {"headers": self._headers}
             ws = await session.ws_connect(self._url, heartbeat=20.0, ssl=ssl_arg, **options)
         except Exception:
             try:

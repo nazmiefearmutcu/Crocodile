@@ -30,7 +30,7 @@ def us_to_ns(us: int | float) -> int:
 def now_ns() -> int:
     """Capture clock for local_ts. Realtime so it's comparable to source_ts."""
     if hasattr(time, "clock_gettime_ns") and hasattr(time, "CLOCK_REALTIME"):
-        return time.clock_gettime_ns(time.CLOCK_REALTIME)
+        return int(time.clock_gettime_ns(getattr(time, "CLOCK_REALTIME", 0)))
     return time.time_ns()
 
 
