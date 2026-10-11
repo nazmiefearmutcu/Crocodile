@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Literal
 
 import aiohttp
 
 from crocodile.core.connector import Connector
+from crocodile.core.errors import ConfigError
 from crocodile.core.ingest.transport import Transport
 from crocodile.core.schema.records import Record
 from crocodile.core.sink.base import Sink
@@ -38,7 +40,9 @@ _CHANNEL_MAP: dict[str, str] = {
 }
 
 
-def build_channels(symbols: list[str], channels: list[str]) -> list[str]:
+def build_channels(
+    symbols: list[str], channels: list[str], *, interval: str = "100ms"
+) -> list[str]:
     """Return the list of Deribit WS channel strings for the given symbols and channel kinds.
 
     Deduplicates: if both 'book_delta' and 'book_snapshot' appear they map to the same
@@ -49,7 +53,7 @@ def build_channels(symbols: list[str], channels: list[str]) -> list[str]:
         for ch in channels:
             pattern = _CHANNEL_MAP.get(ch)
             if pattern is not None:
-                result.add(pattern.format(sym=sym))
+                result.add(pattern.format(sym=sym).removesuffix(_WS_INTERVAL) + interval)
     return sorted(result)
 
 
@@ -132,9 +136,36 @@ class DeribitConnector(Connector):
         channels: list[str],
         out: Sink,
         registry: InstrumentRegistry,
+        *,
+        interval: Literal["100ms", "raw"] = "100ms",
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        request_timeout_seconds: float = 10.0,
+        heartbeat_interval_seconds: int = 30,
+        refresh_margin_seconds: float = 30.0,
     ) -> None:
+        if interval not in ("100ms", "raw"):
+            raise ConfigError("Deribit interval expects 100ms or raw")
+        if interval == "raw" and not (
+            client_id and client_id.strip() and client_secret and client_secret.strip()
+        ):
+            raise ConfigError("Deribit raw requires CROCODILE_DERIBIT_CLIENT_ID and CLIENT_SECRET")
+        if heartbeat_interval_seconds < 10:
+            raise ConfigError("Deribit heartbeat interval must be at least 10 seconds")
+        if not math.isfinite(request_timeout_seconds) or request_timeout_seconds <= 0:
+            raise ConfigError("Deribit request timeout must be finite and positive")
+        if not math.isfinite(refresh_margin_seconds) or refresh_margin_seconds < 0:
+            raise ConfigError("Deribit refresh margin must be finite and nonnegative")
         super().__init__(symbols=symbols, channels=channels, out=out, registry=registry)
-        self._sub_channels = build_channels(symbols, channels)
+        self.interval = interval
+        self._client_id, self._client_secret = client_id, client_secret
+        self._request_timeout_seconds = request_timeout_seconds
+        self._heartbeat_interval_seconds = heartbeat_interval_seconds
+        self._refresh_margin_seconds = refresh_margin_seconds
+        self._sub_channels = build_channels(symbols, channels, interval=interval)
+        self.capture_endpoint_id = f"deribit-{interval}-ws"
+        self.capture_decoder_id = "deribit-json"
+        self.capture_decoder_version = 1
 
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]:
         if isinstance(msg, dict):

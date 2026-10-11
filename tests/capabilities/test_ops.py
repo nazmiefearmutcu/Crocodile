@@ -655,6 +655,16 @@ def test_sbe_collect_market_refuses_before_universe_lookup(ctx):
         ops.collect_market(fast, _market_params())
 
 
+def test_deribit_raw_collect_market_refuses_before_universe_lookup(ctx):
+    fast = CapabilityContext(
+        catalog=ctx.catalog,
+        asset_class=AssetClass.CRYPTO,
+        settings=Settings(data_dir=ctx.settings.data_dir, deribit_interval="raw"),
+    )
+    with pytest.raises(ConfigError, match="native symbols"):
+        ops.collect_market(fast, _market_params(sources=("deribit",)))
+
+
 def test_collect_preserves_connector_supplied_transport(ctx, monkeypatch):
     from crocodile.core.ingest.transport import FakeTransport
     from crocodile.crypto.exchanges.binance.connector import BinanceConnector

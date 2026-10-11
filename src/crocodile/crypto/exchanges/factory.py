@@ -146,6 +146,10 @@ def make_connector(
         kw.setdefault("market", settings.binance_market)
         kw.setdefault("wire_format", settings.binance_wire_format)
         kw.setdefault("api_key", settings.binance_sbe_api_key)
+    if settings is not None and exchange == "deribit":
+        kw.setdefault("interval", settings.deribit_interval)
+        kw.setdefault("client_id", settings.deribit_client_id)
+        kw.setdefault("client_secret", settings.deribit_client_secret)
     entry = _REGISTRY.get(exchange)
     if entry is None:
         # Not a native connector — fall through to the universal ccxt venue set.

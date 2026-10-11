@@ -60,6 +60,9 @@ class Settings(msgspec.Struct, frozen=True):
     binance_market: str = "spot"
     binance_wire_format: str = "json"
     binance_sbe_api_key: str | None = None
+    deribit_interval: str = "100ms"
+    deribit_client_id: str | None = None
+    deribit_client_secret: str | None = None
 
     home: str | None = None
     """State directory for payment records and IPC files. ``None`` means ``~/.crocodile``.
@@ -226,6 +229,9 @@ _VARS: Final[Mapping[str, str]] = {
     "binance_market": "BINANCE_MARKET",
     "binance_wire_format": "BINANCE_WIRE_FORMAT",
     "binance_sbe_api_key": "BINANCE_SBE_API_KEY",
+    "deribit_interval": "DERIBIT_INTERVAL",
+    "deribit_client_id": "DERIBIT_CLIENT_ID",
+    "deribit_client_secret": "DERIBIT_CLIENT_SECRET",
     "home": "HOME",
     "alpaca_api_key": "ALPACA_API_KEY",
     "alpaca_api_secret": "ALPACA_API_SECRET",
@@ -269,7 +275,9 @@ field is; a second hand-maintained list could only ever disagree with it.
 _BOOL_FIELDS: Final = frozenset(f.name for f in msgspec.structs.fields(Settings) if f.type is bool)
 
 _SECRET_FIELDS: Final = frozenset(
-    field for field in Settings.__struct_fields__ if field.endswith(_SECRET_SUFFIXES)
+    field
+    for field in Settings.__struct_fields__
+    if field.endswith(_SECRET_SUFFIXES) or field == "deribit_client_id"
 )
 
 _TRUE_TOKENS: Final = frozenset({"1", "true", "yes", "on"})

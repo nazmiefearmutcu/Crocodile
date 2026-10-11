@@ -909,6 +909,8 @@ def collect_market(ctx: CapabilityContext, params: CollectMarketParams) -> Subsc
     _refuse_readonly(ctx, "collect-market")
     if ctx.settings.binance_wire_format == "sbe" and "binance" in params.sources:
         raise ConfigError("Spot SBE requires collect with native symbols; use collect")
+    if ctx.settings.deribit_interval == "raw" and "deribit" in params.sources:
+        raise ConfigError("Deribit raw requires collect with native symbols; use collect")
     if ctx.settings.raw_capture:
         _capture_budget(ctx)
         raise ConfigError("Raw capture requires collect with native symbols; use collect")

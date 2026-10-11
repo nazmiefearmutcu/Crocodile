@@ -413,6 +413,14 @@ of 50 new changes per second on every symbol. REST seed coverage is limited to t
 snapshot depth (default 1000, maximum 5000 per side), with additional changed levels learned
 afterwards. Source identity remains `binance-spot`, including in SBE captures.
 
+For Deribit raw, use native symbols such as `BTC-PERPETUAL` with `collect`, set
+`CROCODILE_DERIBIT_INTERVAL=raw` and configure `CROCODILE_DERIBIT_CLIENT_ID` /
+`CROCODILE_DERIBIT_CLIENT_SECRET` locally. Raw access requires an authorized account;
+there is no silent fallback when authorization fails. The default remains anonymous
+`100ms`. Raw book updates use 1 ms aggregation and are L2 price levels, without L3
+order identities. Contract amount units come from the instrument registry; an absent
+unit is not inferred. `collect-market` rejects explicit raw mode before querying a universe.
+
 ## Contributing
 
 PRs welcome. Skim [`CHANGELOG.md`](CHANGELOG.md) for direction, keep the `mypy --strict` and
