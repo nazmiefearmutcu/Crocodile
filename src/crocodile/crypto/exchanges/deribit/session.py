@@ -7,6 +7,7 @@ import json
 import math
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Literal, NoReturn
@@ -62,14 +63,15 @@ class DeribitSession:
         self._expires_ns: int | None = None
         self._refresh_ns: int | None = None
         self._wake = asyncio.Event()
+        self._watchdog_task: asyncio.Task[Any] | None = None
         self.state = SessionState.DISCONNECTED
 
     @property
     def ready_for_market(self) -> bool:
-        return self._ready
+        return self._ready and (self._expires_ns is None or self._clock_ns() < self._expires_ns)
 
     async def begin(self, transport: Transport) -> None:
-        await self.close()
+        self._invalidate()
         self._epoch += 1
         self._transport = transport
         if self.interval == "raw":
@@ -161,12 +163,21 @@ class DeribitSession:
         self._refresh_ns = now + lifetime - min(self._margin_ns, lifetime // 2)
 
     async def handle_control(self, msg: dict[str, Any]) -> bool:
+        if msg.get("method") == "heartbeat" and self._transport is not None:
+            params = msg.get("params")
+            if isinstance(params, dict) and params.get("type") == "test_request":
+                await self._send("public/test", {})
+            return True
         request_id = msg.get("id")
         if isinstance(request_id, bool) or not isinstance(request_id, int):
             return False
         pending = self._pending.pop(request_id, None)
         if pending is None or pending.connection_epoch != self._epoch:
             return False
+        if pending.deadline_monotonic_ns <= self._clock_ns():
+            self._transient("Deribit control request timeout")
+        if self._expires_ns is not None and self._clock_ns() >= self._expires_ns:
+            self._transient("Deribit connection token expired")
         if "error" in msg:
             error = msg["error"]
             if isinstance(error, dict) and error.get("code") == 10028:
@@ -186,6 +197,13 @@ class DeribitSession:
                 self._fatal("Deribit subscription acknowledgement is incomplete")
             self._ready = True
             self.state = SessionState.SNAPSHOT_PENDING
+            await self._send("public/set_heartbeat", {"interval": self._heartbeat_interval})
+        elif pending.method == "public/set_heartbeat":
+            if result != "ok":
+                self._fatal("Deribit heartbeat acknowledgement is invalid")
+        elif pending.method == "public/test":
+            if not isinstance(result, dict) or not isinstance(result.get("version"), str):
+                self._fatal("Deribit test acknowledgement is invalid")
         self._wake.set()
         return True
 
@@ -193,18 +211,54 @@ class DeribitSession:
         now = self._clock_ns()
         if any(p.deadline_monotonic_ns <= now for p in self._pending.values()):
             self._transient("Deribit control request timeout")
+        if self._expires_ns is not None and now >= self._expires_ns:
+            self._transient("Deribit connection token expired")
+        if (
+            self._refresh_ns is not None
+            and now >= self._refresh_ns
+            and not any(p.method == "public/auth" for p in self._pending.values())
+        ):
+            await self._send(
+                "public/auth",
+                {
+                    "grant_type": "refresh_token",
+                    "refresh_token": self._refresh_token,
+                },
+            )
 
     async def _watchdog(self) -> NoReturn:
-        while True:
-            self._wake.clear()
-            await self.tick()
-            try:
-                await asyncio.wait_for(self._wake.wait(), timeout=0.5)
-            except TimeoutError:
-                pass
+        current = asyncio.current_task()
+        self._watchdog_task = current
+        try:
+            while True:
+                self._wake.clear()
+                await self.tick()
+                deadlines = [p.deadline_monotonic_ns for p in self._pending.values()]
+                if self._expires_ns is not None:
+                    deadlines.append(self._expires_ns)
+                if self._refresh_ns is not None and not any(
+                    p.method == "public/auth" for p in self._pending.values()
+                ):
+                    deadlines.append(self._refresh_ns)
+                delay = min(
+                    [0.5]
+                    + [max(0.000001, (d - self._clock_ns()) / 1_000_000_000) for d in deadlines]
+                )
+                try:
+                    await asyncio.wait_for(self._wake.wait(), timeout=delay)
+                except TimeoutError:
+                    pass
+        finally:
+            if self._watchdog_task is current:
+                self._watchdog_task = None
 
     async def close(self) -> None:
         self._invalidate()
         self._transport = None
         self.state = SessionState.DISCONNECTED
         self._wake.set()
+        task = self._watchdog_task
+        if task is not None and task is not asyncio.current_task():
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
