@@ -9,6 +9,7 @@ from typing import Literal
 from crocodile.core.capture.schema import (
     ApplicationDecision,
     CaptureEvent,
+    ControlMetadata,
     JournalRecord,
     MarketFrame,
     SnapshotRequest,
@@ -21,6 +22,13 @@ from crocodile.core.schema.records import Record
 from crocodile.crypto.exchanges.binance.book import parse_rest_depth_snapshot
 from crocodile.crypto.exchanges.binance.book_session import BinanceBookState, json_depth
 from crocodile.crypto.exchanges.binance.normalize import normalize_message
+from crocodile.crypto.exchanges.binance.normalize_sbe import normalize_sbe_message, to_depth_event
+from crocodile.crypto.exchanges.binance.sbe import (
+    SbeDepthDiff,
+    SbeDepthSnapshot,
+    SbeProtocolError,
+    decode_sbe_frame,
+)
 from crocodile.crypto.instruments.registry import InstrumentRegistry
 
 
@@ -42,6 +50,9 @@ class BinanceReplayDecoder:
         self.requests.clear()
 
     def observe(self, event: CaptureEvent) -> None:
+        if isinstance(event, ControlMetadata) and event.kind == "connected":
+            self.states.clear()
+            self.requests.clear()
         if isinstance(event, SnapshotRequest):
             if event.source != self.source:
                 raise CaptureIntegrityError("Snapshot source mismatch")
@@ -103,3 +114,42 @@ class BinanceReplayDecoder:
         ):
             raise CaptureIntegrityError("Canonical emission indices mismatch")
         return records
+
+
+class BinanceSbeReplayDecoder(BinanceReplayDecoder):
+    def bind(self, stream: StreamContext) -> None:
+        if stream.source != "binance-spot" or (stream.schema_id, stream.schema_version) != (1, 0):
+            raise CaptureIntegrityError("Unsupported SBE stream schema/version/source")
+        super().bind(stream)
+
+    def observe(self, event: CaptureEvent) -> None:
+        super().observe(event)
+        if isinstance(event, MarketFrame):
+            try:
+                decoded = decode_sbe_frame(event.frame.payload)
+            except SbeProtocolError as exc:
+                raise CaptureIntegrityError("Unsupported or malformed captured SBE frame") from exc
+            if isinstance(decoded, SbeDepthSnapshot):
+                raise CaptureIntegrityError("Partial SBE snapshot cannot anchor full-depth capture")
+
+    def _market_records(
+        self, event: MarketFrame, decision: ApplicationDecision, registry: InstrumentRegistry
+    ) -> tuple[Record, ...]:
+        decoded = decode_sbe_frame(event.frame.payload)
+        if isinstance(decoded, SbeDepthDiff):
+            if decision.reason != "book_sync":
+                raise CaptureIntegrityError("SBE depth bypassed the book sequence gate")
+            depth = to_depth_event(decoded)
+            state = self.states.get(depth.symbol_raw)
+            if state is None or not state.valid:
+                raise CaptureIntegrityError("Missing SBE snapshot anchor")
+            result, records = state.accept_depth(depth, local_ts=event.observed_utc_ns)
+            action = "gap" if result == SyncResult.RESYNC else result.value
+            if action != decision.action:
+                raise CaptureIntegrityError("SBE replay sequence decision mismatch")
+            return records
+        if decision.action != "apply" or isinstance(decoded, SbeDepthSnapshot):
+            raise CaptureIntegrityError("Invalid SBE materialization action")
+        return tuple(
+            normalize_sbe_message(decoded, local_ts=event.observed_utc_ns, registry=registry)
+        )

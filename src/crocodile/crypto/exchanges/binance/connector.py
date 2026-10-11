@@ -33,7 +33,7 @@ from crocodile.core.capture.classification import FrameClass
 from crocodile.core.capture.schema import RawFrame
 from crocodile.core.capture.snapshots import HttpSnapshotProvider, SnapshotProvider
 from crocodile.core.connector import Connector
-from crocodile.core.errors import ConfigError
+from crocodile.core.errors import ConfigError, TransientConnectorError
 from crocodile.core.ingest.gap_bridge import BookResyncBridge
 from crocodile.core.ingest.transport import AiohttpWsTransport, Transport
 from crocodile.core.schema.records import BookDelta, BookSnapshot, Record
@@ -278,6 +278,15 @@ class BinanceConnector(Connector):
                 return "market"
             return "control" if isinstance(msg, dict) else "unknown"
         return super()._classify_frame(frame, msg)
+
+    async def _handle_control_message(self, msg: object, frame: RawFrame) -> bool:
+        if isinstance(msg, dict) and msg.get("e") == "serverShutdown":
+            raise TransientConnectorError("Binance requested connection renewal")
+        if self.wire_format == "sbe":
+            if isinstance(msg, dict) and msg.get("error") is not None:
+                raise SbeProtocolError("Binance SBE subscription/control rejected")
+            return True
+        return await super()._handle_control_message(msg, frame)
 
     # ------------------------------------------------------------------
     # Book resync integration (BookResyncBridge)

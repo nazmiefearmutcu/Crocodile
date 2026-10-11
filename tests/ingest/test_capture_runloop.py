@@ -20,9 +20,20 @@ from crocodile.crypto.instruments.registry import InstrumentRegistry
 
 @pytest.fixture
 def capture_context():
-    return CaptureContext(capture_id="test", streams=(StreamContext(
-        stream_id="s1", source="deribit", market="derivatives", symbols=("BTC",),
-        endpoint_id="deribit-public", decoder_id="deribit-json", decoder_version=1),))
+    return CaptureContext(
+        capture_id="test",
+        streams=(
+            StreamContext(
+                stream_id="s1",
+                source="deribit",
+                market="derivatives",
+                symbols=("BTC",),
+                endpoint_id="deribit-public",
+                decoder_id="deribit-json",
+                decoder_version=1,
+            ),
+        ),
+    )
 
 
 class Harness(Connector):
@@ -55,8 +66,9 @@ class Harness(Connector):
         return True
 
 
-MARKET = json.dumps({"method": "subscription", "params": {
-    "channel": "book.BTC.raw", "data": {"type": "snapshot"}}}).encode()
+MARKET = json.dumps(
+    {"method": "subscription", "params": {"channel": "book.BTC.raw", "data": {"type": "snapshot"}}}
+).encode()
 
 
 @pytest.mark.asyncio
@@ -66,8 +78,8 @@ async def test_reader_captures_and_routes_control_while_processor_waits(tmp_path
     conn.transport = FakeTransport([MARKET, b'{"id":7,"result":null}'])
     task = asyncio.create_task(conn.run(max_reconnects=0))
     try:
-        await asyncio.wait_for(conn.entered.wait(), .5)
-        await asyncio.wait_for(conn.ack.wait(), .5)
+        await asyncio.wait_for(conn.entered.wait(), 0.5)
+        await asyncio.wait_for(conn.ack.wait(), 0.5)
         await writer.flush()
         assert any(isinstance(r.event, MarketFrame) for r in CaptureReader(tmp_path).records())
         conn.release.set()
@@ -82,15 +94,25 @@ async def test_reader_captures_and_routes_control_while_processor_waits(tmp_path
 async def test_unknown_mixed_frames_never_leak_secrets(tmp_path, capture_context, caplog):
     writer = await CaptureWriter.create(tmp_path, capture_context)
     conn = Harness(writer)
-    secret = b'SENTINEL_PRIVATE_TOKEN'
-    conn.transport = FakeTransport([b'{"access_token":"' + secret + b'"}',
-                                    b'{"access_token":"' + secret])
+    secret = b"SENTINEL_PRIVATE_TOKEN"
+    conn.transport = FakeTransport(
+        [b'{"access_token":"' + secret + b'"}', b'{"access_token":"' + secret]
+    )
     await conn.run(max_reconnects=0)
     await writer.close()
     assert conn._dlq.drain() == []
     assert secret.decode() not in caplog.text
     records = list(CaptureReader(tmp_path).records())
-    assert len([r for r in records if isinstance(r.event, ControlMetadata)]) == 2
+    assert (
+        len(
+            [
+                r
+                for r in records
+                if isinstance(r.event, ControlMetadata) and r.event.kind != "connected"
+            ]
+        )
+        == 2
+    )
     assert not any(isinstance(r.event, MarketFrame) for r in records)
     assert all(secret not in p.read_bytes() for p in tmp_path.iterdir())
 
@@ -122,7 +144,7 @@ async def test_idle_reader_is_stopped_by_disk_failure(tmp_path, capture_context)
     await asyncio.sleep(0)
     writer._fail(OSError("disk full"))
     with pytest.raises(CaptureError):
-        await asyncio.wait_for(task, .5)
+        await asyncio.wait_for(task, 0.5)
     with pytest.raises(CaptureError):
         await writer.close()
 
@@ -132,12 +154,13 @@ async def test_public_malformed_frame_is_preserved(tmp_path, capture_context):
     writer = await CaptureWriter.create(tmp_path, capture_context)
     conn = Harness(writer)
     conn.name = "binance"
-    conn.transport = FakeTransport([b'{malformed market'])
+    conn.transport = FakeTransport([b"{malformed market"])
     await conn.run(max_reconnects=0)
     await writer.close()
-    frames = [r.event for r in CaptureReader(tmp_path).records()
-              if isinstance(r.event, MarketFrame)]
-    assert frames[0].frame.payload == b'{malformed market'
+    frames = [
+        r.event for r in CaptureReader(tmp_path).records() if isinstance(r.event, MarketFrame)
+    ]
+    assert frames[0].frame.payload == b"{malformed market"
     assert len(conn._dlq.drain()) == 1
 
 

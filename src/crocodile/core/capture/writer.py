@@ -186,7 +186,8 @@ class CaptureWriter:
                            last_ordinal=self._written if self._segment_first else 0,
                            sha256=checksum(sealed))
         self._manifest = CaptureManifest(context=self.context,
-            segments=(*self._manifest.segments, info), fsynced_ordinal=self._fsynced)
+            segments=(*self._manifest.segments, info), fsynced_ordinal=self._fsynced,
+            stats=self.stats())
         save_manifest(self.root, self._manifest)
         partial.unlink()
 

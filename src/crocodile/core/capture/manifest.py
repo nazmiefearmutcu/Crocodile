@@ -6,7 +6,7 @@ from pathlib import Path
 
 import msgspec
 
-from crocodile.core.capture.schema import CaptureContext
+from crocodile.core.capture.schema import CaptureContext, CaptureStats
 from crocodile.core.errors import CaptureIntegrityError
 
 
@@ -24,6 +24,7 @@ class CaptureManifest(msgspec.Struct, frozen=True, kw_only=True):
     active_name: str | None = None
     fsynced_ordinal: int = 0
     version: int = 1
+    stats: CaptureStats | None = None
 
 
 def segment_path(root: Path, name: str) -> Path:

@@ -422,6 +422,10 @@ class Connector(ABC):
                         RegistryCheckpoint(instruments=self.registry.instruments())
                     )
                 await transport.connect()
+                if self.capture is not None:
+                    await self.capture.append(ControlMetadata(stream_id=self._stream_id(),
+                        kind="connected", connection_id=getattr(transport, "_connection_id", None),
+                        request_id=None, status="connected", observed_utc_ns=now_ns()))
                 await self._run_connection(transport)
                 break
 
