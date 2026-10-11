@@ -14,6 +14,8 @@ from typing import Any
 __all__ = [
     "BookGap",
     "CapabilityUnavailable",
+    "CaptureError",
+    "CaptureIntegrityError",
     "ConfigError",
     "ConnectorError",
     "CrocodileError",
@@ -51,6 +53,14 @@ class SinkError(CrocodileError):
 
 class StoreError(CrocodileError):
     """The lake or its catalog could not satisfy the request."""
+
+
+class CaptureError(SinkError):
+    """Required raw capture failed; never silently continue or reconnect."""
+
+
+class CaptureIntegrityError(StoreError):
+    """Raw capture bytes, references, or manifest are inconsistent."""
 
 
 class BookGap(StoreError):
