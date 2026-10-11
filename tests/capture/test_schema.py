@@ -31,10 +31,12 @@ async def test_legacy_bytes_transport_does_not_fabricate_receive_metadata():
 
 async def test_iter_frames_preserves_text_binary_and_receive_metadata(monkeypatch):
     transport = mod.AiohttpWsTransport("wss://test.invalid")
-    transport._ws = Socket([
-        SimpleNamespace(type=aiohttp.WSMsgType.TEXT, data="€"),
-        SimpleNamespace(type=aiohttp.WSMsgType.BINARY, data=b"\xff\x00"),
-    ])
+    transport._ws = Socket(
+        [
+            SimpleNamespace(type=aiohttp.WSMsgType.TEXT, data="€"),
+            SimpleNamespace(type=aiohttp.WSMsgType.BINARY, data=b"\xff\x00"),
+        ]
+    )
     utc = iter([100, 90])
     mono = iter([1, 2])
     monkeypatch.setattr(mod.time, "time_ns", lambda: next(utc))

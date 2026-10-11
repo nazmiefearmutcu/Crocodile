@@ -71,12 +71,13 @@ class CaptureReader:
                 raise CaptureIntegrityError("Cannot read segment") from exc
         if self.manifest.fsynced_ordinal > expected - 1:
             raise CaptureIntegrityError("Durable watermark exceeds available records")
-        self._report = RecoveryReport(recovered_records=expected - 1,
-                                      discarded_tail_bytes=discarded)
+        self._report = RecoveryReport(
+            recovered_records=expected - 1, discarded_tail_bytes=discarded
+        )
         self._indexed = True
 
     def read_record(self, ordinal: int) -> JournalRecord:
-        if not self._indexed:
+        if ordinal not in self._index and not self._indexed:
             for _ in self.records():
                 pass
         location = self._index.get(ordinal)

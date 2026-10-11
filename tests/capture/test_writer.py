@@ -46,12 +46,12 @@ async def test_fsync_error_wakes_failure_waiters(tmp_path, capture_context, monk
 
 
 async def test_idle_capture_fsyncs_within_interval(tmp_path, capture_context):
-    writer = await mod.CaptureWriter.create(tmp_path, capture_context, fsync_interval_s=.02)
+    writer = await mod.CaptureWriter.create(tmp_path, capture_context, fsync_interval_s=0.02)
     await writer.append(RegistryCheckpoint(instruments=()))
     for _ in range(100):
         if writer.stats().fsynced_ordinal == 1:
             break
-        await asyncio.sleep(.005)
+        await asyncio.sleep(0.005)
     assert writer.stats().fsynced_ordinal == 1
     await writer.close()
 
@@ -67,7 +67,8 @@ async def test_rotation_never_splits_records(tmp_path, capture_context):
 
 
 async def test_queue_budget_includes_envelope_and_inflight_bytes(
-        tmp_path, capture_context, monkeypatch):
+    tmp_path, capture_context, monkeypatch
+):
     writer = await mod.CaptureWriter.create(tmp_path, capture_context, queue_bytes=60)
     entered, release = threading.Event(), threading.Event()
     actual = mod.write_all
@@ -91,11 +92,14 @@ async def test_queue_budget_includes_envelope_and_inflight_bytes(
 
 
 async def test_short_write_failure_does_not_advance_watermark(
-        tmp_path, capture_context, monkeypatch):
+    tmp_path, capture_context, monkeypatch
+):
     writer = await mod.CaptureWriter.create(tmp_path, capture_context)
+
     def broken(file, payload):
         file.write(payload[:2])
         raise OSError("short write")
+
     monkeypatch.setattr(mod, "write_all", broken)
     await writer.append(RegistryCheckpoint(instruments=()))
     with pytest.raises(CaptureError):

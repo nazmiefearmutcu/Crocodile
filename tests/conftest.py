@@ -10,6 +10,14 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 import pytest
 from unittest.mock import patch
 
+
+@pytest.fixture
+def network_forbidden(monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Offline replay attempted network construction")
+    monkeypatch.setattr("aiohttp.ClientSession", forbidden)
+    monkeypatch.setattr("crocodile.core.ingest.transport.AiohttpWsTransport.__init__", forbidden)
+
 # Force Qt offscreen platform for headless tests run in CI/CLI environments
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 

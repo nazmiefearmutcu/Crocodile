@@ -10,10 +10,22 @@ from crocodile.core.errors import CaptureIntegrityError
 
 
 def record(ordinal=1, payload=b"\xff\x00"):
-    return JournalRecord(ordinal=ordinal, event=MarketFrame(stream_id="s1",
-        frame=RawFrame(payload=payload, frame_kind="binary", received_utc_ns=100,
-                       received_monotonic_ns=7, connection_id="c1", receive_ordinal=ordinal),
-        observed_utc_ns=101, observed_monotonic_ns=8))
+    return JournalRecord(
+        ordinal=ordinal,
+        event=MarketFrame(
+            stream_id="s1",
+            frame=RawFrame(
+                payload=payload,
+                frame_kind="binary",
+                received_utc_ns=100,
+                received_monotonic_ns=7,
+                connection_id="c1",
+                receive_ordinal=ordinal,
+            ),
+            observed_utc_ns=101,
+            observed_monotonic_ns=8,
+        ),
+    )
 
 
 @pytest.mark.parametrize("payload", [b"", b"\xff\x00", b'{"broken', b'{"valid":1}'])
