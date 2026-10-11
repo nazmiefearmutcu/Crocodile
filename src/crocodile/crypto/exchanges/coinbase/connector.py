@@ -32,7 +32,7 @@ from crocodile.crypto.instruments.registry import Instrument, InstrumentRegistry
 
 from .advanced import CoinbaseAdvancedGate
 from .normalize import normalize_message
-from .replay import CoinbaseExchangeGate
+from .replay import CoinbaseExchangeGate, validate_exchange_book
 
 log = logging.getLogger(__name__)
 
@@ -163,6 +163,7 @@ class CoinbaseConnector(GatedConnector):
             yield from super().normalize(msg, local_ts)
             return
         if isinstance(msg, dict):
+            validate_exchange_book(msg)
             yield from normalize_message(msg, local_ts=local_ts, registry=self.registry)
 
     async def list_instruments(self) -> list[Instrument]:

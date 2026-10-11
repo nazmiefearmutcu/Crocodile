@@ -120,6 +120,7 @@ class BitfinexBookGate(Levels):
                 raise PublicBookError("Bitfinex signed quantity invalid") from None
             if not qty.is_finite() or not qty:
                 raise PublicBookError("Bitfinex signed quantity invalid")
+            decimal(qty.copy_abs(), positive=True)
             if not price:
                 if oid not in orders:
                     raise PublicBookError("Bitfinex delete of unknown order")

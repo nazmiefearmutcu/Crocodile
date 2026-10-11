@@ -2,13 +2,28 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from crocodile.core.capture.schema import StreamContext
 from crocodile.core.errors import CaptureIntegrityError
-from crocodile.crypto.exchanges.public_books import BookResult, Levels, PublicReplayDecoder
+from crocodile.crypto.exchanges.public_books import BookResult, Levels, PublicReplayDecoder, decimal
 from crocodile.crypto.instruments.registry import InstrumentRegistry
 
 from .advanced import CoinbaseAdvancedGate
 from .normalize import normalize_message
+
+
+def validate_exchange_book(msg: dict[str, Any]) -> None:
+    """Check raw values before the existing float-only Exchange normalizer."""
+    if msg.get("type") == "snapshot":
+        for side in ("bids", "asks"):
+            for row in msg.get(side, []):
+                decimal(row[0], positive=True)
+                decimal(row[1])
+    elif msg.get("type") == "l2update":
+        for row in msg.get("changes", []):
+            decimal(row[1], positive=True)
+            decimal(row[2])
 
 
 class CoinbaseExchangeGate(Levels):
@@ -19,6 +34,7 @@ class CoinbaseExchangeGate(Levels):
         symbol = msg.get("product_id")
         if kind == "l2update" and symbol not in self.ready:
             return BookResult("drop")
+        validate_exchange_book(msg)
         records = tuple(normalize_message(msg, local_ts=local_ts, registry=registry))
         if kind == "snapshot":
             if not isinstance(symbol, str):

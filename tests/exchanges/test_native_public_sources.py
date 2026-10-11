@@ -816,3 +816,197 @@ async def test_kraken_authenticated_l3_fixture_capture_replay_and_deletion(monke
         for file in tmp_path.rglob("*")
         if file.is_file()
     )
+
+
+@pytest.mark.parametrize("positive", [False, True])
+@pytest.mark.parametrize("value", ["1e999", "1e-999"])
+def test_public_decimal_refuses_finite_decimal_outside_canonical_float_range(positive, value):
+    from crocodile.crypto.exchanges.public_books import PublicBookError, decimal
+
+    with pytest.raises(PublicBookError):
+        decimal(value, positive=positive)
+
+
+@pytest.mark.parametrize("price", [Decimal("0"), Decimal("1e-999")])
+def test_shared_emit_requires_positive_canonical_price_before_publishing_state(price):
+    from crocodile.crypto.exchanges.public_books import Levels, PublicBookError
+
+    gate = Levels()
+    with pytest.raises(PublicBookError):
+        gate.emit(
+            "test",
+            "BTC-USD",
+            {price: Decimal("1")},
+            {},
+            snapshot=True,
+            local_ts=100,
+            source_ts=None,
+            registry=InstrumentRegistry(),
+        )
+    assert not gate.ready and not gate.bids
+
+
+def _overflow_fixture(source, price, quantity, *, aggregate=False):
+    from crocodile.crypto.exchanges.factory import make_connector
+
+    venue = "coinbase" if source == "coinbase_exchange" else source
+    symbol = {"bitfinex": "tBTCUSD", "kraken": "BTC/USD", "bybit": "BTCUSDT"}.get(venue, "BTC-USD")
+    kwargs = {"mode": "advanced"} if source == "coinbase" else {}
+    sink = MemorySink()
+    connector = make_connector(
+        venue,
+        [symbol],
+        ["book_delta"],
+        sink,
+        InstrumentRegistry(),
+        **kwargs,
+    )
+    mapping = None
+    if source == "bitfinex":
+        mapping = {
+            "chanId": 7,
+            "symbol": symbol,
+            "channel": "book",
+            "prec": "R0",
+            "freq": "F0",
+            "len": "250",
+        }
+        connector.gate.map_channel(mapping)
+        orders = [[1, price, quantity]]
+        if aggregate:
+            orders.append([2, price, quantity])
+        message = [7, orders, 1, 100]
+    elif source == "kraken":
+        message = {
+            "channel": "book",
+            "type": "snapshot",
+            "data": [
+                {
+                    "symbol": symbol,
+                    "bids": [{"price": price, "qty": quantity}],
+                    "asks": [],
+                    "checksum": 0,
+                }
+            ],
+        }
+    elif source == "dydx":
+        message = {
+            "type": "subscribed",
+            "channel": "v4_orderbook",
+            "id": symbol,
+            "connection_id": "test",
+            "message_id": 0,
+            "contents": {"bids": [[price, quantity]], "asks": []},
+        }
+    elif source == "bybit":
+        message = {
+            "type": "snapshot",
+            "topic": f"orderbook.50.{symbol}",
+            "cts": 1,
+            "data": {"s": symbol, "u": 10, "seq": 100, "b": [[price, quantity]], "a": []},
+        }
+    elif source == "coinbase_exchange":
+        message = {
+            "type": "snapshot",
+            "product_id": symbol,
+            "bids": [[price, quantity]],
+            "asks": [],
+        }
+    else:
+        message = {
+            "channel": "l2_data",
+            "sequence_num": 0,
+            "events": [
+                {
+                    "type": "snapshot",
+                    "product_id": symbol,
+                    "updates": [{"side": "bid", "price_level": price, "new_quantity": quantity}],
+                }
+            ],
+        }
+    return connector, sink, message, mapping
+
+
+async def _assert_overflow_refused_live_and_replay(tmp_path, connector, sink, message, mapping):
+    from crocodile.core.capture.native import replay_decoders, stream_context
+    from crocodile.core.capture.schema import ApplicationDecision, ControlMetadata, MarketFrame
+    from crocodile.core.errors import CaptureIntegrityError
+    from crocodile.crypto.exchanges.public_books import PublicBookError
+
+    with pytest.raises(PublicBookError):
+        await connector._handle_message(message, 100)
+    assert sink.records == []
+    assert not connector.gate.ready
+    if connector.name == "bybit":
+        # Its public pure normalize API retains a separate legacy book path.
+        with pytest.raises(PublicBookError):
+            list(connector.normalize(message, 100))
+
+    # A legacy/forged journal decision cannot authorize a non-finite canonical book.
+    writer = await CaptureWriter.create(
+        tmp_path, CaptureContext(capture_id="overflow", streams=(stream_context(connector, "s1"),))
+    )
+    try:
+        if mapping is not None:
+            await writer.append(
+                ControlMetadata(
+                    stream_id="s1",
+                    kind="subscribed",
+                    connection_id="test",
+                    request_id=None,
+                    status="ok",
+                    observed_utc_ns=100,
+                    public_data=mapping,
+                )
+            )
+        origin = await writer.append(
+            MarketFrame(
+                stream_id="s1",
+                frame=frame(message),
+                observed_utc_ns=100,
+                observed_monotonic_ns=100,
+            )
+        )
+        await writer.append(
+            ApplicationDecision(
+                origin_ordinal=origin,
+                record_indices=(0,),
+                action="snapshot",
+                reason="public_book",
+            )
+        )
+    finally:
+        await writer.close()
+    replayed = []
+    with pytest.raises(CaptureIntegrityError) as refused:
+        for record in RawReplay(CaptureReader(tmp_path), replay_decoders()).records():
+            replayed.append(record)
+    assert isinstance(refused.value.__cause__, PublicBookError)
+    assert replayed == []
+
+
+@pytest.mark.parametrize(
+    "source", ["bitfinex", "kraken", "dydx", "bybit", "coinbase", "coinbase_exchange"]
+)
+@pytest.mark.parametrize("field", ["price", "quantity"])
+@pytest.mark.parametrize("value", ["1e999", "1e-999"])
+async def test_native_overflow_never_emits_canonical_book_live_or_replay(
+    source,
+    field,
+    value,
+    tmp_path,
+):
+    args = _overflow_fixture(
+        source, value if field == "price" else "100", value if field == "quantity" else "1"
+    )
+    await _assert_overflow_refused_live_and_replay(tmp_path, *args)
+
+
+async def test_bitfinex_finite_l3_orders_with_overflowing_sum_never_emit_live_or_replay(tmp_path):
+    args = _overflow_fixture("bitfinex", "100", "1e308", aggregate=True)
+    await _assert_overflow_refused_live_and_replay(tmp_path, *args)
+
+
+async def test_bitfinex_signed_quantity_exponent_is_rejected_before_decimal_aggregation(tmp_path):
+    args = _overflow_fixture("bitfinex", "100", "-1e999999999")
+    await _assert_overflow_refused_live_and_replay(tmp_path, *args)

@@ -7,6 +7,7 @@ other channels. The original frame and protocol gate retain those counters.
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -58,6 +59,15 @@ def _visible_l3_sum(inputs: Mapping[str, Any]) -> float:
     return float(synchronized)
 
 
+def _canonical_float(value: Decimal, *, positive: bool = False) -> float:
+    if not value.is_finite() or value < 0:
+        raise PublicBookError("Invalid public price or quantity")
+    result = float(value)
+    if not math.isfinite(result) or (positive and result <= 0) or (value != 0 and result == 0):
+        raise PublicBookError("Public price or quantity is outside canonical float range")
+    return result
+
+
 def decimal(value: object, *, positive: bool = False) -> Decimal:
     try:
         if isinstance(value, bool):
@@ -65,8 +75,7 @@ def decimal(value: object, *, positive: bool = False) -> Decimal:
         result = Decimal(str(value))
     except (InvalidOperation, ValueError):
         raise PublicBookError("Invalid public price or quantity") from None
-    if not result.is_finite() or result < 0 or (positive and result <= 0):
-        raise PublicBookError("Invalid public price or quantity")
+    _canonical_float(result, positive=positive)
     return result
 
 
@@ -148,8 +157,6 @@ class Levels:
         if prune is not None:
             bids = dict(sorted(bids.items(), reverse=True)[:prune])
             asks = dict(sorted(asks.items())[:prune])
-        self.bids[symbol], self.asks[symbol] = bids, asks
-        self.ready.add(symbol)
 
         def rows(
             current: dict[Decimal, Decimal], previous: dict[Decimal, Decimal], reverse: bool
@@ -163,12 +170,19 @@ class Levels:
                     if current.get(price, Decimal(0)) != previous.get(price, Decimal(0))
                 }
             )
+            # L3 sums can overflow even when every order fits. An unchanged
+            # level already passed this check; validate every newly emitted
+            # row before committing state, without converting the full book
+            # again for a small delta.
             return [
-                (float(p), float(current.get(p, Decimal(0)))) for p in sorted(keys, reverse=reverse)
+                (_canonical_float(p, positive=True), _canonical_float(current.get(p, Decimal(0))))
+                for p in sorted(keys, reverse=reverse)
             ]
 
         bid_rows = rows(bids, previous_bids, True)
         ask_rows = rows(asks, previous_asks, False)
+        self.bids[symbol], self.asks[symbol] = bids, asks
+        self.ready.add(symbol)
         if not snapshot and not bid_rows and not ask_rows:
             return BookResult("drop")
         instrument = registry.get_raw(source, symbol)

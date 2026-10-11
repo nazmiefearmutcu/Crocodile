@@ -25,7 +25,7 @@ from crocodile.core.ingest.transport import Transport
 from crocodile.core.schema.records import Record
 from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import ms_to_ns
-from crocodile.crypto.exchanges.public_books import GatedConnector, PublicBookError
+from crocodile.crypto.exchanges.public_books import GatedConnector, PublicBookError, decimal
 from crocodile.crypto.instruments.registry import Instrument, InstrumentRegistry, Kind
 
 from .book import BybitBookGate
@@ -248,6 +248,11 @@ class BybitConnector(GatedConnector):
 
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]:
         if isinstance(msg, dict):
+            if str(msg.get("topic", "")).startswith("orderbook."):
+                for side in ("b", "a"):
+                    for row in (msg.get("data") or {}).get(side, []):
+                        decimal(row[0], positive=True)
+                        decimal(row[1])
             yield from normalize_message(
                 msg, local_ts=local_ts, venue=self.name, registry=self.registry
             )
