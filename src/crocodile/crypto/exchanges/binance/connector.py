@@ -29,8 +29,11 @@ import logging
 from collections.abc import Iterable
 from typing import Any, Literal
 
+from crocodile.core.capture.classification import FrameClass
+from crocodile.core.capture.schema import RawFrame
 from crocodile.core.capture.snapshots import HttpSnapshotProvider, SnapshotProvider
 from crocodile.core.connector import Connector
+from crocodile.core.errors import ConfigError
 from crocodile.core.ingest.gap_bridge import BookResyncBridge
 from crocodile.core.ingest.transport import Transport
 from crocodile.core.schema.records import BookDelta, BookSnapshot, Record
@@ -46,6 +49,15 @@ from crocodile.crypto.instruments.registry import Instrument, InstrumentRegistry
 
 from .book_session import BinanceBookSession, json_depth
 from .normalize import normalize_message
+from .normalize_sbe import normalize_sbe_message, to_depth_event
+from .sbe import (
+    SbeBestBidAsk,
+    SbeDepthDiff,
+    SbeDepthSnapshot,
+    SbeProtocolError,
+    SbeTrades,
+    decode_sbe_frame,
+)
 
 log = logging.getLogger(__name__)
 
@@ -115,6 +127,20 @@ def build_channels(
     return result
 
 
+def build_sbe_channels(symbols: list[str], channels: list[str]) -> list[str]:
+    patterns = {
+        "trade": "trade",
+        "book_ticker": "bestBidAsk",
+        "book_delta": "depth",
+        "book_snapshot": "depth",
+    }
+    if not symbols or not channels or any(ch not in patterns for ch in channels):
+        raise ConfigError("SBE supports trade, book_ticker, book_delta and book_snapshot channels")
+    if any(not s.isalnum() for s in symbols):
+        raise ConfigError("SBE requires native Spot symbols such as BTCUSDT")
+    return list(dict.fromkeys(f"{s.lower()}@{patterns[ch]}" for s in symbols for ch in channels))
+
+
 class BinanceConnector(Connector):
     """Binance combined-stream WebSocket connector.
 
@@ -157,12 +183,25 @@ class BinanceConnector(Connector):
         out: Sink,
         registry: InstrumentRegistry,
         market: str = "spot",
+        *,
+        wire_format: Literal["json", "sbe"] = "json",
+        api_key: str | None = None,
+        snapshot_provider: SnapshotProvider | None = None,
     ) -> None:
+        if market not in _MARKET_WS_URL or wire_format not in {"json", "sbe"}:
+            raise ConfigError("Invalid Binance market or wire format")
+        if wire_format == "sbe" and (market != "spot" or not api_key or not api_key.strip()):
+            raise ConfigError("Spot SBE requires spot market and CROCODILE_BINANCE_SBE_API_KEY")
         super().__init__(symbols=symbols, channels=channels, out=out, registry=registry)
+        self.wire_format, self._api_key = wire_format, api_key
+        self.decoder_id = "binance-sbe" if wire_format == "sbe" else "binance-json"
         self.market = market
         self.ws_url = _MARKET_WS_URL.get(market, _MARKET_WS_URL["spot"])
         self.rest_url = _MARKET_REST_URL.get(market, _MARKET_REST_URL["spot"])
         self._sub_topics = build_channels(symbols, channels, market=market)
+        if wire_format == "sbe":
+            self.ws_url = "wss://stream-sbe.binance.com/ws"
+            self._sub_topics = build_sbe_channels(symbols, channels)
         # venue tag forwarded to normalize_message so records carry the right exchange label
         self._venue = f"binance-{market}"
         # Per-symbol book sync + resync bridge (lazy, only for book channels).
@@ -170,11 +209,11 @@ class BinanceConnector(Connector):
         self._book_bridges: dict[str, BookResyncBridge] = {}
         # limit for REST depth snapshots (Binance max 5000; 1000 is standard).
         self.book_depth_limit: int = 1000
-        self.snapshot_provider: SnapshotProvider | None = None
+        self.snapshot_provider = snapshot_provider
         self._book_session: BinanceBookSession | None = None
 
     async def _prepare_connection(self) -> None:
-        if self.capture is not None:
+        if self.capture is not None or self.wire_format == "sbe":
             self._book_session = BinanceBookSession(
                 self._sync_venue(),
                 self.snapshot_provider
@@ -183,7 +222,7 @@ class BinanceConnector(Connector):
                 self.registry,
                 self.capture,
                 source=self._venue,
-                stream_id=self._stream_id(),
+                stream_id=self._stream_id() if self.capture is not None else "s1",
                 path=self._depth_rest_path(),
                 depth_limit=self.book_depth_limit,
             )
@@ -204,6 +243,9 @@ class BinanceConnector(Connector):
             self._book_session = None
 
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]:
+        if isinstance(msg, (SbeTrades, SbeBestBidAsk, SbeDepthSnapshot, SbeDepthDiff)):
+            yield from normalize_sbe_message(msg, local_ts=local_ts, registry=self.registry)
+            return
         if isinstance(msg, dict):
             yield from normalize_message(
                 msg,
@@ -215,6 +257,18 @@ class BinanceConnector(Connector):
     def subscribe_channels(self) -> list[str]:
         """Return the list of Binance stream topic strings."""
         return self._sub_topics
+
+    def _decode_frame(self, frame: RawFrame) -> object:
+        if self.wire_format == "sbe":
+            return decode_sbe_frame(frame.payload)
+        return super()._decode_frame(frame)
+
+    def _classify_frame(self, frame: RawFrame, msg: object | None) -> FrameClass:
+        if self.wire_format == "sbe":
+            if frame.frame_kind == "binary" or (frame.frame_kind == "unknown" and msg is None):
+                return "market"
+            return "control" if isinstance(msg, dict) else "unknown"
+        return super()._classify_frame(frame, msg)
 
     # ------------------------------------------------------------------
     # Book resync integration (BookResyncBridge)
@@ -339,6 +393,15 @@ class BinanceConnector(Connector):
         Integration point documented on
         :meth:`crocodile.core.connector.Connector._handle_message`.
         """
+        if isinstance(msg, SbeDepthSnapshot):
+            raise SbeProtocolError("Unexpected partial depth snapshot on full-depth session")
+        if isinstance(msg, SbeDepthDiff):
+            if self._book_session is None:
+                raise SbeProtocolError("SBE depth session has no snapshot provider")
+            await self._book_session.accept_depth(
+                to_depth_event(msg), origin_ordinal=self._origin_ordinal, local_ts=local_ts
+            )
+            return
         if isinstance(msg, dict) and self._wants_book_sync() and self._is_depth_message(msg):
             if self._book_session is not None:
                 await self._book_session.accept_depth(
