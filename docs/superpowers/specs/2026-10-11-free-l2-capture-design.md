@@ -24,7 +24,11 @@ Capture opt-in'dir; etkinleştirildiğinde required-capture davranışı kullan�
 
 Authentication request/response ve token refresh mesajları market-data journal'a girmez. Outbound credentials veya API header'ları kaydedilmez. Deribit kontrol yanıtları önce request-ID handler tarafından tüketilir; access/refresh token payload'ları kayda ve loga çıkmaz. Bilinmeyen kontrol mesajlarında ham payload yerine redacted hata metadata'sı kullanılır. Binance binary market frame'leri ve market subscription bildirimleri özgün bytes olarak korunur.
 
+Deribit'in kontrol/veri ortak socket'inde bozuk JSON'un market frame olduğu varsayılamaz: bozulmuş auth yanıtı token içerebilir. Bu durumda yalnız payload içermeyen hata metadata'sı kaydedilir. Bozuk market payload'ının byte fidelity testi, market-only endpoint veya güvenilir biçimde market olarak sınıflandırılmış frame üzerindedir. Kontrol sınıflandırması, canonical decode/normalization öncesindeki dar routing adımıdır.
+
 Journal yalnız WebSocket frame'lerinden oluşamaz. Binance başlangıç/resync REST snapshot response'u, receive zamanı, snapshot request kimliği ve uygulama karar sırası da kaydedilir. Instrument registry/tick/kontrat metadata'sı capture bağlamına dahil edilir. Offline replay, ilgili kayıtlı snapshot provider ile çalışır; yeni REST çağrısı yapamaz. Buffered WS mesajları, snapshot'ın alınması ve deftere uygulanması kayıtlı kontrol sırasına göre yeniden yürütülür.
+
+Arrival sırası ile apply sırası ayrı kayıtlar üzerinden ilişkilendirilir. Apply/drop/snapshot kararları, ilgili ham frame veya snapshot ordinal'ine referans verir. Replay bu karar sırasını yürütür; snapshot'a göre tamponlanan deltaları yalnız timestamp/son sequence filtresiyle geçerli saymaz. Kontrol router'ı auth bekleyen market processor'dan bağımsızdır; auth ack aynı bekleyen kuyrukta kilitlenemez.
 
 Dosya formatı versioned binary framing kullanır: file magic/version, ardından length + MsgPack envelope/payload + CRC32 kayıtları. `msgspec` mevcut bağımlılıktır. Her kayıt uzunluğu sınırı 16 MiB'dir; okuyucu bu sınırı allocation öncesi kontrol eder. İlk sürüm sıkıştırmasız immutable segmentlerle başlar; byte fidelity ve recovery doğrulandıktan sonra bağımsız block compression eklenebilir.
 
