@@ -22,7 +22,7 @@ Signed exponents/group block length/truncation görev 1; buyer-maker yönü ve �
 
 Yeni `binance/sbe.py` yalnız wire parsing; `binance/normalize_sbe.py` canonical/pure depth adaptörü. Mevcut `binance/connector.py` transport mode ve routing. Raw planın `binance/book_session.py`, `core/capture/schema.py`, `SnapshotProvider`, `ReplayDecoder` API'leri tekrar tanımlanmaz; shared Spot sync düzeltmesi raw plan görev 5'te bitmiş olmalıdır. `binance/replay.py` SBE decoder registration ekler. Test fixture'ları XML'den bağımsız okunabilir field/offset açıklaması taşır.
 
-## Görev 1: Dört template pure decoder
+## Task 1: Dört template pure decoder
 
 **Files:** Create `src/crocodile/crypto/exchanges/binance/sbe.py`, `tests/exchanges/binance/test_sbe_decoder.py`, `tests/exchanges/binance/conftest.py`, `tests/exchanges/binance/fixtures/sbe/` fixtures ve fixture `README.md`.
 
@@ -46,7 +46,7 @@ def test_trades_10000_preserves_integer_precision(sbe_fixture):
 - [ ] **GREEN:** Aynı komut PASS; fixture README byte offsets ve beklenen alanları gösterir.
 - [ ] **Commit:** `feat: decode Binance Spot SBE market frames`.
 
-## Görev 2: Canonical adaptör ve ortak book session
+## Task 2: Canonical adaptör ve ortak book session
 
 **Files:** Create `binance/normalize_sbe.py`; modify `binance/connector.py`; create `tests/exchanges/binance/test_sbe_connector.py`.
 
@@ -69,7 +69,7 @@ def test_buyer_maker_trade_has_sell_aggressor_side(sbe_fixture):
 - [ ] **GREEN:** Yukarıdaki test + `.\.venv\Scripts\python.exe -m pytest tests/exchanges/binance/test_connector.py tests/exchanges/binance/test_normalize_spot.py tests/exchanges/binance/test_normalize_usdm.py tests/exchanges/binance/test_book_session.py` PASS.
 - [ ] **Commit:** `feat: ingest SBE through the existing Spot book identity`.
 
-## Görev 3: Settings, factory ve doğru transport
+## Task 3: Settings, factory ve doğru transport
 
 **Files:** Modify `core/config.py`, `crypto/exchanges/factory.py`, `capabilities/ops.py`; modify `tests/conformance/test_config.py`, `tests/exchanges/test_factory.py`, `tests/capabilities/test_ops.py`; update README.
 
@@ -97,7 +97,7 @@ def test_sbe_mode_rejects_non_spot_market_before_connect():
 - [ ] **GREEN:** Yukarıdaki test PASS; `.\.venv\Scripts\python.exe -m pytest tests/surfaces/test_cli_arguments.py tests/surfaces/test_unknown_parameters.py tests/conformance/test_phase2_surface_parity.py` generated surface regressions PASS.
 - [ ] **Commit:** `feat: configure Spot SBE without changing collect defaults`.
 
-## Görev 4: Shutdown, SBE replay ve ölçüm
+## Task 4: Shutdown, SBE replay ve ölçüm
 
 **Files:** Modify `binance/connector.py`, `binance/replay.py`, `tests/exchanges/binance/conftest.py`; create `tests/exchanges/binance/test_sbe_replay.py`, new `scripts/benchmark_raw_capture.py`; create `tests/capture/test_benchmark_counters.py`.
 

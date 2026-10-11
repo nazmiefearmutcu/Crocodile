@@ -22,7 +22,7 @@ Eksik key/yanlış mode ve client ID repr görev1; control ack deadlock/late res
 
 Yeni `deribit/session.py` auth/request state; `deribit/book.py` pure continuity gate; `deribit/replay.py` offline adapter. Mevcut `connector.py` bunları birleştirir; `normalize.py` canonical conversion action kontrolünü güçlendirir. Shared Connector reader/control/pacing/journal kodu burada ikinci defa yazılmaz.
 
-## Görev1: Mode/config ve subscription mapping
+## Task 1: Mode/config ve subscription mapping
 
 **Files:** Modify `deribit/connector.py`, `core/config.py`, `crypto/exchanges/factory.py`, `capabilities/ops.py`, README; modify `tests/exchanges/deribit/test_connector.py`, `tests/conformance/test_config.py`, `tests/capabilities/test_ops.py`, `tests/exchanges/test_factory.py`.
 
@@ -42,7 +42,7 @@ def test_build_channels_raw_deduplicates_book_subscription():
 - [ ] **GREEN:** Yukarıdaki test PASS; mevcut Deribit normalizer tests de PASS.
 - [ ] **Commit:** `feat: configure authenticated Deribit raw subscriptions`.
 
-## Görev2: Request correlation ve auth→subscribe lifecycle
+## Task 2: Request correlation ve auth→subscribe lifecycle
 
 **Files:** Create `deribit/session.py`, `tests/exchanges/deribit/test_session.py`, `tests/exchanges/deribit/conftest.py`; modify `deribit/connector.py`.
 
@@ -87,7 +87,7 @@ async def test_subscribe_is_sent_only_after_auth_success(rpc_transport):
 - [ ] **GREEN:** Aynı komut ve `tests/exchanges/test_base_run_loop.py`, `tests/ingest/test_capture_runloop.py` PASS. FakeTransport fixture'ları auth/ack gerektiğinde scripted, default public compatibility mevcut testlerle korunur.
 - [ ] **Commit:** `feat: correlate Deribit control requests without blocking ingest`.
 
-## Görev3: Expiry, refresh ve application heartbeat
+## Task 3: Expiry, refresh ve application heartbeat
 
 **Files:** Modify `deribit/session.py`; create `tests/exchanges/deribit/test_session_timers.py`.
 
@@ -112,7 +112,7 @@ async def test_test_request_sends_public_test_without_market_data(authenticated_
 - [ ] **GREEN:** Yukarıdaki timer testleri fake clock ile PASS; gerçek kısa sleep/credentials gerektirmez.
 - [ ] **Commit:** `feat: refresh Deribit sessions and answer application heartbeats`.
 
-## Görev4: Per-symbol book gate ve offline raw replay
+## Task 4: Per-symbol book gate ve offline raw replay
 
 **Files:** Create `deribit/book.py`, `deribit/replay.py`; modify `deribit/connector.py`, `deribit/normalize.py`; create `tests/exchanges/deribit/test_book_sequence.py`, `tests/exchanges/deribit/test_raw_replay.py`.
 

@@ -51,7 +51,7 @@ JournalRecord(ordinal: int, event: CaptureEvent)
 
 `CaptureStats` fields: received_frames, queued_records, written_records, fsynced_records, queued_ordinal, written_ordinal, fsynced_ordinal, queued_bytes, peak_queued_bytes, durable_lag_ns, failed. `CaptureSummary` context+stats+sealed_segment_count; `RecoveryReport` recovered_records+discarded_tail_bytes; `ReplaySummary` emitted_records+last_ordinal. Başlangıç ordinal 0; ilk kabul 1. Sayaçlar heartbeat/drop ile yeni depth event sayısını karıştırmaz.
 
-## Görev 1: Receive zarfı ve transport uyumluluğu
+## Task 1: Receive zarfı ve transport uyumluluğu
 
 **Files:** Create `core/capture/schema.py`, `core/capture/__init__.py`; modify `src/crocodile/core/ingest/transport.py`; test `tests/ingest/test_transport.py`, new `tests/capture/test_schema.py`.
 
@@ -72,7 +72,7 @@ async def test_legacy_bytes_transport_does_not_fabricate_receive_metadata():
 - [ ] **GREEN:** Aynı komut; tüm testler PASS.
 - [ ] **Commit:** Yalnız görev dosyalarını stage ederek `feat: preserve inbound frame metadata`.
 
-## Görev 2: Format, manifest ve doğrulayan reader
+## Task 2: Format, manifest ve doğrulayan reader
 
 **Files:** Create `core/capture/{format,manifest,reader}.py`; modify `core/errors.py`; create `tests/capture/{test_format,test_reader}.py`.
 
@@ -94,7 +94,7 @@ def test_raw_bytes_and_metadata_round_trip():
 - [ ] **GREEN:** Aynı komut PASS; version/oversize/CRC/missing segment ayrı error testleri.
 - [ ] **Commit:** `feat: add validated raw journal format and reader`.
 
-## Görev 3: Writer, byte sınırı ve durability
+## Task 3: Writer, byte sınırı ve durability
 
 **Files:** Create `core/capture/writer.py`; create `tests/capture/test_writer.py`, `tests/capture/conftest.py`.
 
@@ -132,7 +132,7 @@ async def test_flush_advances_only_durable_watermark(tmp_path, capture_context):
 - [ ] **GREEN:** Aynı komut PASS; timer tests gerçek 1 s sleep kullanmaz, fake clock/event ile deterministik.
 - [ ] **Commit:** `feat: add bounded durable raw capture writer`.
 
-## Görev 4: Reader/control router ve ayrı market processor
+## Task 4: Reader/control router ve ayrı market processor
 
 **Files:** Modify `core/connector.py`; create `core/capture/classification.py`, `core/capture/emitter.py`; create `tests/ingest/test_capture_runloop.py`.
 
@@ -156,7 +156,7 @@ async def test_capture_failure_is_not_dead_lettered_or_reconnected(runloop_harne
 - [ ] **GREEN:** Aynı komut PASS; cancel ve fixture EOF eski semantiklerini korur.
 - [ ] **Commit:** `feat: route control and capture before market processing`.
 
-## Görev 5: Snapshot anchor ve Binance JSON sequence oturumu
+## Task 5: Snapshot anchor ve Binance JSON sequence oturumu
 
 **Files:** Create `core/capture/snapshots.py`, `crypto/exchanges/binance/book_session.py`; modify `binance/connector.py`, `core/ingest/book_sync.py`; create `tests/exchanges/binance/{test_capture_snapshots,test_book_session}.py`; existing `tests/exchanges/binance/test_book_sync.py`.
 
@@ -182,7 +182,7 @@ def test_overlapping_spot_range_and_duplicate():
 - [ ] **GREEN:** Aynı komut ve `.\.venv\Scripts\python.exe -m pytest tests/ingest/test_gap_bridge.py tests/exchanges/binance/test_book_resync_bridge.py tests/equity/test_ingest.py`; legacy bridge ve equity shared sync regressions PASS.
 - [ ] **Commit:** `fix: preserve snapshot anchors and validate buffered depth ranges`.
 
-## Görev 6: Deterministik ağsız replay
+## Task 6: Deterministik ağsız replay
 
 **Files:** Create `core/capture/replay.py`, `crypto/exchanges/binance/replay.py`; create `tests/capture/test_replay.py`; modify `tests/conftest.py` ile yalnız opt-in `network_forbidden` fixture; `tests/capture/conftest.py` içine recorded_json_session fixture ekle.
 
@@ -206,7 +206,7 @@ def test_replay_matches_live_canonical_records(recorded_json_session, network_fo
 - [ ] **GREEN:** Aynı komut ve mevcut `tests/client/test_replay.py` PASS.
 - [ ] **Commit:** `feat: replay captured market data without network access`.
 
-## Görev 7: Collect/config/CLI ve kullanıcı dokümanı
+## Task 7: Collect/config/CLI ve kullanıcı dokümanı
 
 **Files:** Modify `crypto/client/collect.py`, `capabilities/ops.py`, `core/config.py`; create `tests/client/test_collect_capture.py`, `tests/surfaces/test_collect_capture_cli.py`; modify `README.md`. Gerekirse `surfaces/dispatch.py` mevcut CrocodileError mapping'i için dar değişiklik.
 
