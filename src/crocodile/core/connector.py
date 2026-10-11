@@ -20,6 +20,7 @@ from crocodile.core.capture.schema import (
     ControlMetadata,
     MarketFrame,
     RawFrame,
+    RegistryCheckpoint,
 )
 from crocodile.core.capture.writer import CaptureWriter
 from crocodile.core.errors import (
@@ -205,16 +206,25 @@ class Connector(ABC):
         """
         await self._emit_records(list(self.normalize(msg, local_ts)))
 
-    async def _emit_records(self, records: list[Record], *,
-                            action: Literal["apply", "drop", "snapshot", "gap"] = "apply",
-                            reason: str = "market", origin_ordinal: int | None = None) -> None:
+    async def _emit_records(
+        self,
+        records: list[Record],
+        *,
+        action: Literal["apply", "drop", "snapshot", "gap"] = "apply",
+        reason: str = "market",
+        origin_ordinal: int | None = None,
+    ) -> None:
         origin = self._origin_ordinal if origin_ordinal is None else origin_ordinal
         try:
             if self.capture is not None:
                 if origin is None:
                     raise CaptureError("Canonical emission has no recorded origin")
-                decision = ApplicationDecision(origin_ordinal=origin,
-                    record_indices=tuple(range(len(records))), action=action, reason=reason)
+                decision = ApplicationDecision(
+                    origin_ordinal=origin,
+                    record_indices=tuple(range(len(records))),
+                    action=action,
+                    reason=reason,
+                )
                 await CaptureEmitter(self.capture, self.out).emit(decision, records)
             else:
                 for record in records:
@@ -229,8 +239,11 @@ class Connector(ABC):
 
     def _classify_frame(self, frame: RawFrame, msg: object | None) -> FrameClass:
         source = self.name
-        if (source == "deribit" and self.capture is None
-                and not getattr(self, "_mixed_controls", False)):
+        if (
+            source == "deribit"
+            and self.capture is None
+            and not getattr(self, "_mixed_controls", False)
+        ):
             source = "public-json"
         return classify_frame(source, frame, msg)
 
@@ -239,6 +252,15 @@ class Connector(ABC):
 
     async def _on_connection_close(self) -> None:
         return None
+
+    async def _prepare_connection(self) -> None:
+        return None
+
+    async def _drain_market(self) -> None:
+        return None
+
+    async def _watch_market_failure(self) -> None:
+        await asyncio.Event().wait()
 
     def _stream_id(self) -> str:
         if self.capture is None:
@@ -270,23 +292,41 @@ class Connector(ABC):
                 kind = self._classify_frame(frame, msg)
                 if kind != "market":
                     if self.capture is not None:
-                        request_id = str(msg["id"]) if (isinstance(msg, dict) and
-                            isinstance(msg.get("id"), int)) else None
-                        await self.capture.append(ControlMetadata(stream_id=self._stream_id(),
-                            kind=kind, connection_id=frame.connection_id, request_id=request_id,
-                            status="received", observed_utc_ns=local_ts))
+                        request_id = (
+                            str(msg["id"])
+                            if (isinstance(msg, dict) and isinstance(msg.get("id"), int))
+                            else None
+                        )
+                        await self.capture.append(
+                            ControlMetadata(
+                                stream_id=self._stream_id(),
+                                kind=kind,
+                                connection_id=frame.connection_id,
+                                request_id=request_id,
+                                status="received",
+                                observed_utc_ns=local_ts,
+                            )
+                        )
                     handled = await self._handle_control_message(msg, frame)
                     if not handled and isinstance(msg, dict) and msg.get("error") is not None:
                         error = msg["error"]
                         code = error.get("code") if isinstance(error, dict) else None
-                        log.warning("%s: exchange rejected request (code=%s)", self.name,
-                                    code if isinstance(code, int) else "unknown")
+                        log.warning(
+                            "%s: exchange rejected request (code=%s)",
+                            self.name,
+                            code if isinstance(code, int) else "unknown",
+                        )
                     continue
                 origin = None
                 if self.capture is not None:
-                    origin = await self.capture.append(MarketFrame(stream_id=self._stream_id(),
-                        frame=frame, observed_utc_ns=local_ts,
-                        observed_monotonic_ns=time.monotonic_ns()))
+                    origin = await self.capture.append(
+                        MarketFrame(
+                            stream_id=self._stream_id(),
+                            frame=frame,
+                            observed_utc_ns=local_ts,
+                            observed_monotonic_ns=time.monotonic_ns(),
+                        )
+                    )
                 size = len(frame.payload) + 256
                 if pending_bytes + size > self._processor_budget:
                     error_type = CaptureError if self.capture is not None else FatalConnectorError
@@ -305,8 +345,12 @@ class Connector(ABC):
                 except (FatalConnectorError, CaptureError):
                     raise
                 except Exception as exc:
-                    await self._dlq.put(item.local_ts, item.frame.payload, type(exc).__name__,
-                                        traceback.format_exc())
+                    await self._dlq.put(
+                        item.local_ts,
+                        item.frame.payload,
+                        type(exc).__name__,
+                        traceback.format_exc(),
+                    )
                     log.debug("DLQ: market processing failed (%s)", type(exc).__name__)
                 finally:
                     pending_bytes -= len(item.frame.payload) + 256
@@ -317,15 +361,23 @@ class Connector(ABC):
                 reader = group.create_task(read())
                 processor = group.create_task(process())
                 watcher = group.create_task(self.capture.wait_failure()) if self.capture else None
+                background = group.create_task(self._watch_market_failure())
                 await self._subscribe(transport)
                 await reader
                 await processor
+                await self._drain_market()
+                background.cancel()
                 if watcher is not None:
                     watcher.cancel()
         except ExceptionGroup as exc:
+
             def leaves(group: BaseExceptionGroup) -> list[BaseException]:
-                return [leaf for e in group.exceptions
-                        for leaf in (leaves(e) if isinstance(e, BaseExceptionGroup) else [e])]
+                return [
+                    leaf
+                    for e in group.exceptions
+                    for leaf in (leaves(e) if isinstance(e, BaseExceptionGroup) else [e])
+                ]
+
             errors = leaves(exc)
             for error in errors:
                 if isinstance(error, (CaptureError, FatalConnectorError)):
@@ -361,6 +413,11 @@ class Connector(ABC):
             if transport is None:
                 raise RuntimeError("No transport configured; set conn.transport before run()")
             try:
+                await self._prepare_connection()
+                if self.capture is not None:
+                    await self.capture.append(
+                        RegistryCheckpoint(instruments=self.registry.instruments())
+                    )
                 await transport.connect()
                 await self._run_connection(transport)
                 break
@@ -370,8 +427,12 @@ class Connector(ABC):
                 # it and would hammer the venue; surface it to the caller.
                 raise
             except Exception as exc:
-                log.warning("Connector %s error (attempt %d, type=%s)", self.name,
-                            attempt, type(exc).__name__)
+                log.warning(
+                    "Connector %s error (attempt %d, type=%s)",
+                    self.name,
+                    attempt,
+                    type(exc).__name__,
+                )
                 if max_reconnects == 0 or (max_reconnects > 0 and attempt >= max_reconnects):
                     raise
                 delay = backoff_delays(attempt, jitter=0.25, rand=random.random())

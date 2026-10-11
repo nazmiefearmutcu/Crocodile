@@ -73,7 +73,7 @@ class OrderBookSync:
     Spot:
       - Drop buffered events where ``u <= lastUpdateId``.
       - First applied event: ``U <= lastUpdateId + 1`` AND ``u >= lastUpdateId + 1``.
-      - Thereafter: ``U == prev_u + 1``.
+      - Thereafter: drop ``u <= prev_u``; apply ``U <= prev_u + 1 <= u``.
       - Continuity break → RESYNC.
 
     Futures:
@@ -158,7 +158,9 @@ class OrderBookSync:
             if self._prev_u is None:
                 raise RuntimeError("invariant violated: _prev_u is None with _have_first=True")
             if self._venue == "spot":
-                if U == self._prev_u + 1:
+                if u <= self._prev_u:
+                    return SyncResult.DROP
+                if U <= self._prev_u + 1 <= u:
                     self._prev_u = u
                     return SyncResult.APPLY
                 return SyncResult.RESYNC

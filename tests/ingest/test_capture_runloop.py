@@ -90,8 +90,8 @@ async def test_unknown_mixed_frames_never_leak_secrets(tmp_path, capture_context
     assert conn._dlq.drain() == []
     assert secret.decode() not in caplog.text
     records = list(CaptureReader(tmp_path).records())
-    assert len(records) == 2
-    assert all(isinstance(r.event, ControlMetadata) for r in records)
+    assert len([r for r in records if isinstance(r.event, ControlMetadata)]) == 2
+    assert not any(isinstance(r.event, MarketFrame) for r in records)
     assert all(secret not in p.read_bytes() for p in tmp_path.iterdir())
 
 

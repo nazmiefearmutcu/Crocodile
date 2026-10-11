@@ -43,3 +43,7 @@ class InstrumentRegistry:
 
     def get_raw(self, exchange: str, symbol_raw: str) -> Instrument | None:
         return self._by_raw.get((exchange, symbol_raw))
+
+    def instruments(self) -> tuple[Instrument, ...]:
+        """Snapshot the public metadata used by normalizers."""
+        return tuple(self._by_canonical.values())

@@ -29,6 +29,7 @@ import logging
 from collections.abc import Iterable
 from typing import Any, Literal
 
+from crocodile.core.capture.snapshots import HttpSnapshotProvider, SnapshotProvider
 from crocodile.core.connector import Connector
 from crocodile.core.ingest.gap_bridge import BookResyncBridge
 from crocodile.core.ingest.transport import Transport
@@ -37,11 +38,13 @@ from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import now_ns
 from crocodile.crypto.exchanges.binance.book import (
     OrderBookSync,
+    SyncResult,
     normalize_depth,
     parse_rest_depth_snapshot,
 )
 from crocodile.crypto.instruments.registry import Instrument, InstrumentRegistry, Kind
 
+from .book_session import BinanceBookSession, json_depth
 from .normalize import normalize_message
 
 log = logging.getLogger(__name__)
@@ -72,7 +75,7 @@ _CHANNEL_MAP: dict[str, str] = {
     "book_delta": "{sym}@depth",
     "book_snapshot": "{sym}@depth",
     "derivative_ticker": "{sym}@markPrice",
-    "funding": "{sym}@markPrice",       # markPrice carries funding rate
+    "funding": "{sym}@markPrice",  # markPrice carries funding rate
     "liquidation": "{sym}@forceOrder",
     "options_chain": "{sym}@optionMarkPrice",
 }
@@ -167,6 +170,38 @@ class BinanceConnector(Connector):
         self._book_bridges: dict[str, BookResyncBridge] = {}
         # limit for REST depth snapshots (Binance max 5000; 1000 is standard).
         self.book_depth_limit: int = 1000
+        self.snapshot_provider: SnapshotProvider | None = None
+        self._book_session: BinanceBookSession | None = None
+
+    async def _prepare_connection(self) -> None:
+        if self.capture is not None:
+            self._book_session = BinanceBookSession(
+                self._sync_venue(),
+                self.snapshot_provider
+                or HttpSnapshotProvider(self.http_session, self.capture, base_url=self.rest_url),
+                self.out,
+                self.registry,
+                self.capture,
+                source=self._venue,
+                stream_id=self._stream_id(),
+                path=self._depth_rest_path(),
+                depth_limit=self.book_depth_limit,
+            )
+
+    async def _drain_market(self) -> None:
+        if self._book_session is not None:
+            await self._book_session.drain()
+
+    async def _watch_market_failure(self) -> None:
+        if self._book_session is not None:
+            await self._book_session.wait_failure()
+        else:
+            await super()._watch_market_failure()
+
+    async def _on_connection_close(self) -> None:
+        if self._book_session is not None:
+            await self._book_session.reset("disconnect")
+            self._book_session = None
 
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]:
         if isinstance(msg, dict):
@@ -228,9 +263,7 @@ class BinanceConnector(Connector):
             registry=self.registry,
         )
 
-    async def _ensure_book_bridge(
-        self, symbol_raw: str
-    ) -> tuple[OrderBookSync, BookResyncBridge]:
+    async def _ensure_book_bridge(self, symbol_raw: str) -> tuple[OrderBookSync, BookResyncBridge]:
         """Return (create if needed) OrderBookSync + BookResyncBridge for *symbol_raw*.
 
         On first use: REST-fetch a snapshot, emit it, and seed the sync machine.
@@ -251,9 +284,7 @@ class BinanceConnector(Connector):
             # absent so the next depth message retries bootstrap.
             snap = await self.fetch_book_snapshot(key)
             if snap.sequence_id is None:
-                raise ValueError(
-                    f"Binance book bootstrap [{key}]: snapshot missing sequence_id"
-                )
+                raise ValueError(f"Binance book bootstrap [{key}]: snapshot missing sequence_id")
             sync.set_snapshot(last_update_id=snap.sequence_id)
             await self.out.put(snap)
             self._book_syncs[key] = sync
@@ -289,10 +320,18 @@ class BinanceConnector(Connector):
                 await self.out.put(emit)
 
             if bridge.is_resyncing:
-                # Inline REST resync (single-coroutine; buffers already held).
-                applied = await bridge.complete_resync()
-                for r in applied:
-                    await self.out.put(r)
+                # This compatibility path keeps fetch_book_snapshot injection;
+                # range validation uses the original U/u, never only seq_id.
+                snap = await self.fetch_book_snapshot(symbol_raw)
+                if snap.sequence_id is None:
+                    raise ValueError("Binance resync snapshot missing sequence_id")
+                sync.set_snapshot(snap.sequence_id)
+                await self.out.put(snap)
+                self._book_bridges[symbol_raw.upper()] = BookResyncBridge(
+                    sync=sync, fetch_snapshot=self.fetch_book_snapshot, symbol=symbol_raw.upper()
+                )
+                if sync.feed(U=U, u=u, pu=pu_int) == SyncResult.APPLY:
+                    await self.out.put(rec)
 
     async def _handle_message(self, msg: object, local_ts: int) -> None:
         """Route depth updates through BookResyncBridge; all else default path.
@@ -300,11 +339,12 @@ class BinanceConnector(Connector):
         Integration point documented on
         :meth:`crocodile.core.connector.Connector._handle_message`.
         """
-        if (
-            isinstance(msg, dict)
-            and self._wants_book_sync()
-            and self._is_depth_message(msg)
-        ):
+        if isinstance(msg, dict) and self._wants_book_sync() and self._is_depth_message(msg):
+            if self._book_session is not None:
+                await self._book_session.accept_depth(
+                    json_depth(msg), origin_ordinal=self._origin_ordinal, local_ts=local_ts
+                )
+                return
             await self._handle_depth_message(msg, local_ts)
             return
         await super()._handle_message(msg, local_ts)
@@ -316,9 +356,7 @@ class BinanceConnector(Connector):
         self._book_bridges.clear()
         topics = self.subscribe_channels()
         if topics:
-            frame = json.dumps(
-                {"method": "SUBSCRIBE", "params": topics, "id": 1}
-            ).encode()
+            frame = json.dumps({"method": "SUBSCRIBE", "params": topics, "id": 1}).encode()
             await transport.send(frame)
 
     async def list_instruments(self) -> list[Instrument]:  # pragma: no cover
@@ -355,7 +393,10 @@ class BinanceConnector(Connector):
             elif contract_type == "PERPETUAL":
                 kind = Kind.PERPETUAL
             elif contract_type in (
-                "CURRENT_QUARTER", "NEXT_QUARTER", "CURRENT_MONTH", "NEXT_MONTH"
+                "CURRENT_QUARTER",
+                "NEXT_QUARTER",
+                "CURRENT_MONTH",
+                "NEXT_MONTH",
             ):
                 kind = Kind.FUTURE
             else:
