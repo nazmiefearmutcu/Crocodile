@@ -1030,12 +1030,9 @@ def label_transfers(ctx: CapabilityContext, params: LabelTransfersParams) -> lis
     ``known_only`` is genuinely ordered: it reads ``is_known``, which does not exist until
     the labeller has written it.
 
-    ``crocodile.crypto.analytics.whale_transfers`` is imported here rather than at module
-    scope because it imports ``web3`` and ``eth_abi`` at *its* module scope, and those are
-    the ``onchain`` extra. A top-level import would make ``crocodile.capabilities.analytics``
-    unimportable on a base install, which ``load_all()`` deliberately refuses to swallow —
-    so an optional dependency would take the whole registry, and all three surfaces with it.
-    The two functions used here touch neither package.
+    The helpers are imported on demand. Their module keeps Web3 as a type-only import
+    and loads ``eth_abi`` only when decoding RPC logs, so these offline transforms work
+    with the base installation.
     """
     from crocodile.crypto.analytics.whale_transfers import (
         filter_transfers_by_usd,
@@ -1122,9 +1119,8 @@ def label_transfers_filings(
     ``usd_value``, ``amount`` and ``value`` in that order, and a filing row states ``value``.
     A Form 4 gift, which reports shares and no price, therefore has no notional and lands
     below every threshold rather than above the zero one — the same treatment a transfer with
-    an unparseable ``usd_value`` gets. It is imported inside the function for the reason the
-    crypto adapter gives: its module imports ``web3`` and ``eth_abi`` at module scope, and a
-    top-level import here would make the whole registry unimportable on a base install.
+    an unparseable ``usd_value`` gets. The helper is imported on demand and requires no
+    on-chain dependencies for this offline transform.
 
     What differs from the crypto half is the label an *unmatched* party gets, and this is the
     claim the ledger comment above ``PENDING_SYMMETRY`` made when it said a CIK is already a

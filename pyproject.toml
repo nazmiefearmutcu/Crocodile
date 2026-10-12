@@ -1,6 +1,6 @@
 [project]
 name = "crocodile"
-version = "0.3.0"
+version = "0.3.1"
 description = "Deterministic market-data engine for crypto and US equities: ingest, normalize, store, replay."
 readme = "README.md"
 requires-python = ">=3.12"

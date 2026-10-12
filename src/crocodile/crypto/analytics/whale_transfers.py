@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, Mapping, Sequence
-import eth_abi
-from web3 import AsyncWeb3
+from collections.abc import Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any
+
+from crocodile.core.errors import ConfigError
+
+if TYPE_CHECKING:
+    from web3 import AsyncWeb3
 
 
 def filter_transfers_by_usd(
@@ -113,6 +117,14 @@ class WhaleTransferTracker:
         self, start_block: int, end_block: int
     ) -> list[dict[str, Any]]:
         """Fetch and filter Transfer logs within block range for whale movements."""
+        try:
+            import eth_abi
+        except ModuleNotFoundError as exc:
+            if exc.name != "eth_abi":
+                raise
+            raise ConfigError(
+                "On-chain transfer decoding requires: pip install 'crocodile[onchain]'"
+            ) from exc
         try:
             logs = await self.w3.eth.get_logs(
                 {

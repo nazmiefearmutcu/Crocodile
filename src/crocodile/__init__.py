@@ -14,7 +14,7 @@ from crocodile.core.schema.provenance import Provenance
 from crocodile.core.schema.records import Record
 from crocodile.core.store.catalog import Catalog
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = [
     "AssetClass",

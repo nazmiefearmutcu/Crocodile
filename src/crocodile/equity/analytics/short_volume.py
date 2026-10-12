@@ -28,8 +28,12 @@ def regsho_short_ratio(
 
     Reads the ``short_volume`` channel in the lake.
     """
-    sym_clean = symbol.upper()
-    sql = f"""
+    if (
+        isinstance(start_ns, bool) or not isinstance(start_ns, int)
+        or isinstance(end_ns, bool) or not isinstance(end_ns, int)
+    ):
+        raise ValueError("start_ns and end_ns must be integer nanosecond timestamps")
+    sql = """
     SELECT
         date_val AS date,
         symbol,
@@ -40,12 +44,12 @@ def regsho_short_ratio(
         ROUND(short_exempt_volume / NULLIF(total_volume, 0), 4) AS short_exempt_ratio,
         (short_volume / NULLIF(total_volume, 0) >= 0.50) AS is_elevated_short
     FROM "short_volume"
-    WHERE symbol = '{sym_clean}'
-      AND local_ts >= {start_ns}
-      AND local_ts <= {end_ns}
+    WHERE symbol = ?
+      AND local_ts >= ?
+      AND local_ts <= ?
     ORDER BY date_val ASC
     """
-    df = catalog.query(sql)
+    df = catalog.query(sql, params=[symbol.upper(), start_ns, end_ns])
     return df
 
 

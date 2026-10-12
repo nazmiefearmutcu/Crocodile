@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from web3 import AsyncWeb3
+if TYPE_CHECKING:
+    from web3 import AsyncWeb3
 
 
 def lending_stress_test(

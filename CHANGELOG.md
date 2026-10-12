@@ -4,6 +4,25 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 
 ---
 
+## [0.3.1] - 2026-10-12
+### Added
+- Native public books for Bitfinex, Kraken and dYdX v4, plus Coinbase Advanced and Bybit fast/full modes. Kraken authenticated L3 and Bitfinex visible orders can be summed into L2 with derived provenance. Source, product, endpoint mode and quantity units remain explicit.
+- Bounded raw capture and offline replay for supported native sources, including recorded receive clocks, REST anchors, instrument metadata and book application decisions. Required capture failures reach the caller; credentials are excluded from the journal.
+- Optional Binance Spot SBE and authenticated Deribit raw subscriptions. JSON and anonymous Deribit `100ms` remain the defaults; explicit authenticated modes fail visibly instead of falling back.
+- OKX archive listing, byte-limited resumable downloads, SHA-256 manifests and audited source-time replay for supported 400/5000-level tar/NDJSON files. Other archive candidates retain their unaudited status.
+- Finite-grid synthetic L2 estimates with causal information cutoffs, separate retrospective revisions, solver budgets, residuals and feasible bounds. Estimates do not restore missing source events or hidden liquidity.
+- FINRA short-volume/short-interest backfill, ATS weekly-summary transforms, and SEC fails-to-deliver fetch/analytics helpers.
+
+### Fixed
+- FINRA short-volume and short-interest analytics bind symbols and timestamp filters as query parameters and reject non-integer timestamps.
+- Base installations can build the CLI and run offline lending/transfer helpers without the optional on-chain dependencies. Pool readers report the `crocodile[onchain]` install command when Web3 is absent.
+- Preserve inbound frame timing and snapshot anchors, validate buffered depth ranges, and reject public book values that cannot fit the canonical float representation before publishing them.
+
+### Compatibility and limits
+- Deprecated `crypcodile` and `stockodile` imports and commands remain available until 0.4. Raw replay is a library API; the existing Parquet replay command keeps its semantics.
+- Published feed intervals do not guarantee 30 unique book changes per second. Raw admission, written bytes and fsynced data are separate; storage stalls can exceed the one-second fsync target.
+- See [0.3.1 release notes](docs/release-notes-0.3.1.md) and [native book usage](docs/free-l2-sources.md) for mode identities, coverage and access requirements.
+
 ## [0.3.0] - 2026-07-27
 ### Changed
 - **One package.** `crypcodile` and `stockodile` are now `crocodile`, laid out as `crocodile.core` (everything both asset classes share), `crocodile.crypto`, `crocodile.equity` and `crocodile.contrib.evasion`. Both old import paths keep working for one minor version through deprecation shims, and both old commands (`crypcodile`, `stockodile`) still run — now printing a deprecation notice naming their replacement. Everything old is removed in 0.4.

@@ -58,14 +58,16 @@ def build_dark_pool_frame(rows: list[dict[str, Any]]) -> pl.DataFrame:
 
 
 def dark_pool_market_share(df: pl.DataFrame) -> pl.DataFrame:
-    """Calculate market share percentages per dark pool and wholesaler."""
+    """Calculate each row's participant share within its symbol and week."""
     if df.is_empty():
         return df
 
-    total_shares = df["shares"].sum()
-    if total_shares == 0:
-        return df.with_columns(pl.lit(0.0).alias("share_pct"))
+    total_shares = pl.col("shares").sum().over(["week_start", "symbol"])
 
     return df.with_columns(
-        (pl.col("shares") / total_shares * 100.0).round(2).alias("share_pct")
+        pl.when(total_shares != 0)
+        .then(pl.col("shares") / total_shares * 100.0)
+        .otherwise(0.0)
+        .round(2)
+        .alias("share_pct")
     ).sort("share_pct", descending=True)

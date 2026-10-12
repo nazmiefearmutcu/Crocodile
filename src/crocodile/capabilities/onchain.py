@@ -34,6 +34,7 @@ the deleted MCP server into the connector package they read through, unchanged.
 
 from __future__ import annotations
 
+from importlib import import_module
 from typing import Any
 
 import msgspec
@@ -47,6 +48,7 @@ from crocodile.core.capability import (
     declare,
     run_to_completion,
 )
+from crocodile.core.errors import ConfigError
 from crocodile.core.schema.provenance import Provenance
 
 __all__ = ["BASE_MARKET_DATA", "ONCHAIN_PRICE", "BaseMarketDataParams", "OnchainPriceParams"]
@@ -70,6 +72,17 @@ class BaseMarketDataParams(msgspec.Struct, frozen=True):
     the field keeps its own name because that is the name the tool was called with."""
 
 
+def _require_onchain() -> None:
+    try:
+        import_module("web3")
+    except ModuleNotFoundError as exc:
+        if exc.name != "web3":
+            raise
+        raise ConfigError(
+            "On-chain pool data requires: pip install 'crocodile[onchain]'"
+        ) from exc
+
+
 def onchain_price(ctx: CapabilityContext, params: OnchainPriceParams) -> dict[str, Any]:
     """Current price, virtual reserves and pool address for one Base pool.
 
@@ -88,6 +101,7 @@ def onchain_price(ctx: CapabilityContext, params: OnchainPriceParams) -> dict[st
     is the asymmetry the registry exists to end, arriving through the module that was added
     to close a different one.
     """
+    _require_onchain()
     from crocodile.crypto.exchanges.base_onchain.price import get_onchain_price
 
     return run_to_completion(lambda: get_onchain_price(params.symbol))
@@ -98,6 +112,7 @@ def base_market_data(ctx: CapabilityContext, params: BaseMarketDataParams) -> di
 
     The extra cost is a log scan, which is why this is not a default on the other one.
     """
+    _require_onchain()
     from crocodile.crypto.exchanges.base_onchain.price import get_base_market_data
 
     return run_to_completion(lambda: get_base_market_data(params.token_pair))

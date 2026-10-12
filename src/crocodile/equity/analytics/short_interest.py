@@ -28,8 +28,12 @@ def short_interest_history(
 
     Reads the ``short_interest`` channel in the lake.
     """
-    sym_clean = symbol.upper()
-    sql = f"""
+    if (
+        isinstance(start_ns, bool) or not isinstance(start_ns, int)
+        or isinstance(end_ns, bool) or not isinstance(end_ns, int)
+    ):
+        raise ValueError("start_ns and end_ns must be integer nanosecond timestamps")
+    sql = """
     SELECT
         settlement_date,
         symbol,
@@ -39,12 +43,12 @@ def short_interest_history(
         change_pct,
         (short_interest - prev_short_interest) AS net_shares_changed
     FROM "short_interest"
-    WHERE symbol = '{sym_clean}'
-      AND local_ts >= {start_ns}
-      AND local_ts <= {end_ns}
+    WHERE symbol = ?
+      AND local_ts >= ?
+      AND local_ts <= ?
     ORDER BY settlement_date ASC
     """
-    return catalog.query(sql)
+    return catalog.query(sql, params=[symbol.upper(), start_ns, end_ns])
 
 
 def short_interest_metrics(catalog: Catalog, symbol: str) -> dict[str, Any]:
