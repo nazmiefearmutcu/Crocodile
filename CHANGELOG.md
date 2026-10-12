@@ -15,12 +15,14 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 
 ### Fixed
 - FINRA short-volume and short-interest analytics bind symbols and timestamp filters as query parameters and reject non-integer timestamps.
+- Dark-pool participant shares are calculated within the matching week and symbol.
 - Base installations can build the CLI and run offline lending/transfer helpers without the optional on-chain dependencies. Pool readers report the `crocodile[onchain]` install command when Web3 is absent.
 - Preserve inbound frame timing and snapshot anchors, validate buffered depth ranges, and reject public book values that cannot fit the canonical float representation before publishing them.
 
 ### Compatibility and limits
 - Deprecated `crypcodile` and `stockodile` imports and commands remain available until 0.4. Raw replay is a library API; the existing Parquet replay command keeps its semantics.
 - Published feed intervals do not guarantee 30 unique book changes per second. Raw admission, written bytes and fsynced data are separate; storage stalls can exceed the one-second fsync target.
+- Python 3.12 or later is required. If Windows selects cp1254 for redirected table-query output, use `PYTHONUTF8=1` to make Python emit UTF-8.
 - See [0.3.1 release notes](docs/release-notes-0.3.1.md) and [native book usage](docs/free-l2-sources.md) for mode identities, coverage and access requirements.
 
 ## [0.3.0] - 2026-07-27
