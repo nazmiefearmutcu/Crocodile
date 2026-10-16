@@ -4,6 +4,19 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 
 ---
 
+## [0.3.2] - 2026-10-15
+
+### Fixed
+
+- Async Yahoo retries move session reset and cookie/crumb clearing into workers. Intraday candle conversion also runs in a worker, preserving values, timestamps, fields and row order.
+- Yahoo session use, reset and close share ownership across Crocodile clients, preventing cleanup from closing a session another coordinated call is using.
+- Cancellation drains an active Yahoo worker before releasing session ownership or closing the client.
+
+### Compatibility and limits
+
+- Yahoo requests sharing ownership serialize; concurrent requests may take longer. Retry attempts and backoff are unchanged.
+- Cancellation cannot stop a blocking network call or lock wait. Cleanup waits for the worker to finish.
+
 ## [0.3.1] - 2026-10-12
 ### Added
 - Native public books for Bitfinex, Kraken and dYdX v4, plus Coinbase Advanced and Bybit fast/full modes. Kraken authenticated L3 and Bitfinex visible orders can be summed into L2 with derived provenance. Source, product, endpoint mode and quantity units remain explicit.

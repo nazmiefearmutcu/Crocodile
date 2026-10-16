@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import random
+import threading
 import time
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
@@ -27,6 +28,88 @@ from crocodile.core.schema.records import (
 )
 
 logger = logging.getLogger(__name__)
+
+# YfData is a process-wide singleton, even for Tickers with distinct sessions.
+# Lock order: async client request -> shared worker -> client session -> yfinance
+# singleton/cookie locks. Synchronous reset starts at the shared worker lock.
+# Direct yfinance users must cooperate through run_yfinance_default_call; this
+# does not coordinate arbitrary external threads that bypass this module.
+_YF_WORKER_LOCK = threading.RLock()
+_YF_DEFAULT_SESSION: Any = None
+
+
+def _default_yfinance_session() -> Any:
+    """Return the process-owned default session while holding the worker lock."""
+    global _YF_DEFAULT_SESSION
+    if _YF_DEFAULT_SESSION is None:
+        from yfinance.data import new_session
+
+        _YF_DEFAULT_SESSION = new_session()
+    return _YF_DEFAULT_SESSION
+
+
+def _detach_yfinance_session(session: requests.Session) -> None:
+    """Keep a no-session Ticker from inheriting a client session we are closing."""
+    from yfinance.data import YfData
+
+    data = YfData()
+    lock = getattr(data, "_cookie_lock", None)
+
+    def detach() -> None:
+        if getattr(data, "_session", None) is session:
+            data._session = _default_yfinance_session()
+
+    if lock is not None:
+        with lock:
+            detach()
+    else:
+        detach()
+
+
+async def _run_yfinance_worker(
+    func: Callable[[], Any], *, cancel_before_start: bool = False
+) -> Any:
+    """Own shared state until a worker finishes, including cancellation drain."""
+    cancelled = threading.Event()
+
+    def run() -> Any:
+        with _YF_WORKER_LOCK:
+            # A cancelled request waiting at the shared gate must not start I/O.
+            # Once started, mutations/close and network work must finish safely.
+            if cancel_before_start and cancelled.is_set():
+                return None
+            return func()
+
+    future = asyncio.get_running_loop().run_in_executor(None, run)
+    try:
+        return await asyncio.shield(future)
+    except asyncio.CancelledError:
+        cancelled.set()
+        while not future.done():
+            try:
+                await asyncio.shield(future)
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                break
+        if not future.cancelled():
+            future.exception()  # Retrieve a worker error; cancellation wins.
+        raise
+
+
+async def run_yfinance_default_call(func: Callable[[Any], Any]) -> Any:
+    """Run a complete blocking yfinance call with shared session ownership.
+
+    Construct Tickers inside ``func`` with the supplied session. The default
+    session belongs to this module for the process lifetime; callers borrow it
+    and must not close it. Cancellation drains running work and skips I/O that
+    is still waiting for the shared gate. Uncoordinated direct yfinance threads
+    are outside this ownership boundary.
+    """
+    return await _run_yfinance_worker(
+        lambda: func(_default_yfinance_session()), cancel_before_start=True
+    )
+
 
 USER_AGENTS = [
     (
@@ -122,6 +205,64 @@ def _expiry_to_ns(expiry: str) -> int:
     return int(day.timestamp()) * 1_000_000_000
 
 
+def _intraday_records(
+    df: pd.DataFrame, symbol: str, interval: str, local_ts: int
+) -> list[OHLCV]:
+    """Convert one fetched frame without touching the client's network session."""
+    records: list[OHLCV] = []
+    for idx, row in df.iterrows():
+        if not isinstance(idx, datetime):
+            ts_val = pd.to_datetime(idx)
+        else:
+            ts_val = idx
+
+        if ts_val.tzinfo is None:
+            ts_val = ts_val.tz_localize("UTC")
+        else:
+            ts_val = ts_val.tz_convert("UTC")
+        source_ts = int(ts_val.timestamp() * 1e9)
+
+        open_val = _clean_float(row.get("Open"))
+        high_val = _clean_float(row.get("High"))
+        low_val = _clean_float(row.get("Low"))
+        close_val = _clean_float(row.get("Close"))
+        volume_val = _clean_float(row.get("Volume"))
+
+        if (
+            open_val is None
+            or high_val is None
+            or low_val is None
+            or close_val is None
+            or volume_val is None
+        ):
+            logger.warning(
+                "Skipping bar with missing price/volume for %s at %s",
+                symbol,
+                ts_val,
+            )
+            continue
+
+        bar = OHLCV(
+            source="yahoo",
+            symbol=symbol,
+            symbol_raw=symbol,
+            source_ts=source_ts,
+            local_ts=local_ts,
+            interval=interval,
+            open=open_val,
+            high=high_val,
+            low=low_val,
+            close=close_val,
+            volume=volume_val,
+            vwap=None,
+            num_trades=None,
+            asset_class=AssetClass.EQUITY,
+        )
+        records.append(bar)
+
+    return records
+
+
 class YahooClient:
     """Client for Yahoo Finance using the unofficial yfinance library.
 
@@ -142,6 +283,10 @@ class YahooClient:
         # Default rate limit of ~1 req per 1.5 seconds, burst capacity 5
         self.rate_limiter = rate_limiter or TokenBucket(capacity=5.0, refill_rate=1.0 / 1.5)
         self.backoff_delay = backoff_delay
+        # Async requests own the full retry lifecycle. The thread lock also
+        # protects explicit synchronous reset callers while a worker uses it.
+        self._request_lock = asyncio.Lock()
+        self._session_lock = threading.RLock()
         self.session = self._create_session()
 
     def _create_session(self) -> requests.Session:
@@ -176,6 +321,10 @@ class YahooClient:
 
     def reset_session(self) -> None:
         """Reset the internal requests session to force a fresh cookie and crumb handshake."""
+        with _YF_WORKER_LOCK, self._session_lock:
+            self._reset_session()
+
+    def _reset_session(self) -> None:
         try:
             self.session.close()
         except Exception as e:
@@ -230,18 +379,32 @@ class YahooClient:
 
     async def _execute_yf_call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Run a yfinance blocking call in an executor, handling 429s and crumb reset logic."""
+        async with self._request_lock:
+            return await self._execute_yf_call_locked(func, *args, **kwargs)
+
+    async def _run_session_worker(
+        self, func: Callable[[], Any], *, cancel_before_start: bool = False
+    ) -> Any:
+        """Keep client and shared ownership until an executor worker finishes."""
+        return await _run_yfinance_worker(func, cancel_before_start=cancel_before_start)
+
+    async def _execute_yf_call_locked(
+        self, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         max_retries = 5
         delay = self.backoff_delay
+
+        def _call() -> Any:
+            with self._session_lock:
+                # Bind in the worker, after any synchronous reset has finished.
+                kwargs["session"] = self.session
+                return func(*args, **kwargs)
 
         for attempt in range(max_retries):
             await self.rate_limiter.acquire(1.0)
 
-            # Bind the current requests session
-            kwargs["session"] = self.session
-
             try:
-                loop = asyncio.get_running_loop()
-                result = await loop.run_in_executor(None, lambda: func(*args, **kwargs))
+                result = await self._run_session_worker(_call, cancel_before_start=True)
                 return result
             except YFRateLimitError:
                 logger.warning(
@@ -252,7 +415,7 @@ class YahooClient:
                     delay,
                 )
                 self.rate_limiter.update_backoff(delay)
-                self.reset_session()
+                await self._run_session_worker(self.reset_session)
                 await asyncio.sleep(delay)
                 delay *= 2.0
             except requests.exceptions.HTTPError as exc:
@@ -265,7 +428,7 @@ class YahooClient:
                         delay,
                     )
                     self.rate_limiter.update_backoff(delay)
-                    self.reset_session()
+                    await self._run_session_worker(self.reset_session)
                     await asyncio.sleep(delay)
                     delay *= 2.0
                 else:
@@ -282,7 +445,7 @@ class YahooClient:
                         delay,
                     )
                     self.rate_limiter.update_backoff(delay)
-                    self.reset_session()
+                    await self._run_session_worker(self.reset_session)
                     await asyncio.sleep(delay)
                     delay *= 2.0
                 else:
@@ -293,7 +456,13 @@ class YahooClient:
 
     async def close(self) -> None:
         """Close the requests session."""
-        self.session.close()
+        def _close() -> None:
+            with self._session_lock:
+                _detach_yfinance_session(self.session)
+                self.session.close()
+
+        async with self._request_lock:
+            await self._run_session_worker(_close)
 
     async def __aenter__(self) -> Self:
         return self
@@ -506,60 +675,7 @@ class YahooClient:
                 )
             return []
 
-        records: list[OHLCV] = []
-        local_ts = time.time_ns()
-
-        for idx, row in df.iterrows():
-            if not isinstance(idx, datetime):
-                ts_val = pd.to_datetime(idx)
-            else:
-                ts_val = idx
-
-            if ts_val.tzinfo is None:
-                ts_val = ts_val.tz_localize("UTC")
-            else:
-                ts_val = ts_val.tz_convert("UTC")
-            source_ts = int(ts_val.timestamp() * 1e9)
-
-            open_val = _clean_float(row.get("Open"))
-            high_val = _clean_float(row.get("High"))
-            low_val = _clean_float(row.get("Low"))
-            close_val = _clean_float(row.get("Close"))
-            volume_val = _clean_float(row.get("Volume"))
-
-            if (
-                open_val is None
-                or high_val is None
-                or low_val is None
-                or close_val is None
-                or volume_val is None
-            ):
-                logger.warning(
-                    "Skipping bar with missing price/volume for %s at %s",
-                    symbol,
-                    ts_val,
-                )
-                continue
-
-            bar = OHLCV(
-                source="yahoo",
-                symbol=symbol,
-                symbol_raw=symbol,
-                source_ts=source_ts,
-                local_ts=local_ts,
-                interval=interval,
-                open=open_val,
-                high=high_val,
-                low=low_val,
-                close=close_val,
-                volume=volume_val,
-                vwap=None,
-                num_trades=None,
-                asset_class=AssetClass.EQUITY,
-            )
-            records.append(bar)
-
-        return records
+        return await asyncio.to_thread(_intraday_records, df, symbol, interval, time.time_ns())
 
     async def fetch_option_chain(
         self,
