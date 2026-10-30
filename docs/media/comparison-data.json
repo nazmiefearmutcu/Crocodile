@@ -9,5 +9,5 @@
   "size_unit": "MiB (benchmark labels this MB; bytes / 1048576)",
   "source_commit": "ba55eb03e5a34c1879188d9b11cc42f8b65e0aac",
   "machine": "Windows 11 | AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD (AMD64) | 16 logical CPUs | Python 3.12.10 | polars 1.41.2 | duckdb 1.5.3 | pyarrow 24.0.0",
-  "attribution": "Created By Nazmi Efe Armutcu (Aylin)"
+  "attribution": "Created By Aylin (Nazmi Efe Armutcu)"
 }

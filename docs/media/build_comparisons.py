@@ -18,7 +18,7 @@ MUTED = '#586B65'
 RULE = '#D7DED9'
 GREEN = '#166653'
 PAPER = '#FAFBF8'
-AUTHOR = 'Created By Nazmi Efe Armutcu (Aylin)'
+AUTHOR = 'Created By Aylin (Nazmi Efe Armutcu)'
 
 plt.rcParams.update({'font.family': 'DejaVu Sans', 'svg.fonttype': 'none'})
 

@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-30T19:53:45.024072</dc:date>
+    <dc:date>2026-10-30T19:58:11.461342</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -42,7 +42,7 @@ z
      <g id="line2d_1">
       <path d="M 203.04 303.552
 L 203.04 166.464
-" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p55c8296d5d)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_2"/>
      <g id="text_1">
@@ -53,7 +53,7 @@ L 203.04 166.464
      <g id="line2d_3">
       <path d="M 321.441704 303.552
 L 321.441704 166.464
-" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p55c8296d5d)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_4"/>
      <g id="text_2">
@@ -64,7 +64,7 @@ L 321.441704 166.464
      <g id="line2d_5">
       <path d="M 439.843407 303.552
 L 439.843407 166.464
-" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p55c8296d5d)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_6"/>
      <g id="text_3">
@@ -75,7 +75,7 @@ L 439.843407 166.464
      <g id="line2d_7">
       <path d="M 558.245111 303.552
 L 558.245111 166.464
-" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p55c8296d5d)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_8"/>
      <g id="text_4">
@@ -86,7 +86,7 @@ L 558.245111 166.464
      <g id="line2d_9">
       <path d="M 676.646814 303.552
 L 676.646814 166.464
-" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#p55c8296d5d)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
      </g>
      <g id="line2d_10"/>
      <g id="text_5">
@@ -117,7 +117,7 @@ L 700.03115 207.662127
 L 700.03115 172.695273
 L 203.04 172.695273
 z
-" clip-path="url(#pbc3e56cd49)" style="fill: #94a6a0"/>
+" clip-path="url(#p55c8296d5d)" style="fill: #94a6a0"/>
    </g>
    <g id="patch_4">
     <path d="M 203.04 297.320727
@@ -125,7 +125,7 @@ L 220.208247 297.320727
 L 220.208247 262.353873
 L 203.04 262.353873
 z
-" clip-path="url(#pbc3e56cd49)" style="fill: #166653"/>
+" clip-path="url(#p55c8296d5d)" style="fill: #166653"/>
    </g>
    <g id="text_9">
     <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="708.976991" y="193.555653" transform="rotate(-0 708.976991 193.555653)">167.9</text>
@@ -153,11 +153,11 @@ z
    <text style="font-size: 9.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="47.52" y="423.504" transform="rotate(-0 47.52 423.504)">MiB = 1,048,576 bytes. Source values are rounded; the full report records the machine and workload.</text>
   </g>
   <g id="text_17">
-   <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="47.52" y="457.776" transform="rotate(-0 47.52 457.776)">Created By Nazmi Efe Armutcu (Aylin)</text>
+   <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="47.52" y="457.776" transform="rotate(-0 47.52 457.776)">Created By Aylin (Nazmi Efe Armutcu)</text>
   </g>
  </g>
  <defs>
-  <clipPath id="pbc3e56cd49">
+  <clipPath id="p55c8296d5d">
    <rect x="203.04" y="166.464" width="561.6" height="137.088"/>
   </clipPath>
  </defs>

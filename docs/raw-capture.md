@@ -75,4 +75,4 @@ from the repository with the package installed. The report counts new depth chan
 separately from BBO and duplicate frames. Replay throughput is not live receive cadence;
 the manifest contains seal-time queue/durability telemetry.
 
-Created By Nazmi Efe Armutcu (Aylin)
+Created By Aylin (Nazmi Efe Armutcu)

@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-30T19:53:44.800652</dc:date>
+    <dc:date>2026-10-30T19:58:11.229059</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -35,42 +35,42 @@ L 406.944 415.0512
 L 406.944 103.3632
 L 169.344 103.3632
 z
-" clip-path="url(#pe988f95d0f)" style="fill: #ecf3ed"/>
+" clip-path="url(#pe153d2bfd3)" style="fill: #ecf3ed"/>
    </g>
    <g id="line2d_1">
     <path d="M 38.88 138.528
 L 825.12 138.528
-" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pe153d2bfd3)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="line2d_2">
     <path d="M 38.88 183.816
 L 825.12 183.816
-" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pe153d2bfd3)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="line2d_3">
     <path d="M 38.88 229.104
 L 825.12 229.104
-" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pe153d2bfd3)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="line2d_4">
     <path d="M 38.88 274.392
 L 825.12 274.392
-" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pe153d2bfd3)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="line2d_5">
     <path d="M 38.88 319.68
 L 825.12 319.68
-" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pe153d2bfd3)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="line2d_6">
     <path d="M 38.88 364.968
 L 825.12 364.968
-" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pe153d2bfd3)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="line2d_7">
     <path d="M 38.88 410.256
 L 825.12 410.256
-" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+" clip-path="url(#pe153d2bfd3)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="text_1">
     <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #166653" x="38.88" y="36.901656" transform="rotate(-0 38.88 36.901656)">CROCODILE  /  DATA LAYER COMPARISON</text>
@@ -175,12 +175,12 @@ L 825.12 410.256
     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="489.594769" transform="rotate(-0 38.88 489.594769)">Sources: Crocodile source · CCXT manual · yfinance API reference  |  30 Oct 2026</text>
    </g>
    <g id="text_35">
-    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="38.88" y="506.661891" transform="rotate(-0 38.88 506.661891)">Created By Nazmi Efe Armutcu (Aylin)</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="38.88" y="506.661891" transform="rotate(-0 38.88 506.661891)">Created By Aylin (Nazmi Efe Armutcu)</text>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="pe988f95d0f">
+  <clipPath id="pe153d2bfd3">
    <rect x="0" y="0" width="864" height="532.8"/>
   </clipPath>
  </defs>

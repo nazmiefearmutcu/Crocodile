@@ -25,4 +25,4 @@ Network-free, synthetic-data benchmark of the offline data path (normalize → s
 
 Reproduce: `uv run python benchmarks/bench.py`
 
-Created By Nazmi Efe Armutcu (Aylin)
+Created By Aylin (Nazmi Efe Armutcu)

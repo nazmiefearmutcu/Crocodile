@@ -20,4 +20,4 @@ The comparison combines the effects of a columnar format and compression. It doe
 
 The fixed seed controls fixture generation, not elapsed time. These are offline measurements on one Windows machine during normal desktop use. They do not measure network transport, exchange publication intervals, live capture loss, historical completeness, or another vendor's performance. Query timings are medians of seven repetitions; normalization, writing, and replay are individual stages. The full script remains at [`benchmarks/bench.py`](../../benchmarks/bench.py). Rebuild the figures with `uv run --extra ml python docs/media/build_comparisons.py` from the repository root.
 
-Created By Nazmi Efe Armutcu (Aylin)
+Created By Aylin (Nazmi Efe Armutcu)

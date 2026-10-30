@@ -139,4 +139,4 @@ Tests cover adapters, schemas, provenance, query boundaries, sequence handling, 
 
 [Apache License 2.0](LICENSE).
 
-Created By Nazmi Efe Armutcu (Aylin)
+Created By Aylin (Nazmi Efe Armutcu)
