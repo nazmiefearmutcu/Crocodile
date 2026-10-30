@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="864pt" height="532.8pt" viewBox="0 0 864 532.8" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-30T19:53:44.800652</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 532.8
+L 864 532.8
+L 864 0
+L 0 0
+z
+" style="fill: #fafbf8"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 169.344 415.0512
+L 406.944 415.0512
+L 406.944 103.3632
+L 169.344 103.3632
+z
+" clip-path="url(#pe988f95d0f)" style="fill: #ecf3ed"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 38.88 138.528
+L 825.12 138.528
+" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 38.88 183.816
+L 825.12 183.816
+" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 38.88 229.104
+L 825.12 229.104
+" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_4">
+    <path d="M 38.88 274.392
+L 825.12 274.392
+" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_5">
+    <path d="M 38.88 319.68
+L 825.12 319.68
+" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_6">
+    <path d="M 38.88 364.968
+L 825.12 364.968
+" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_7">
+    <path d="M 38.88 410.256
+L 825.12 410.256
+" clip-path="url(#pe988f95d0f)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #166653" x="38.88" y="36.901656" transform="rotate(-0 38.88 36.901656)">CROCODILE  /  DATA LAYER COMPARISON</text>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 23px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="38.88" y="76.084406" transform="rotate(-0 38.88 76.084406)">Choose the layer your workflow needs.</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="101.065481" transform="rotate(-0 38.88 101.065481)">Source-access libraries and a local dataset engine have different jobs.</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="38.88" y="118.835822" transform="rotate(-0 38.88 118.835822)">RESPONSIBILITY</text>
+   </g>
+   <g id="text_5">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #166653" x="177.12" y="118.115119" transform="rotate(-0 177.12 118.115119)">Crocodile</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="414.72" y="118.115119" transform="rotate(-0 414.72 118.115119)">CCXT</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="630.72" y="118.115119" transform="rotate(-0 630.72 118.115119)">yfinance</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 10.1px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="162.890267" transform="rotate(-0 38.88 162.890267)">Primary role</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="177.12" y="162.968209" transform="rotate(-0 177.12 162.968209)">Collect, store, query, replay</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="414.72" y="162.968209" transform="rotate(-0 414.72 162.968209)">Unified exchange access</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="630.72" y="162.968209" transform="rotate(-0 630.72 162.968209)">Yahoo Finance access</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 10.1px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="208.177873" transform="rotate(-0 38.88 208.177873)">Source access</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="177.12" y="208.256209" transform="rotate(-0 177.12 208.256209)">Native + library adapters</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="414.72" y="208.256209" transform="rotate(-0 414.72 208.256209)">Exchange APIs</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="630.72" y="208.256209" transform="rotate(-0 630.72 208.256209)">Yahoo endpoints</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 10.1px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="253.466267" transform="rotate(-0 38.88 253.466267)">Typical output</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="177.12" y="253.544209" transform="rotate(-0 177.12 253.544209)">Typed records + provenance</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="414.72" y="253.544209" transform="rotate(-0 414.72 253.544209)">Unified API objects</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="630.72" y="253.544209" transform="rotate(-0 630.72 253.544209)">DataFrames + ticker data</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 10.1px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="298.753873" transform="rotate(-0 38.88 298.753873)">Dataset storage</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="177.12" y="298.832209" transform="rotate(-0 177.12 298.832209)">Partitioned Parquet lake</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="414.72" y="298.832209" transform="rotate(-0 414.72 298.832209)">Application adds a store</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="630.72" y="298.832209" transform="rotate(-0 630.72 298.832209)">Application adds a store</text>
+   </g>
+   <g id="text_24">
+    <text style="font-size: 10.1px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="344.042267" transform="rotate(-0 38.88 344.042267)">Recorded replay</text>
+   </g>
+   <g id="text_25">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="177.12" y="344.120209" transform="rotate(-0 177.12 344.120209)">Ordered lake records</text>
+   </g>
+   <g id="text_26">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="414.72" y="344.120209" transform="rotate(-0 414.72 344.120209)">Application builds replay</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="630.72" y="344.120209" transform="rotate(-0 630.72 344.120209)">Application builds replay</text>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 10.1px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="389.330267" transform="rotate(-0 38.88 389.330267)">Order execution</text>
+   </g>
+   <g id="text_29">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="177.12" y="389.408209" transform="rotate(-0 177.12 389.408209)">No execution service</text>
+   </g>
+   <g id="text_30">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="414.72" y="389.408209" transform="rotate(-0 414.72 389.408209)">Supported exchange APIs</text>
+   </g>
+   <g id="text_31">
+    <text style="font-size: 10.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="630.72" y="389.408209" transform="rotate(-0 630.72 389.408209)">No execution API</text>
+   </g>
+   <g id="text_32">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="442.363238" transform="rotate(-0 38.88 442.363238)">Default project scope; no custom storage or replay extensions assumed.</text>
+   </g>
+   <g id="text_33">
+    <text style="font-size: 9.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="461.088131" transform="rotate(-0 38.88 461.088131)">Crocodile can use CCXT and yfinance as connectors. This is not a speed or quality ranking.</text>
+   </g>
+   <g id="text_34">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="38.88" y="489.594769" transform="rotate(-0 38.88 489.594769)">Sources: Crocodile source · CCXT manual · yfinance API reference  |  30 Oct 2026</text>
+   </g>
+   <g id="text_35">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="38.88" y="506.661891" transform="rotate(-0 38.88 506.661891)">Created By Nazmi Efe Armutcu (Aylin)</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pe988f95d0f">
+   <rect x="0" y="0" width="864" height="532.8"/>
+  </clipPath>
+ </defs>
+</svg>

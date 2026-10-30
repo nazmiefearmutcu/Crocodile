@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="864pt" height="489.6pt" viewBox="0 0 864 489.6" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-30T19:53:45.024072</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 489.6
+L 864 489.6
+L 864 0
+L 0 0
+z
+" style="fill: #fafbf8"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 203.04 303.552
+L 764.64 303.552
+L 764.64 166.464
+L 203.04 166.464
+z
+" style="fill: #fafbf8"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <path d="M 203.04 303.552
+L 203.04 166.464
+" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_2"/>
+     <g id="text_1">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #586b65" x="203.04" y="314.649656" transform="rotate(-0 203.04 314.649656)">0</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_3">
+      <path d="M 321.441704 303.552
+L 321.441704 166.464
+" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_4"/>
+     <g id="text_2">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #586b65" x="321.441704" y="314.649656" transform="rotate(-0 321.441704 314.649656)">40</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_5">
+      <path d="M 439.843407 303.552
+L 439.843407 166.464
+" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_6"/>
+     <g id="text_3">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #586b65" x="439.843407" y="314.649656" transform="rotate(-0 439.843407 314.649656)">80</text>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_7">
+      <path d="M 558.245111 303.552
+L 558.245111 166.464
+" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_8"/>
+     <g id="text_4">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #586b65" x="558.245111" y="314.649656" transform="rotate(-0 558.245111 314.649656)">120</text>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_9">
+      <path d="M 676.646814 303.552
+L 676.646814 166.464
+" clip-path="url(#pbc3e56cd49)" style="fill: none; stroke: #d7ded9; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_10"/>
+     <g id="text_5">
+      <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #586b65" x="676.646814" y="314.649656" transform="rotate(-0 676.646814 314.649656)">160</text>
+     </g>
+    </g>
+    <g id="text_6">
+     <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #586b65" x="483.84" y="336.650437" transform="rotate(-0 483.84 336.650437)">Serialized size (MiB)</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_11"/>
+     <g id="text_7">
+      <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #172c29" x="189.04" y="194.35784" transform="rotate(-0 189.04 194.35784)">Uncompressed JSON</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_12"/>
+     <g id="text_8">
+      <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #172c29" x="189.04" y="284.016441" transform="rotate(-0 189.04 284.016441)">Parquet / Zstd-5</text>
+     </g>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 203.04 207.662127
+L 700.03115 207.662127
+L 700.03115 172.695273
+L 203.04 172.695273
+z
+" clip-path="url(#pbc3e56cd49)" style="fill: #94a6a0"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 203.04 297.320727
+L 220.208247 297.320727
+L 220.208247 262.353873
+L 203.04 262.353873
+z
+" clip-path="url(#pbc3e56cd49)" style="fill: #166653"/>
+   </g>
+   <g id="text_9">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="708.976991" y="193.555653" transform="rotate(-0 708.976991 193.555653)">167.9</text>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="229.154088" y="283.214253" transform="rotate(-0 229.154088 283.214253)">5.8</text>
+   </g>
+  </g>
+  <g id="text_11">
+   <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #166653" x="47.52" y="31.824" transform="rotate(-0 47.52 31.824)">CROCODILE  /  MEASURED STORAGE</text>
+  </g>
+  <g id="text_12">
+   <text style="font-weight: 700; font-size: 23px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="47.52" y="71.4816" transform="rotate(-0 47.52 71.4816)">Same trade rows. Different storage cost.</text>
+  </g>
+  <g id="text_13">
+   <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="47.52" y="96.9408" transform="rotate(-0 47.52 96.9408)">500,000 synthetic trades · equivalent fields · base seed 42 · lower is smaller</text>
+  </g>
+  <g id="text_14">
+   <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="47.52" y="374.544" transform="rotate(-0 47.52 374.544)">Source: docs/media/benchmark-run.md · local Windows run, 30 Oct 2026</text>
+  </g>
+  <g id="text_15">
+   <text style="font-size: 9.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="47.52" y="399.024" transform="rotate(-0 47.52 399.024)">Offline fixture; JSON is uncompressed. This isolates format + compression, not live-feed performance.</text>
+  </g>
+  <g id="text_16">
+   <text style="font-size: 9.4px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #586b65" x="47.52" y="423.504" transform="rotate(-0 47.52 423.504)">MiB = 1,048,576 bytes. Source values are rounded; the full report records the machine and workload.</text>
+  </g>
+  <g id="text_17">
+   <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #172c29" x="47.52" y="457.776" transform="rotate(-0 47.52 457.776)">Created By Nazmi Efe Armutcu (Aylin)</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pbc3e56cd49">
+   <rect x="203.04" y="166.464" width="561.6" height="137.088"/>
+  </clipPath>
+ </defs>
+</svg>
