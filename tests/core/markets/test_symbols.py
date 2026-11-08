@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from zoneinfo import ZoneInfo
+
 import pytest
 
 from crocodile.core.markets.errors import (
@@ -9,7 +11,8 @@ from crocodile.core.markets.errors import (
     InvalidSymbolError,
     UnknownMarketError,
 )
-from crocodile.core.markets.exchanges import ExchangeRegistry
+from crocodile.core.markets.exchanges import ExchangeInfo, ExchangeRegistry
+from crocodile.core.markets.mic import MicEntry, MicRegistry
 from crocodile.core.markets.symbols import (
     is_listing_symbol,
     listing_symbol,
@@ -149,6 +152,7 @@ def test_parse_listing_symbol_splits_canonical_symbols() -> None:
         ("7203@XTKS", InvalidSymbolError),
         ("AAPL@XNAS", InvalidSymbolError),
         (f"{CAFE_DECOMPOSED}@XPAR", InvalidSymbolError),
+        (CAFE_DECOMPOSED, InvalidSymbolError),
         (f"A{LONE_SURROGATE}B@XIST", InvalidSymbolError),
         ("X@ZZZZ", UnknownMarketError),
         ("X@XTUR", ExpiredMarketError),
@@ -169,6 +173,7 @@ def test_is_listing_symbol_is_true_only_for_canonical_non_us_symbols() -> None:
         "X@ZZZZ",
         "binance:BTCUSDT",
         "",
+        CAFE_DECOMPOSED,
     ):
         assert is_listing_symbol(symbol) is False, symbol
 
@@ -186,3 +191,74 @@ def test_every_exchange_round_trips_through_the_canonical_form() -> None:
         else:
             assert parse_listing_symbol(sym) == ("TEST-1.A", info.mic), info.mic
             assert is_listing_symbol(sym), info.mic
+
+
+def _mic_entry(mic: str, operating: str, *, segment: bool, country: str) -> MicEntry:
+    return MicEntry(
+        mic=mic,
+        operating_mic=operating,
+        is_segment=segment,
+        name="Injected test market",
+        category="XTDM",
+        country=country,
+        city="",
+        website="",
+        status="ACTIVE",
+        comments="",
+    )
+
+
+def _exchange_info(mic: str, country: str) -> ExchangeInfo:
+    return ExchangeInfo(
+        mic=mic,
+        name="Injected test exchange",
+        country=country,
+        tz=ZoneInfo("UTC"),
+        currency="USD",
+        quote_scale=2,
+        weekend=frozenset({5, 6}),
+        close_local=None,
+        xcal_code=None,
+        tier_research="A",
+        sanctioned=False,
+    )
+
+
+def test_injected_tables_decide_every_listing_symbol_function() -> None:
+    # XFAK, XFSG and XUSF are test codes that the packaged ISO snapshot does not contain.
+    assert "XFAK" not in MicRegistry()
+    assert "XFSG" not in MicRegistry()
+    assert "XUSF" not in MicRegistry()
+    mics = MicRegistry(
+        [
+            _mic_entry("XFAK", "XFAK", segment=False, country="TR"),
+            _mic_entry("XFSG", "XFAK", segment=True, country="TR"),
+            _mic_entry("XUSF", "XUSF", segment=False, country="US"),
+        ]
+    )
+    exchanges = ExchangeRegistry(
+        [_exchange_info("XFAK", "TR"), _exchange_info("XUSF", "US")]
+    )
+    kwargs = {"mics": mics, "exchanges": exchanges}
+
+    # A MIC present only in the injected tables round-trips through the canonical form.
+    assert listing_symbol("FAKE", "XFAK", **kwargs) == "FAKE@XFAK"
+    assert listing_symbol("FAKE", "XFSG", **kwargs) == "FAKE@XFAK"
+    assert listing_symbol("AAA", "XUSF", **kwargs) == "AAA"
+    assert parse_listing_symbol("FAKE@XFAK", **kwargs) == ("FAKE", "XFAK")
+    assert parse_listing_symbol("AAA", **kwargs) == ("AAA", None)
+    assert is_listing_symbol("FAKE@XFAK", **kwargs) is True
+
+    # The same MIC is unknown to the packaged tables, so the injected tables made the call.
+    with pytest.raises(UnknownMarketError):
+        listing_symbol("FAKE", "XFAK")
+    with pytest.raises(UnknownMarketError):
+        parse_listing_symbol("FAKE@XFAK")
+    assert is_listing_symbol("FAKE@XFAK") is False
+
+    # A packaged MIC missing from the injected tables is refused, not looked up elsewhere.
+    with pytest.raises(UnknownMarketError):
+        listing_symbol("THYAO", "XIST", **kwargs)
+    with pytest.raises(UnknownMarketError):
+        parse_listing_symbol("THYAO@XIST", **kwargs)
+    assert is_listing_symbol("THYAO@XIST", **kwargs) is False
