@@ -18,7 +18,12 @@ refused: ``@`` is the canonical separator, and ``:`` marks ``source:RAW`` in
 control characters (``Cc``) and format characters (``Cf``) are refused as well. The
 ``Cf`` rule goes beyond the spec's "control characters": zero-width spaces, byte
 order marks and bidi marks are invisible, so two different symbols could look
-identical. ``.`` and ``-`` stay legal (``CERA.N0000``, ``NOVO-B``).
+identical. Surrogate code points (``Cs``) are refused for a harder reason: they are
+not characters, yet ``json.loads`` (aiohttp's default decoder) returns one for an
+escaped lone surrogate, and a string holding one cannot be encoded as UTF-8. The
+listing master's SQLite insert would raise ``UnicodeEncodeError`` and ``mmh3``
+bucketing would crash the interpreter (mmh3 5.2.1), where callers expect
+:class:`InvalidSymbolError`. ``.`` and ``-`` stay legal (``CERA.N0000``, ``NOVO-B``).
 """
 
 from __future__ import annotations
@@ -47,6 +52,7 @@ _SEPARATOR: Final = "@"
 _REFUSED_SEPARATORS: Final = frozenset({"@", ":"})
 _REFUSED_SPACE_CATEGORIES: Final = frozenset({"Zs", "Zl", "Zp"})
 _REFUSED_CATEGORIES: Final = frozenset({"Cc", "Cf"})
+_SURROGATE_CATEGORY: Final = "Cs"
 
 
 def validate_local_symbol(local: str) -> str:
@@ -55,7 +61,7 @@ def validate_local_symbol(local: str) -> str:
     Raises:
         TypeError: ``local`` is not a ``str``.
         InvalidSymbolError: The symbol is empty, or holds ``@``, ``:``, whitespace,
-            a control character or a format character.
+            a control character, a format character or a surrogate code point.
     """
     if not isinstance(local, str):
         raise TypeError(f"local symbol must be a str, got {type(local).__name__}")
@@ -70,12 +76,18 @@ def validate_local_symbol(local: str) -> str:
                 else "':' marks source:RAW in dispatch"
             )
             raise InvalidSymbolError(local, reason)
-        if char.isspace() or unicodedata.category(char) in _REFUSED_SPACE_CATEGORIES:
+        category = unicodedata.category(char)
+        if char.isspace() or category in _REFUSED_SPACE_CATEGORIES:
             raise InvalidSymbolError(local, f"whitespace U+{ord(char):04X} is not allowed")
-        if unicodedata.category(char) in _REFUSED_CATEGORIES:
+        if category in _REFUSED_CATEGORIES:
             raise InvalidSymbolError(
                 local,
                 f"control or format character U+{ord(char):04X} is not allowed",
+            )
+        if category == _SURROGATE_CATEGORY:
+            raise InvalidSymbolError(
+                local,
+                f"surrogate code point U+{ord(char):04X} is not a Unicode character",
             )
     return normalised
 

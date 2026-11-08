@@ -25,6 +25,8 @@ E_ACUTE = chr(0x00E9)
 ZERO_WIDTH_SPACE = chr(0x200B)
 NO_BREAK_SPACE = chr(0x00A0)
 BYTE_ORDER_MARK = chr(0xFEFF)
+# json.loads turns the JSON escape \ud800 into this lone surrogate code point.
+LONE_SURROGATE = chr(0xD800)
 
 CAFE_DECOMPOSED = "Cafe" + COMBINING_ACUTE
 CAFE_COMPOSED = "Caf" + E_ACUTE
@@ -96,6 +98,7 @@ def test_local_symbols_are_nfc_normalised_and_keep_their_case() -> None:
         "A" + ZERO_WIDTH_SPACE + "B",
         "A" + NO_BREAK_SPACE + "B",
         "A" + BYTE_ORDER_MARK + "B",
+        "A" + LONE_SURROGATE + "B",
     ],
 )
 def test_forbidden_characters_are_refused(bad: str) -> None:
@@ -146,6 +149,7 @@ def test_parse_listing_symbol_splits_canonical_symbols() -> None:
         ("7203@XTKS", InvalidSymbolError),
         ("AAPL@XNAS", InvalidSymbolError),
         (f"{CAFE_DECOMPOSED}@XPAR", InvalidSymbolError),
+        (f"A{LONE_SURROGATE}B@XIST", InvalidSymbolError),
         ("X@ZZZZ", UnknownMarketError),
         ("X@XTUR", ExpiredMarketError),
         ("X@DRSP", UnknownMarketError),
