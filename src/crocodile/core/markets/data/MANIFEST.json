@@ -1,0 +1,51 @@
+{
+  "as_of": "2026-11-08",
+  "files": {
+    "exchanges.csv": {
+      "curation": "scripts/markets_reference/curation.csv",
+      "curation_sha256": "48db7bcf5557cb80b42805815e110f661a1be3888a25604f7258cf8546fa242b",
+      "exchange_calendars_version": "4.13.2",
+      "excluded_without_mic": [
+        "Ethiopian Securities Exchange (ESX)",
+        "BVMAC regional market (Libreville, unverified) and Douala Stock Exchange (Cameroon)",
+        "Royal Securities Exchange of Bhutan (RSEB)",
+        "Yangon Stock Exchange (YSX)"
+      ],
+      "license": "Crocodile research matrix (this repository, Apache-2.0); weekend/close of library rows from exchange_calendars (Apache-2.0).",
+      "notes": "172 operating MICs from the research matrix, joined to the ISO 10383 snapshot. Weekend and close of the 64 rows with xcal_code come from exchange_calendars (XNAS->XNYS and XTSX->XTSE via the library alias table); curated rows come from curation.csv; all other rows are SAT,SUN with weekend:unverified. Sanctioned rows follow sanctions.csv (default-closed). Quote scale 2 only for XJSE, XLON and XTAE.",
+      "retrieved": "2026-11-08",
+      "rows": 172,
+      "sha256": "e164a1f38a0c565201b3bd9e7b20e64993b237dca3e53f068f0ff0b9a25c007d",
+      "source": "docs/superpowers/research/data/market-matrix-2026-11-08.json",
+      "source_sha256_lf": "75d543d9f0165aed1194640aa92a27e8ffe56243a8c1b26592433064696078b8"
+    },
+    "iso10383_mic.csv": {
+      "last_update": "2026-10-26",
+      "license": "Freely published by the ISO 10383 registration authority on iso20022.org; shipped unmodified with attribution; publisher terms not reviewed in this task.",
+      "notes": "Verbatim, unmodified.",
+      "retrieved": "2026-11-08",
+      "rows": 2889,
+      "sha256": "09a0d07b7b8348147453a2d8b18bc6638e3c5b16f749462582c9b1edf0fd0e38",
+      "url": "https://www.iso20022.org/sites/default/files/ISO10383_MIC/ISO10383_MIC.csv"
+    },
+    "iso4217.csv": {
+      "license": "List one published by SIX as ISO 4217 maintenance agency; only code, minor unit and name derived; terms not reviewed in this task.",
+      "notes": "Derived from list one. Excluded the 13 codes with minor unit N.A.: XAG, XAU, XBA, XBB, XBC, XBD, XDR, XPD, XPT, XSU, XTS, XUA, XXX. Kept the 10 fund codes (IsFund=true) because they denominate real instruments: BOV, CHE, CHW, CLF, COU, MXV, USN, UYI, UYW, XAD. Withdrawn codes BGN, HRK, ZWL and SLL are absent because list one no longer carries them.",
+      "published": "2026-09-17",
+      "retrieved": "2026-11-08",
+      "rows": 165,
+      "sha256": "2f6c9df8d56c67f3a6c9e29c7af78e1f8ea05abbf6a63ff111391c8e15f3e568",
+      "source_sha256": "33139b438657d1cee116ba737807ea71d19d6de4b90f799a09c56f0cc6a1b0ff",
+      "url": "https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xml"
+    },
+    "sanctions.csv": {
+      "license": "Curated from public sanctions programme pages; not legal advice.",
+      "notes": "Default-closed countries (spec 3.1). Not legal advice. Targeted programmes (VE, MM, SD, LY) are warned in exchanges.csv notes only.",
+      "retrieved": "2026-11-08",
+      "rows": 5,
+      "sha256": "6647b7ce248e66bfbda6b793672854bfc3a28bb3b68a363af34762c7807d4bff",
+      "source": "curated"
+    }
+  },
+  "generator": "scripts/build_markets_reference.py"
+}

@@ -1,0 +1,6 @@
+country,source,note
+BY,https://ofac.treasury.gov/sanctions-programs-and-country-information/belarus-sanctions,"Belarus. Covers BCSE. Default-closed per design spec 3.1. Not legal advice."
+IR,https://ofac.treasury.gov/sanctions-programs-and-country-information/iran-sanctions,"Iran. Covers XTEH and other IR MICs. Default-closed per design spec 3.1. Not legal advice."
+KP,https://ofac.treasury.gov/sanctions-programs-and-country-information/north-korea-sanctions,"North Korea. No exchange row exists. Default-closed per design spec 3.1. Not legal advice."
+RU,https://ofac.treasury.gov/sanctions-programs-and-country-information/russian-harmful-foreign-activities-sanctions,"Russia. Covers MOEX (MISX) and SPB Exchange (SPBE). Default-closed per design spec 3.1. Not legal advice."
+SY,https://ofac.treasury.gov/sanctions-programs-and-country-information,"Syria. Covers XDSE. Kept default-closed per design spec 3.1; US and EU Syria sanctions were eased in 2025, review this entry. Not legal advice."

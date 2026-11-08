@@ -1,0 +1,3 @@
+# Hashed into MANIFEST.json: git must never rewrite these bytes (core.autocrlf=true on this host).
+/src/crocodile/core/markets/data/** -text
+/scripts/markets_reference/** -text

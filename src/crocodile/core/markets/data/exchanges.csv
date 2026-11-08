@@ -1,0 +1,173 @@
+mic,name,country,timezone,currency,quote_scale,weekend,close_local,xcal_code,tier_research,sanctioned,notes
+AIXK,ASTANA INTERNATIONAL EXCHANGE LTD,KZ,Asia/Almaty,KZT,0,"SAT,SUN",17:00,AIXK,D,false,weekend:library; close_local:library; xcal:matrix; timezone:curated; currency:unverified
+APXL,SYDNEY STOCK EXCHANGE LIMITED,AU,Australia/Sydney,AUD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+AQSE,AQUIS STOCK EXCHANGE,GB,Europe/London,GBP,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown; quote_unit:unverified
+AQXE,AQUIS EXCHANGE PLC,GB,Europe/London,GBP,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown
+ASEX,ATHENS STOCK EXCHANGE,GR,Europe/Athens,EUR,0,"SAT,SUN",17:20,ASEX,B,false,weekend:library; close_local:library; xcal:matrix
+BCSE,BELARUS CURRENCY AND STOCK EXCHANGE,BY,Europe/Minsk,BYN,0,"SAT,SUN",,,D,true,weekend:unverified; close_local:unknown; sanctions:default-closed
+BCXE,CBOE EUROPE EQUITIES,GB,Europe/London,EUR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+BIVA,BOLSA INSTITUCIONAL DE VALORES,MX,America/Mexico_City,MXN,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+BJSE,BEIJING STOCK EXCHANGE,CN,Asia/Shanghai,CNY,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+BMEX,BME - BOLSAS Y MERCADOS ESPANOLES,ES,Europe/Madrid,EUR,0,"SAT,SUN",17:30,XMAD,B,false,weekend:library; close_local:library; xcal:matrix
+BSEX,BAKU STOCK EXCHANGE,AZ,Asia/Baku,AZN,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+BVCA,CARACAS STOCK EXCHANGE,VE,America/Caracas,VES,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown; sanctions:targeted
+BVMF,B3 S.A. - BRASIL BOLSA BALCAO,BR,America/Sao_Paulo,BRL,0,"SAT,SUN",18:00,BVMF,B,false,weekend:library; close_local:library; xcal:matrix
+CHIA,TMX AUSTRALIA EXCHANGE,AU,Australia/Sydney,AUD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+DIFX,NASDAQ DUBAI,AE,Asia/Dubai,USD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+DSMD,QATAR STOCK EXCHANGE,QA,Asia/Qatar,QAR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+GSXL,THE GIBRALTAR STOCK EXCHANGE,GI,Europe/Gibraltar,GBP,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+HSTC,HANOI STOCK EXCHANGE,VN,Asia/Ho_Chi_Minh,VND,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+IEXG,INVESTORS EXCHANGE,US,America/New_York,USD,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown
+MALX,MALDIVES STOCK EXCHANGE,MV,Indian/Maldives,MVR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+MISX,MOSCOW EXCHANGE - ALL MARKETS,RU,Europe/Moscow,RUB,0,"SAT,SUN",18:45,XMOS,A,true,weekend:library; close_local:library; xcal:matrix; sanctions:default-closed
+NEOE,CBOE CANADA - NEO-L (MARKET BY ORDER),CA,America/Toronto,CAD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+NSXB,BENDIGO STOCK EXCHANGE LIMITED,AU,Australia/Melbourne,AUD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+PFTS,PFTS STOCK EXCHANGE,UA,Europe/Kyiv,UAH,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+ROCO,TAIPEI EXCHANGE,TW,Asia/Taipei,TWD,0,"SAT,SUN",,,B,false,weekend:unverified; close_local:unknown
+RSEX,RWANDA STOCK EXCHANGE,RW,Africa/Kigali,RWF,0,"SAT,SUN",,,C,false,weekend:secondary; close_local:unknown
+SIMV,SIM VENTURE SECURITIES EXCHANGE,AU,Australia/Sydney,AUD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+SPBE,SPB EXCHANGE - ALL MARKETS,RU,Europe/Moscow,RUB,0,"SAT,SUN",,,D,true,weekend:unverified; close_local:unknown; sanctions:default-closed
+TGAT,TRADEGATE BERLIN STOCK EXCHANGE,DE,Europe/Berlin,EUR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+TRPX,MERJ EXCHANGE LIMITED,SC,Indian/Mahe,SCR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+UKEX,UKRAINIAN EXCHANGE,UA,Europe/Kyiv,UAH,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+VFEX,VICTORIA FALLS STOCK EXCHANGE,ZW,Africa/Harare,USD,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown
+XADS,ABU DHABI SECURITIES EXCHANGE,AE,Asia/Dubai,AED,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XALG,ALGIERS STOCK EXCHANGE,DZ,Africa/Algiers,DZD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XAMM,AMMAN STOCK EXCHANGE,JO,Asia/Amman,JOD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XAMS,EURONEXT - EURONEXT AMSTERDAM,NL,Europe/Amsterdam,EUR,0,"SAT,SUN",17:30,XAMS,B,false,weekend:library; close_local:library; xcal:matrix
+XARM,ARMENIA STOCK EXCHANGE,AM,Asia/Yerevan,AMD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XASX,ASX - ALL MARKETS,AU,Australia/Sydney,AUD,0,"SAT,SUN",16:00,XASX,B,false,weekend:library; close_local:library; xcal:matrix
+XBAA,BAHAMAS INTERNATIONAL SECURITIES EXCHANGE,BS,America/Nassau,BSD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBAB,BARBADOS STOCK EXCHANGE,BB,America/Barbados,BBD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBAH,BAHRAIN BOURSE,BH,Asia/Bahrain,BHD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBDA,BERMUDA STOCK EXCHANGE LTD,BM,Atlantic/Bermuda,BMD,0,"SAT,SUN",16:30,XBDA,D,false,weekend:library; close_local:library; xcal:matrix
+XBDV,BOLSA DE DIVIDA E VALORES DE ANGOLA (BODIVA) - ANGOLA SECURITIES EXCHANGE,AO,Africa/Luanda,AOA,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBEL,BELGRADE STOCK EXCHANGE,RS,Europe/Belgrade,RSD,0,"SAT,SUN",14:00,XBEL,D,false,weekend:library; close_local:library; xcal:matrix
+XBER,BOERSE BERLIN,DE,Europe/Berlin,EUR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBEY,BOURSE DE BEYROUTH - BEIRUT STOCK EXCHANGE,LB,Asia/Beirut,LBP,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBKK,STOCK EXCHANGE OF THAILAND,TH,Asia/Bangkok,THB,0,"SAT,SUN",16:30,XBKK,B,false,weekend:library; close_local:library; xcal:matrix
+XBLB,BANJA LUKA STOCK EXCHANGE,BA,Europe/Sarajevo,BAM,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBNV,"BOLSA NACIONAL DE VALORES, S.A.",CR,America/Costa_Rica,CRC,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBOG,BOLSA DE VALORES DE COLOMBIA,CO,America/Bogota,COP,0,"SAT,SUN",16:00,XBOG,B,false,weekend:library; close_local:library; xcal:matrix
+XBOL,BOLSA BOLIVIANA DE VALORES S.A.,BO,America/La_Paz,BOB,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XBOM,BSE LTD,IN,Asia/Kolkata,INR,0,"SAT,SUN",15:30,XBOM,B,false,weekend:library; close_local:library; xcal:matrix
+XBOT,BOTSWANA STOCK EXCHANGE,BW,Africa/Gaborone,BWP,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBRN,BX SWISS AG,CH,Europe/Zurich,CHF,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBRU,EURONEXT - EURONEXT BRUSSELS,BE,Europe/Brussels,EUR,0,"SAT,SUN",17:30,XBRU,B,false,weekend:library; close_local:library; xcal:matrix
+XBRV,BOURSE REGIONALE DES VALEURS MOBILIERES,CI,Africa/Abidjan,XOF,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBSE,SPOT REGULATED MARKET - BVB,RO,Europe/Bucharest,RON,0,"SAT,SUN",17:45,XBSE,B,false,weekend:library; close_local:library; xcal:matrix
+XBUD,BUDAPEST STOCK EXCHANGE,HU,Europe/Budapest,HUF,0,"SAT,SUN",17:00,XBUD,B,false,weekend:library; close_local:library; xcal:matrix
+XBUE,BOLSA DE COMERCIO DE BUENOS AIRES,AR,America/Argentina/Buenos_Aires,ARS,0,"SAT,SUN",17:00,XBUE,B,false,weekend:library; close_local:library; xcal:matrix
+XBUL,BULGARIAN STOCK EXCHANGE,BG,Europe/Sofia,EUR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBVC,CAPE VERDE STOCK EXCHANGE,CV,Atlantic/Cape_Verde,CVE,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XBVM,MOZAMBIQUE STOCK  EXCHANGE,MZ,Africa/Maputo,MZN,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XCAI,EGYPTIAN EXCHANGE,EG,Africa/Cairo,EGP,0,"FRI,SAT",,,B,false,weekend:secondary; close_local:unknown
+XCAS,CASABLANCA STOCK EXCHANGE,MA,Africa/Casablanca,MAD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XCAY,CAYMAN ISLANDS STOCK EXCHANGE,KY,America/Cayman,KYD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XCBO,CBOE GLOBAL MARKETS INC.,US,America/New_York,USD,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown
+XCHG,CHITTAGONG STOCK EXCHANGE LTD.,BD,Asia/Dhaka,BDT,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XCNQ,CANADIAN SECURITIES EXCHANGE,CA,America/Toronto,CAD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XCOL,COLOMBO STOCK EXCHANGE,LK,Asia/Colombo,LKR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XCSE,NASDAQ COPENHAGEN A/S,DK,Europe/Copenhagen,DKK,0,"SAT,SUN",17:00,XCSE,B,false,weekend:library; close_local:library; xcal:matrix
+XCSX,CAMBODIA SECURITIES EXCHANGE,KH,Asia/Phnom_Penh,KHR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XCYS,CYPRUS STOCK EXCHANGE,CY,Asia/Nicosia,EUR,0,"SAT,SUN",17:00,XCYS,D,false,weekend:library; close_local:library; xcal:matrix
+XDAR,DAR ES  SALAAM STOCK EXCHANGE,TZ,Africa/Dar_es_Salaam,TZS,0,"SAT,SUN",,,C,false,weekend:secondary; close_local:unknown
+XDFM,DUBAI FINANCIAL MARKET,AE,Asia/Dubai,AED,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XDHA,DHAKA STOCK EXCHANGE LTD,BD,Asia/Dhaka,BDT,0,"FRI,SAT",,,D,false,weekend:secondary; close_local:unknown
+XDSE,DAMASCUS SECURITIES EXCHANGE,SY,Asia/Damascus,SYP,0,"SAT,SUN",,,D,true,weekend:unverified; close_local:unknown; sanctions:default-closed
+XDUB,IRISH STOCK EXCHANGE - ALL MARKET,IE,Europe/Dublin,EUR,0,"SAT,SUN",16:28,XDUB,B,false,weekend:library; close_local:library; xcal:matrix
+XDUS,BOERSE DUESSELDORF,DE,Europe/Berlin,EUR,0,"SAT,SUN",22:00,XDUS,D,false,weekend:library; close_local:library; xcal:matrix
+XECS,EASTERN CARIBBEAN SECURITIES EXCHANGE,KN,America/St_Kitts,XCD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XETR,XETRA,DE,Europe/Berlin,EUR,0,"SAT,SUN",17:30,XETR,A,false,weekend:library; close_local:library; xcal:matrix
+XFKA,FUKUOKA STOCK EXCHANGE,JP,Asia/Tokyo,JPY,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XFRA,DEUTSCHE BOERSE AG,DE,Europe/Berlin,EUR,0,"SAT,SUN",17:30,XFRA,A,false,weekend:library; close_local:library; xcal:matrix
+XGHA,GHANA STOCK EXCHANGE,GH,Africa/Accra,GHS,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XGSE,GEORGIA STOCK EXCHANGE,GE,Asia/Tbilisi,GEL,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XGUA,BOLSA DE VALORES DE GUAYAQUIL,EC,America/Guayaquil,USD,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XHAM,HANSEATISCHE WERTPAPIERBOERSE HAMBURG,DE,Europe/Berlin,EUR,0,"SAT,SUN",22:00,XHAM,D,false,weekend:library; close_local:library; xcal:matrix
+XHAN,NIEDERSAECHSISCHE BOERSE ZU HANNOVER,DE,Europe/Berlin,EUR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XHEL,NASDAQ HELSINKI LTD,FI,Europe/Helsinki,EUR,0,"SAT,SUN",18:30,XHEL,B,false,weekend:library; close_local:library; xcal:matrix
+XHKG,HONG KONG EXCHANGES AND CLEARING LTD,HK,Asia/Hong_Kong,HKD,0,"SAT,SUN",16:00,XHKG,B,false,weekend:library; close_local:library; xcal:matrix
+XICE,NASDAQ ICELAND HF.,IS,Atlantic/Reykjavik,ISK,0,"SAT,SUN",15:30,XICE,D,false,weekend:library; close_local:library; xcal:matrix
+XIDX,INDONESIA STOCK EXCHANGE,ID,Asia/Jakarta,IDR,0,"SAT,SUN",15:50,XIDX,B,false,weekend:library; close_local:library; xcal:matrix
+XIQS,IRAQ STOCK EXCHANGE,IQ,Asia/Baghdad,IQD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XIST,BORSA ISTANBUL,TR,Europe/Istanbul,TRY,0,"SAT,SUN",18:00,XIST,B,false,weekend:library; close_local:library; xcal:matrix
+XJAM,JAMAICA STOCK EXCHANGE,JM,America/Jamaica,JMD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XJPX,JAPAN EXCHANGE GROUP,JP,Asia/Tokyo,JPY,0,"SAT,SUN",15:30,XTKS,B,false,weekend:library; close_local:library; xcal:matrix
+XJSE,JOHANNESBURG STOCK EXCHANGE,ZA,Africa/Johannesburg,ZAR,2,"SAT,SUN",17:00,XJSE,B,false,weekend:library; close_local:library; xcal:matrix; quote_unit:verified-minor
+XKAR,THE PAKISTAN STOCK EXCHANGE LIMITED,PK,Asia/Karachi,PKR,0,"SAT,SUN",15:30,XKAR,B,false,weekend:library; close_local:library; xcal:matrix
+XKAZ,KAZAKHSTAN STOCK EXCHANGE,KZ,Asia/Almaty,KZT,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XKHA,KHARTOUM STOCK EXCHANGE,SD,Africa/Khartoum,SDG,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown; sanctions:targeted
+XKLS,BURSA MALAYSIA,MY,Asia/Kuala_Lumpur,MYR,0,"SAT,SUN",17:00,XKLS,B,false,weekend:library; close_local:library; xcal:matrix
+XKRX,KOREA EXCHANGE (STOCK MARKET),KR,Asia/Seoul,KRW,0,"SAT,SUN",15:30,XKRX,B,false,weekend:library; close_local:library; xcal:matrix
+XKUW,KUWAIT STOCK EXCHANGE,KW,Asia/Kuwait,KWD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XLAO,LAO SECURITIES EXCHANGE,LA,Asia/Vientiane,LAK,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XLIM,BOLSA DE VALORES DE LIMA,PE,America/Lima,PEN,0,"SAT,SUN",16:00,XLIM,B,false,weekend:library; close_local:library; xcal:matrix
+XLIS,EURONEXT - EURONEXT LISBON,PT,Europe/Lisbon,EUR,0,"SAT,SUN",16:30,XLIS,B,false,weekend:library; close_local:library; xcal:matrix
+XLIT,AB NASDAQ VILNIUS,LT,Europe/Vilnius,EUR,0,"SAT,SUN",16:00,XLIT,D,false,weekend:library; close_local:library; xcal:matrix
+XLJU,LJUBLJANA STOCK EXCHANGE (OFFICIAL MARKET),SI,Europe/Ljubljana,EUR,0,"SAT,SUN",15:15,XLJU,D,false,weekend:library; close_local:library; xcal:matrix
+XLON,LONDON STOCK EXCHANGE,GB,Europe/London,GBP,2,"SAT,SUN",16:30,XLON,B,false,weekend:library; close_local:library; xcal:matrix; quote_unit:verified-minor
+XLSM,LIBYAN STOCK MARKET,LY,Africa/Tripoli,LYD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown; sanctions:targeted
+XLUS,LUSAKA STOCK EXCHANGE,ZM,Africa/Lusaka,ZMW,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XLUX,LUXEMBOURG STOCK EXCHANGE,LU,Europe/Luxembourg,EUR,0,"SAT,SUN",17:40,XLUX,C,false,weekend:library; close_local:library; xcal:matrix
+XMAE,MACEDONIAN STOCK EXCHANGE,MK,Europe/Skopje,MKD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XMAL,MALTA STOCK EXCHANGE,MT,Europe/Malta,EUR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XMAU,STOCK EXCHANGE OF MAURITIUS LTD,MU,Indian/Mauritius,MUR,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XMEX,BOLSA MEXICANA DE VALORES (MEXICAN STOCK EXCHANGE),MX,America/Mexico_City,MXN,0,"SAT,SUN",15:00,XMEX,B,false,weekend:library; close_local:library; xcal:matrix
+XMIL,BORSA ITALIANA S.P.A.,IT,Europe/Rome,EUR,0,"SAT,SUN",17:30,XMIL,B,false,weekend:library; close_local:library; xcal:matrix
+XMNT,BOLSA DE VALORES DE MONTEVIDEO,UY,America/Montevideo,UYU,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XMNX,MONTENEGRO STOCK EXCHANGE,ME,Europe/Podgorica,EUR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XMOL,MOLDOVA STOCK EXCHANGE,MD,Europe/Chisinau,MDL,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XMSW,MALAWI STOCK EXCHANGE,MW,Africa/Blantyre,MWK,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XMUN,BOERSE MUENCHEN,DE,Europe/Berlin,EUR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XMUS,MUSCAT STOCK EXCHANGE,OM,Asia/Muscat,OMR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XNAI,NAIROBI STOCK EXCHANGE,KE,Africa/Nairobi,KES,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XNAM,NAMIBIAN STOCK EXCHANGE,NA,Africa/Windhoek,NAD,0,"SAT,SUN",17:00,,D,false,weekend:unverified; close_local:primary
+XNAS,NASDAQ - ALL MARKETS,US,America/New_York,USD,0,"SAT,SUN",16:00,XNYS,B,false,weekend:library; close_local:library; xcal:alias
+XNEC,NATIONAL STOCK EXCHANGE OF AUSTRALIA LIMITED,AU,Australia/Sydney,AUD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XNEP,NEPAL STOCK EXCHANGE,NP,Asia/Kathmandu,NPR,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XNGM,NORDIC GROWTH MARKET,SE,Europe/Stockholm,SEK,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XNGO,NAGOYA STOCK EXCHANGE,JP,Asia/Tokyo,JPY,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XNSA,THE NIGERIAN STOCK EXCHANGE,NG,Africa/Lagos,NGN,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XNSE,NATIONAL STOCK EXCHANGE OF INDIA,IN,Asia/Kolkata,INR,0,"SAT,SUN",,,B,false,weekend:unverified; close_local:unknown
+XNYS,"NEW YORK STOCK EXCHANGE, INC.",US,America/New_York,USD,0,"SAT,SUN",16:00,XNYS,B,false,weekend:library; close_local:library; xcal:matrix
+XNZE,NZX - ALL MARKETS,NZ,Pacific/Auckland,NZD,0,"SAT,SUN",16:45,XNZE,B,false,weekend:library; close_local:library; xcal:matrix
+XOSL,OSLO BORS,NO,Europe/Oslo,NOK,0,"SAT,SUN",16:20,XOSL,B,false,weekend:library; close_local:library; xcal:matrix
+XPAE,PALESTINE SECURITIES EXCHANGE,PS,Asia/Hebron,ILS,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XPAR,EURONEXT - EURONEXT PARIS,FR,Europe/Paris,EUR,0,"SAT,SUN",17:30,XPAR,B,false,weekend:library; close_local:library; xcal:matrix
+XPHS,"PHILIPPINE STOCK EXCHANGE, INC.",PH,Asia/Manila,PHP,0,"SAT,SUN",15:30,XPHS,D,false,weekend:library; close_local:library; xcal:matrix
+XPOM,PNGX MARKETS LIMITED,PG,Pacific/Port_Moresby,PGK,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XPRA,PRAGUE STOCK EXCHANGE,CZ,Europe/Prague,CZK,0,"SAT,SUN",16:20,XPRA,B,false,weekend:library; close_local:library; xcal:matrix
+XPTY,"LATIN AMERICAN STOCK EXCHANGE, INC.",PA,America/Panama,USD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XQUI,BOLSA DE VALORES DE QUITO,EC,America/Guayaquil,USD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XRIS,NASDAQ RIGA AS,LV,Europe/Riga,EUR,0,"SAT,SUN",16:00,XRIS,D,false,weekend:library; close_local:library; xcal:matrix
+XSAP,SAPPORO SECURITIES EXCHANGE,JP,Asia/Tokyo,JPY,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XSAT,SPOTLIGHT STOCK MARKET AB,SE,Europe/Stockholm,SEK,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XSAU,SAUDI STOCK EXCHANGE,SA,Asia/Riyadh,SAR,0,"FRI,SAT",15:00,XSAU,B,false,weekend:library; close_local:library; xcal:matrix
+XSES,SINGAPORE EXCHANGE,SG,Asia/Singapore,SGD,0,"SAT,SUN",17:00,XSES,B,false,weekend:library; close_local:library; xcal:matrix
+XSGO,SANTIAGO STOCK EXCHANGE,CL,America/Santiago,CLP,0,"SAT,SUN",17:00,XSGO,B,false,weekend:library; close_local:library; xcal:matrix
+XSHE,SHENZHEN STOCK EXCHANGE,CN,Asia/Shanghai,CNY,0,"SAT,SUN",15:00,,B,false,weekend:unverified; close_local:primary
+XSHG,SHANGHAI STOCK EXCHANGE,CN,Asia/Shanghai,CNY,0,"SAT,SUN",15:00,XSHG,B,false,weekend:library; close_local:library; xcal:matrix
+XSPS,SOUTH PACIFIC STOCK EXCHANGE,FJ,Pacific/Fiji,FJD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XSSE,SARAJEVO STOCK EXCHANGE,BA,Europe/Sarajevo,BAM,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XSTC,HOCHIMINH STOCK EXCHANGE,VN,Asia/Ho_Chi_Minh,VND,0,"SAT,SUN",,,B,false,weekend:unverified; close_local:unknown
+XSTE,REPUBLICAN STOCK EXCHANGE,UZ,Asia/Tashkent,UZS,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown
+XSTO,NASDAQ STOCKHOLM AB,SE,Europe/Stockholm,SEK,0,"SAT,SUN",17:30,XSTO,B,false,weekend:library; close_local:library; xcal:matrix
+XSTU,BOERSE STUTTGART,DE,Europe/Berlin,EUR,0,"SAT,SUN",22:00,XSTU,B,false,weekend:library; close_local:library; xcal:matrix
+XSWA,ESWATINI STOCK EXCHANGE,SZ,Africa/Mbabane,SZL,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XSWX,SIX SWISS EXCHANGE,CH,Europe/Zurich,CHF,0,"SAT,SUN",17:30,XSWX,B,false,weekend:library; close_local:library; xcal:matrix
+XTAE,TEL AVIV STOCK EXCHANGE,IL,Asia/Jerusalem,ILS,2,"SAT,SUN",17:15,XTAE,B,false,weekend:library; close_local:library; xcal:matrix; quote_unit:verified-minor
+XTAI,TAIWAN STOCK EXCHANGE,TW,Asia/Taipei,TWD,0,"SAT,SUN",13:30,XTAI,A,false,weekend:library; close_local:library; xcal:matrix
+XTAL,NASDAQ TALLINN AS,EE,Europe/Tallinn,EUR,0,"SAT,SUN",16:00,XTAL,D,false,weekend:library; close_local:library; xcal:matrix
+XTEH,TEHRAN STOCK EXCHANGE,IR,Asia/Tehran,IRR,0,"SAT,SUN",,,D,true,weekend:unverified; close_local:unknown; sanctions:default-closed
+XTRN,TRINIDAD AND TOBAGO STOCK EXCHANGE,TT,America/Port_of_Spain,TTD,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XTSE,TORONTO STOCK EXCHANGE,CA,America/Toronto,CAD,0,"SAT,SUN",16:00,XTSE,B,false,weekend:library; close_local:library; xcal:matrix
+XTSX,TSX VENTURE EXCHANGE,CA,America/Toronto,CAD,0,"SAT,SUN",16:00,XTSE,D,false,weekend:library; close_local:library; xcal:alias
+XTUN,TUNIS STOCK EXCHANGE (BOURSE DE TUNIS),TN,Africa/Tunis,TND,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XUGA,UGANDA SECURITIES EXCHANGE,UG,Africa/Kampala,UGX,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XULA,MONGOLIAN STOCK EXCHANGE,MN,Asia/Ulaanbaatar,MNT,0,"SAT,SUN",,,D,false,weekend:secondary; close_local:unknown
+XVPA,BOLSA DE VALORES Y PRODUCTOS DE ASUNCION SA,PY,America/Asuncion,PYG,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
+XWAR,WARSAW STOCK EXCHANGE/EQUITIES/MAIN MARKET,PL,Europe/Warsaw,PLN,0,"SAT,SUN",17:00,XWAR,B,false,weekend:library; close_local:library; xcal:matrix
+XWBO,WIENER BOERSE AG,AT,Europe/Vienna,EUR,0,"SAT,SUN",17:30,XWBO,B,false,weekend:library; close_local:library; xcal:matrix
+XZAG,ZAGREB STOCK EXCHANGE,HR,Europe/Zagreb,EUR,0,"SAT,SUN",16:00,XZAG,D,false,weekend:library; close_local:library; xcal:matrix
+XZIM,ZIMBABWE STOCK EXCHANGE,ZW,Africa/Harare,ZWG,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown

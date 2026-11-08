@@ -20,6 +20,9 @@ htmlcov/
 
 # Data store (never commit market data)
 data/
+# Package reference data is code, not lake data.
+!/src/crocodile/core/markets/data/
+!/src/crocodile/equity/universal/data/
 *.parquet
 *.duckdb
 *.duckdb.wal
