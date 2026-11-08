@@ -326,6 +326,24 @@ def test_targeted_sanctions_are_warned_in_notes_only() -> None:
         assert "sanctions:targeted" in _notes(rows[mic]), mic
 
 
+SUNDAY_TO_THURSDAY_MICS = ("DSMD", "XKUW", "XBAH", "XAMM", "XCHG", "XPAE", "XKHA")
+
+
+@pytest.mark.parametrize("mic", SUNDAY_TO_THURSDAY_MICS)
+def test_markets_that_trade_sunday_to_thursday_have_a_friday_saturday_weekend(mic: str) -> None:
+    row = _exchange_rows()[mic]
+    assert row["weekend"] == "FRI,SAT", mic
+    notes = _notes(row)
+    assert "weekend:primary" in notes or "weekend:secondary" in notes, mic
+
+
+def test_tehran_trades_saturday_to_wednesday() -> None:
+    row = _exchange_rows()["XTEH"]
+    assert row["weekend"] == "THU,FRI"
+    notes = _notes(row)
+    assert "weekend:primary" in notes or "weekend:secondary" in notes
+
+
 def test_the_manifest_lists_the_four_exchanges_without_a_mic() -> None:
     entry = _manifest()["files"]["exchanges.csv"]
     assert tuple(entry["excluded_without_mic"]) == EXCLUDED_WITHOUT_MIC

@@ -317,6 +317,13 @@ def test_weekday_fallback_uses_weekend_and_close_from_exchanges_csv() -> None:
     assert cairo.quality is CalendarQuality.WEEKDAY_FALLBACK
 
 
+def test_a_sunday_to_thursday_market_trades_on_sunday_and_not_on_friday() -> None:
+    kuwait = calendar_for("XKUW")
+    assert kuwait.quality is CalendarQuality.WEEKDAY_FALLBACK
+    assert kuwait.is_session(date(2026, 11, 8)) is True  # Sunday
+    assert kuwait.is_session(date(2026, 11, 6)) is False  # Friday
+
+
 def test_always_open_calendar() -> None:
     crypto = AlwaysOpenCalendar()
     assert crypto.is_session(date(2026, 11, 8)) is True

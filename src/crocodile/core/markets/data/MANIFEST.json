@@ -3,7 +3,7 @@
   "files": {
     "exchanges.csv": {
       "curation": "scripts/markets_reference/curation.csv",
-      "curation_sha256": "48db7bcf5557cb80b42805815e110f661a1be3888a25604f7258cf8546fa242b",
+      "curation_sha256": "6749be69f2b152db8da028a2fe8795d96e50d4d03180a7706f01a7e29492f90f",
       "exchange_calendars_version": "4.13.2",
       "excluded_without_mic": [
         "Ethiopian Securities Exchange (ESX)",
@@ -15,7 +15,7 @@
       "notes": "172 operating MICs from the research matrix, joined to the ISO 10383 snapshot. Weekend and close of the 64 rows with xcal_code come from exchange_calendars (XNAS->XNYS and XTSX->XTSE via the library alias table); curated rows come from curation.csv; all other rows are SAT,SUN with weekend:unverified. Sanctioned rows follow sanctions.csv (default-closed). Quote scale 2 only for XJSE, XLON and XTAE.",
       "retrieved": "2026-11-08",
       "rows": 172,
-      "sha256": "e164a1f38a0c565201b3bd9e7b20e64993b237dca3e53f068f0ff0b9a25c007d",
+      "sha256": "75f9378ad24f2aadba6befd11827ec6670ea84a9c47be8de5d639c22cde8f79f",
       "source": "docs/superpowers/research/data/market-matrix-2026-11-08.json",
       "source_sha256_lf": "75d543d9f0165aed1194640aa92a27e8ffe56243a8c1b26592433064696078b8"
     },
