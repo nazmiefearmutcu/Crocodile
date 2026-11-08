@@ -12,12 +12,17 @@ Builds three generated files in ``src/crocodile/core/markets/data``:
 the verbatim ISO file and the second is hand-written. The script checks their
 hashes but never rewrites them.
 
-Usage, from the repository root, in the pinned ephemeral environment (the
-project environment is never modified)::
+Usage, from the repository root, with the project interpreter (``exchange-calendars``
+is a base dependency since task 03; running the script never modifies the environment)::
+
+    .venv/Scripts/python.exe scripts/build_markets_reference.py
+    .venv/Scripts/python.exe scripts/build_markets_reference.py --check   # exits 0 when up to date
+
+On POSIX the interpreter is ``.venv/bin/python``. Fallback for a checkout without the
+dependency, in the pinned ephemeral environment::
 
     uv run --no-project --python 3.12 --with "exchange-calendars==4.13.2" \\
-        --with "pandas==3.0.3" python scripts/build_markets_reference.py
-    ... python scripts/build_markets_reference.py --check   # exits 0 when up to date
+        --with "pandas==3.0.3" python scripts/build_markets_reference.py [--check]
 
 The script reads no clock and no network and writes LF, UTF-8, no BOM.
 ``exchange_calendars`` is imported inside ``main()`` only, so the builders can be
