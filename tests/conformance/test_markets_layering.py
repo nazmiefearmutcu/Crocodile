@@ -58,6 +58,12 @@ def _forbidden_imports(source: str, module: str, *, is_package: bool = False) ->
                 target = node.module or ""
             if _is_forbidden(target):
                 flagged.append(target)
+            # ``from crocodile import equity`` names a forbidden package as an alias.
+            flagged.extend(
+                f"{target}.{alias.name}"
+                for alias in node.names
+                if _is_forbidden(f"{target}.{alias.name}")
+            )
     return flagged
 
 
@@ -98,8 +104,7 @@ def test_importing_core_markets_loads_no_forbidden_package() -> None:
         ")\n"
         "print('\\n'.join(loaded))\n"
     )
-    existing = os.environ.get("PYTHONPATH", "")
-    env = {**os.environ, "PYTHONPATH": os.pathsep.join(filter(None, [str(_SRC), existing]))}
+    env = {**os.environ, "PYTHONPATH": str(_SRC)}
     result = subprocess.run(
         [sys.executable, "-c", code],
         cwd=_REPO,
@@ -125,6 +130,19 @@ def test_importing_core_markets_loads_no_forbidden_package() -> None:
         # which is not a forbidden package, so it is a control and must not be flagged.
         ("from ..equity import x\n", "crocodile.core.markets.mic", False),
         ("from . import errors\n", "crocodile.core.markets.mic", False),
+        # A forbidden package named as an alias of an allowed package is still an import of it.
+        ("from crocodile import equity\n", "crocodile.core.markets.mic", True),
+        ("from crocodile import surfaces, contrib\n", "crocodile.core.markets.mic", True),
+        ("from ... import equity\n", "crocodile.core.markets.mic", True),
+        ("from crocodile import capabilities as caps\n", "crocodile.core.markets.mic", True),
+        # A lazy, function-level import is still an import.
+        (
+            "def late():\n    from crocodile import capabilities\n",
+            "crocodile.core.markets.mic",
+            True,
+        ),
+        ("from crocodile.core.markets import errors\n", "crocodile.core.markets.mic", False),
+        ("from crocodile import __version__\n", "crocodile.core.markets.mic", False),
     ],
 )
 def test_the_scanner_flags_a_forbidden_import(source: str, module: str, expected: bool) -> None:
