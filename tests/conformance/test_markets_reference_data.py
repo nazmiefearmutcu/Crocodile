@@ -9,17 +9,23 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import importlib.util
 import io
 import json
 import re
+import subprocess
+import sys
 import zoneinfo
 from collections import Counter
 from importlib.resources import files
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 DATA = files("crocodile.core.markets") / "data"
+_REPO = Path(__file__).resolve().parents[2]
+_BUILD_SCRIPT = _REPO / "scripts" / "build_markets_reference.py"
 
 MIC_SNAPSHOT_SHA256 = "09a0d07b7b8348147453a2d8b18bc6638e3c5b16f749462582c9b1edf0fd0e38"
 MIC_FILE_HEADER = (
@@ -353,3 +359,39 @@ def test_generated_and_hand_written_csv_headers_are_exact(name: str) -> None:
     }[name]
     header, _ = _csv_rows(name)
     assert header == expected
+
+
+_LOAD_SCRIPT_CODE = (
+    "import importlib.util, sys\n"
+    "spec = importlib.util.spec_from_file_location('build_markets_reference', sys.argv[1])\n"
+    "module = importlib.util.module_from_spec(spec)\n"
+    "spec.loader.exec_module(module)\n"
+    "assert callable(module.main)\n"
+    "print('exchange_calendars' in sys.modules)\n"
+)
+
+
+def test_the_build_script_loads_with_the_standard_importlib_recipe() -> None:
+    # The recipe of task 05's gate: spec_from_file_location, module_from_spec and
+    # exec_module, with no sys.modules registration. A fresh interpreter keeps this
+    # test from depending on what earlier tests imported.
+    result = subprocess.run(
+        [sys.executable, "-c", _LOAD_SCRIPT_CODE, str(_BUILD_SCRIPT)],
+        cwd=_REPO,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "False", "loading the script must not import exchange_calendars"
+
+
+def test_the_build_script_is_loadable_in_process_without_sys_modules() -> None:
+    spec = importlib.util.spec_from_file_location("_probe_build_markets_reference", _BUILD_SCRIPT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert callable(module.main)
+    assert "_probe_build_markets_reference" not in sys.modules

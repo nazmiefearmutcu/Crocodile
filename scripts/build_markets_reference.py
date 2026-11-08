@@ -24,8 +24,6 @@ The script reads no clock and no network and writes LF, UTF-8, no BOM.
 loaded without it.
 """
 
-from __future__ import annotations
-
 import argparse
 import csv
 import hashlib
