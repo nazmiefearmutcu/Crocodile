@@ -140,7 +140,7 @@ def test_bist_2026_official_holidays_and_half_days_match_the_library() -> None:
 def test_every_xcal_code_in_exchanges_csv_builds_a_library_calendar(
     library_calendars: dict[str, LibraryCalendar],
 ) -> None:
-    assert len(library_calendars) == 69
+    assert len(library_calendars) == 68
     for mic, calendar in library_calendars.items():
         assert calendar.sessions(date(2026, 11, 2), date(2026, 11, 13)), mic
 

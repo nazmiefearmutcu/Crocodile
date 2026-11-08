@@ -31,4 +31,3 @@ XSHE,xcal_code,XSHG,secondary,"https://www.tradinghours.com/markets/szse (retrie
 BJSE,xcal_code,XSHG,secondary,"https://markethours.io/market/bse_beijing (retrieved 2026-11-08)","Beijing trades Mon-Fri 09:30-15:00 with a 11:30-13:00 lunch, as the Shanghai calendar does"
 XCNQ,xcal_code,XTSE,secondary,"https://www.tradinghours.com/markets/cnsx (retrieved 2026-11-08)","CSE trades Mon-Fri 09:30-16:00 Toronto time, as the Toronto calendar does; CSE pages not reachable"
 XNGM,xcal_code,XSTO,primary,"https://www.ngm.se/en/tradinghours-and-holidays (retrieved 2026-11-08)","NGM official page: normal trading day 09:00-17:30 CET, as the Stockholm calendar closes"
-AQSE,xcal_code,XLON,primary,"https://aquis.eu/stock-exchange/rules-and-regulations (retrieved 2026-11-08)","Aquis official rules: trading 08:00-16:30 each weekday; England and Wales bank holidays"

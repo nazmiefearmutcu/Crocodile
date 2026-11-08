@@ -299,7 +299,7 @@ def test_spot_values_match_the_measured_reference() -> None:
     assert rows["AIXK"]["timezone"] == "Asia/Almaty"
     assert "timezone:curated" in _notes(rows["AIXK"])
     assert rows["XBUL"]["currency"] == "EUR"
-    assert sum(1 for row in rows.values() if row["xcal_code"]) == 69
+    assert sum(1 for row in rows.values() if row["xcal_code"]) == 68
 
 
 def test_sanctions_csv_lists_exactly_the_comprehensive_programme_countries() -> None:
@@ -327,7 +327,7 @@ def test_targeted_sanctions_are_warned_in_notes_only() -> None:
 
 
 SUNDAY_TO_THURSDAY_MICS = ("DSMD", "XKUW", "XBAH", "XAMM", "XCHG", "XPAE", "XKHA")
-SIBLING_ALIASES = {"BJSE": "XSHG", "XCNQ": "XTSE", "XNGM": "XSTO", "AQSE": "XLON", "XSHE": "XSHG"}
+SIBLING_ALIASES = {"BJSE": "XSHG", "XCNQ": "XTSE", "XNGM": "XSTO", "XSHE": "XSHG"}
 
 
 @pytest.mark.parametrize("mic", SUNDAY_TO_THURSDAY_MICS)

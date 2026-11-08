@@ -1,7 +1,7 @@
 mic,name,country,timezone,currency,quote_scale,weekend,close_local,xcal_code,tier_research,sanctioned,notes
 AIXK,ASTANA INTERNATIONAL EXCHANGE LTD,KZ,Asia/Almaty,KZT,0,"SAT,SUN",17:00,AIXK,D,false,weekend:library; close_local:library; xcal:matrix; timezone:curated; currency:unverified
 APXL,SYDNEY STOCK EXCHANGE LIMITED,AU,Australia/Sydney,AUD,0,"SAT,SUN",,,D,false,weekend:unverified; close_local:unknown
-AQSE,AQUIS STOCK EXCHANGE,GB,Europe/London,GBP,0,"SAT,SUN",16:30,XLON,C,false,weekend:library; close_local:library; xcal:sibling; quote_unit:unverified
+AQSE,AQUIS STOCK EXCHANGE,GB,Europe/London,GBP,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown; quote_unit:unverified
 AQXE,AQUIS EXCHANGE PLC,GB,Europe/London,GBP,0,"SAT,SUN",,,C,false,weekend:unverified; close_local:unknown
 ASEX,ATHENS STOCK EXCHANGE,GR,Europe/Athens,EUR,0,"SAT,SUN",17:20,ASEX,B,false,weekend:library; close_local:library; xcal:matrix
 BCSE,BELARUS CURRENCY AND STOCK EXCHANGE,BY,Europe/Minsk,BYN,0,"SAT,SUN",,,D,true,weekend:unverified; close_local:unknown; sanctions:default-closed

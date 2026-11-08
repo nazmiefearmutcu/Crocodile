@@ -122,7 +122,7 @@ DEFAULT_WEEKEND = frozenset({5, 6})
 
 EXPECTED_EXCHANGE_ROWS = 172
 EXPECTED_CURRENCY_ROWS = 165
-EXPECTED_XCAL_ROWS = 69
+EXPECTED_XCAL_ROWS = 68
 EXPECTED_MIC_ROWS = 2889
 EXPECTED_SANCTIONED_ROWS = 5
 EXPECTED_SCALE_2 = frozenset({"XJSE", "XLON", "XTAE"})
@@ -620,9 +620,9 @@ def _manifest(
                 "license": EXCHANGES_LICENSE,
                 "notes": (
                     "172 operating MICs from the research matrix, joined to the ISO 10383 "
-                    "snapshot. Weekend and close of the 69 rows with xcal_code come from "
+                    "snapshot. Weekend and close of the 68 rows with xcal_code come from "
                     "exchange_calendars (XNAS->XNYS and XTSX->XTSE via the library alias "
-                    "table; XSHE, BJSE, XCNQ, XNGM and AQSE via curated sibling codes, "
+                    "table; XSHE, BJSE, XCNQ and XNGM via curated sibling codes, "
                     "xcal:sibling); curated rows come from curation.csv; all other rows are "
                     "SAT,SUN with weekend:unverified. Sanctioned rows follow sanctions.csv "
                     "(default-closed). Quote scale 2 only for XJSE, XLON and XTAE."
