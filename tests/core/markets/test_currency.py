@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from decimal import Decimal
 
 import pytest
 
+from crocodile.core.markets import currency
 from crocodile.core.markets.currency import (
     QuoteUnit,
     currencies,
@@ -14,7 +16,7 @@ from crocodile.core.markets.currency import (
     require_currency,
     to_major,
 )
-from crocodile.core.markets.errors import UnknownCurrencyError
+from crocodile.core.markets.errors import ReferenceDataError, UnknownCurrencyError
 
 pytestmark = pytest.mark.usefixtures("network_forbidden")
 
@@ -105,3 +107,31 @@ def test_to_major_rejects_bad_input(value: object, scale: object, error: type[Ex
 def test_to_major_rejects_a_non_finite_decimal_string() -> None:
     with pytest.raises(ValueError):
         to_major("NaN", 2)
+
+
+@pytest.fixture
+def fresh_currency_table() -> Iterator[None]:
+    """Each loader test starts from an empty cache and leaves none behind."""
+    currency._table.cache_clear()
+    yield
+    currency._table.cache_clear()
+
+
+@pytest.mark.parametrize(
+    "rows",
+    [
+        [{"code": "eur", "minor_unit": "2", "name": "Euro"}],
+        [{"code": "EUR", "minor_unit": "two", "name": "Euro"}],
+        [
+            {"code": "EUR", "minor_unit": "2", "name": "Euro"},
+            {"code": "EUR", "minor_unit": "2", "name": "Euro"},
+        ],
+    ],
+    ids=["lowercase-code", "non-numeric-minor-unit", "duplicate-code"],
+)
+def test_the_iso4217_loader_refuses_a_bad_row(
+    fresh_currency_table: None, monkeypatch: pytest.MonkeyPatch, rows: list[dict[str, str]]
+) -> None:
+    monkeypatch.setattr(currency, "read_csv", lambda name, header: rows)
+    with pytest.raises(ReferenceDataError):
+        currency._table()

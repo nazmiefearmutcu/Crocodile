@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import time
 from zoneinfo import ZoneInfo
 
@@ -168,3 +169,47 @@ def test_the_module_exposes_the_spec_columns() -> None:
         "notes",
     )
     assert exchanges.WEEKDAY_TOKENS == ("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
+
+
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [
+        ("sanctioned", "True"),
+        ("close_local", "25:00"),
+        ("close_local", "9:30"),
+        ("tier_research", "E"),
+        ("weekend", "SUN,SAT"),
+        ("mic", "xist"),
+        ("country", "tr"),
+    ],
+    ids=[
+        "sanctioned-not-lower-case",
+        "close-hour-out-of-range",
+        "close-not-two-digit-hour",
+        "tier-outside-a-to-d",
+        "weekend-not-monday-first",
+        "mic-lower-case",
+        "country-lower-case",
+    ],
+)
+def test_parse_exchange_row_refuses_each_bad_cell(column: str, value: str) -> None:
+    with pytest.raises(ReferenceDataError) as caught:
+        parse_exchange_row({**_valid_row(), column: value}, line=9)
+    assert "line 9" in str(caught.value)
+
+
+@pytest.fixture
+def fresh_exchange_index() -> Iterator[None]:
+    exchanges._packaged_exchange_index.cache_clear()
+    yield
+    exchanges._packaged_exchange_index.cache_clear()
+
+
+def test_the_packaged_exchange_loader_refuses_a_duplicate_mic(
+    fresh_exchange_index: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    row = _valid_row()
+    monkeypatch.setattr(exchanges, "read_csv", lambda name, header: [row, row])
+    with pytest.raises(ReferenceDataError) as caught:
+        exchanges._packaged_exchange_index()
+    assert "duplicate mic XIST" in str(caught.value)

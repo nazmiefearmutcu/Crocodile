@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import date
 
 import pytest
@@ -128,3 +129,67 @@ def test_a_duplicate_mic_in_the_source_is_a_reference_data_error() -> None:
     }
     with pytest.raises(ReferenceDataError):
         mic.parse_mic_rows([row, dict(row)])
+
+
+def _mic_row(mic_code: str = "XIST", **overrides: str) -> dict[str, str]:
+    row = {column: "" for column in mic.MIC_HEADER}
+    row.update(
+        {
+            "MIC": mic_code,
+            "OPERATING MIC": mic_code,
+            "OPRT/SGMT": "OPRT",
+            "MARKET NAME-INSTITUTION DESCRIPTION": "BORSA ISTANBUL",
+            "MARKET CATEGORY CODE": "NSPD",
+            "ISO COUNTRY CODE (ISO 3166)": "TR",
+            "STATUS": "ACTIVE",
+        }
+    )
+    row.update(overrides)
+    return row
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("20130826", date(2013, 8, 26)), ("", None)],
+    ids=["a-date", "empty"],
+)
+def test_expiry_reads_yyyymmdd_or_nothing(raw: str, expected: date | None) -> None:
+    assert mic._expiry(raw, "XTUR") == expected
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["2013-08-26", "2013082", "abcdefgh", "20131301", "20130230"],
+    ids=["dashed", "seven-digits", "letters", "month-13", "no-such-day"],
+)
+def test_expiry_refuses_a_value_that_is_not_a_yyyymmdd_date(raw: str) -> None:
+    with pytest.raises(ReferenceDataError) as caught:
+        mic._expiry(raw, "XTUR")
+    assert "XTUR" in str(caught.value)
+
+
+def test_parse_mic_rows_refuses_a_duplicate_mic() -> None:
+    with pytest.raises(ReferenceDataError) as caught:
+        mic.parse_mic_rows([_mic_row("XIST"), _mic_row("XIST")])
+    assert "duplicate MIC XIST" in str(caught.value)
+
+
+def test_parse_mic_rows_refuses_a_malformed_expiry_date() -> None:
+    with pytest.raises(ReferenceDataError):
+        mic.parse_mic_rows([_mic_row("XTUR", **{"EXPIRY DATE": "2013-08-26"})])
+
+
+@pytest.fixture
+def fresh_mic_index() -> Iterator[None]:
+    mic._packaged_index.cache_clear()
+    yield
+    mic._packaged_index.cache_clear()
+
+
+def test_the_packaged_mic_loader_refuses_a_duplicate_row(
+    fresh_mic_index: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rows = [_mic_row("XIST"), _mic_row("XIST")]
+    monkeypatch.setattr(mic, "read_csv", lambda name, header: rows)
+    with pytest.raises(ReferenceDataError):
+        mic._packaged_index()
