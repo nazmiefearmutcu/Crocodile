@@ -224,11 +224,42 @@ def test_library_calendar_beyond_its_bound_raises_but_registry_answers_with_fall
     assert shanghai.is_session(date(2027, 1, 2)) is False  # Saturday
     assert shanghai.quality_for(date(2027, 1, 4)) is CalendarQuality.WEEKDAY_FALLBACK
     assert shanghai.quality_for(date(2026, 12, 31)) is CalendarQuality.LIBRARY
-    assert shanghai.session_close_utc(date(2027, 1, 4)) == calendar_for("XSHG").session_close_utc(
-        date(2027, 1, 4)
-    )
+    assert shanghai.session_close_utc(date(2027, 1, 4)) == _utc("2027-01-04T07:00")
     with pytest.raises(CalendarRangeError):
         calendar_for("XNYS").is_session(date(1900, 1, 2))
+
+
+def test_composite_answers_across_the_upper_bound_without_raising() -> None:
+    # calendar_for("XSHG") is cached, so comparing it with itself proves nothing; the expected
+    # values below are fixed instants and dates (XSHG closes 15:00 Asia/Shanghai = 07:00 UTC).
+    shanghai = calendar_for("XSHG")
+    assert shanghai.window[1] == date(2026, 12, 31)
+    assert shanghai.sessions(date(2026, 12, 28), date(2027, 1, 8)) == [
+        date(2026, 12, 28),
+        date(2026, 12, 29),
+        date(2026, 12, 30),
+        date(2026, 12, 31),
+        date(2027, 1, 1),
+        date(2027, 1, 4),
+        date(2027, 1, 5),
+        date(2027, 1, 6),
+        date(2027, 1, 7),
+        date(2027, 1, 8),
+    ]
+    assert shanghai.previous_session(date(2027, 1, 1)) == date(2026, 12, 31)
+    assert shanghai.previous_session(date(2027, 1, 4)) == date(2027, 1, 1)
+    assert shanghai.session_open_utc(date(2027, 1, 4)) == _utc("2027-01-03T16:00")
+    assert shanghai.session_break_utc(date(2027, 1, 4)) is None
+    delay = timedelta(minutes=45)
+    assert shanghai.latest_completed_session(_utc("2027-01-04T08:00"), delay) == date(2027, 1, 4)
+    assert shanghai.latest_completed_session(_utc("2027-01-04T06:00"), delay) == date(2027, 1, 1)
+
+
+def test_library_clamps_the_window_to_bound_min() -> None:
+    # The requested start (2019-06-01) precedes XSAU's recorded lower bound, so the library
+    # window is clamped to bound_min (2021-01-01) and the upper clamp keeps 2021-03-31.
+    xsau = LibraryCalendar(_registry_info("XSAU"), start=date(2019, 6, 1), end=date(2021, 3, 31))
+    assert xsau.window == (date(2021, 1, 1), date(2021, 3, 31))
 
 
 def test_non_sessions_have_no_open_close_or_break() -> None:
