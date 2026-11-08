@@ -158,6 +158,13 @@ def test_require_not_sanctioned_passes_for_an_open_market() -> None:
     assert require_not_sanctioned("XIST") is None
 
 
+def test_an_unparsed_allow_string_is_refused() -> None:
+    with pytest.raises(TypeError, match="parse_allowed_countries"):
+        is_sanctioned("MISX", allow="IRU")
+    with pytest.raises(TypeError, match="parse_allowed_countries"):
+        require_not_sanctioned("MISX", allow="IRU")
+
+
 def test_unknown_mics_are_refused_rather_than_assumed_clean() -> None:
     with pytest.raises(UnknownMarketError):
         is_sanctioned("ZZZZ")

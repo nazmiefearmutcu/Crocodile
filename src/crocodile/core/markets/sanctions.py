@@ -130,6 +130,16 @@ def allowed_countries(settings: Settings | None = None) -> frozenset[str]:
     return parse_allowed_countries(source.allow_sanctioned_markets)
 
 
+def _refuse_str_allow(allow: object) -> None:
+    """Refuse a ``str`` allow-list: a string is a collection of characters, not of codes."""
+    if isinstance(allow, str):
+        raise TypeError(
+            "allow must be a collection of country codes, not a str (a str would match "
+            "substrings, so allow='IRU' opens RU and IR); wrap the value in "
+            "parse_allowed_countries(...)"
+        )
+
+
 def _country_of(mic: str, mics: MicRegistry | None) -> str:
     registry = mics if mics is not None else MicRegistry()
     return registry.get(mic).country
@@ -141,11 +151,13 @@ def is_sanctioned(
     """True when ``mic`` sits in a default-closed country that ``allow`` does not open.
 
     ``allow`` holds upper-case alpha-2 codes, as :func:`parse_allowed_countries` returns
-    them. There is no normalisation here.
+    them. There is no normalisation here. A ``str`` is refused, not read as a set of codes.
 
     Raises:
+        TypeError: ``allow`` is a ``str``; pass :func:`parse_allowed_countries` output.
         UnknownMarketError: ``mic`` is not in ISO 10383. An unknown market is refused.
     """
+    _refuse_str_allow(allow)
     country = _country_of(mic, mics)
     return country in sanctioned_countries() and country not in allow
 
@@ -156,12 +168,15 @@ def require_not_sanctioned(
     """Return ``None`` for an open market, otherwise raise :class:`SanctionedMarketError`.
 
     The error names the country, the programme page and the note from ``sanctions.csv``,
-    and the variable that opts in.
+    and the variable that opts in. A ``str`` ``allow`` is refused, as in
+    :func:`is_sanctioned`.
 
     Raises:
+        TypeError: ``allow`` is a ``str``; pass :func:`parse_allowed_countries` output.
         SanctionedMarketError: ``mic`` is in a closed country that ``allow`` does not open.
         UnknownMarketError: ``mic`` is not in ISO 10383.
     """
+    _refuse_str_allow(allow)
     country = _country_of(mic, mics)
     entry = sanctioned_countries().get(country)
     if entry is None or country in allow:

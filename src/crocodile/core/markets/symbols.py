@@ -181,7 +181,10 @@ def is_listing_symbol(
 ) -> bool:
     """True only for a canonical non-US ``local@MIC`` symbol. Never raises a market error.
 
-    Dispatch uses this to decide that a symbol resolves to equity (spec section 3.11).
+    This is the strict canonical-form check, for callers that need one. It answers whether
+    the string parses as a listing symbol whose MIC is known to the registries. Task 08's
+    dispatch does not call it: dispatch uses lenient ``MicRegistry`` membership instead
+    (interfaces section 5.7), so a symbol that this check rejects can still resolve there.
     """
     try:
         _, mic = parse_listing_symbol(symbol, mics=mics, exchanges=exchanges)

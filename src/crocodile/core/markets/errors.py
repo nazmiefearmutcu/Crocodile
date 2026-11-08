@@ -162,7 +162,7 @@ class ListingConflictError(MarketError, StoreError):
 
 
 class CalendarRangeError(MarketError, ValueError):
-    """A date lies before the earliest date a library calendar can answer."""
+    """A date lies outside the window a library calendar can answer."""
 
     def __init__(self, mic: str, requested: date, first: date | None, last: date | None) -> None:
         self.mic = mic
