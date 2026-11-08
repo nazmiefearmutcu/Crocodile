@@ -299,7 +299,7 @@ def test_spot_values_match_the_measured_reference() -> None:
     assert rows["AIXK"]["timezone"] == "Asia/Almaty"
     assert "timezone:curated" in _notes(rows["AIXK"])
     assert rows["XBUL"]["currency"] == "EUR"
-    assert sum(1 for row in rows.values() if row["xcal_code"]) == 64
+    assert sum(1 for row in rows.values() if row["xcal_code"]) == 69
 
 
 def test_sanctions_csv_lists_exactly_the_comprehensive_programme_countries() -> None:
@@ -327,6 +327,7 @@ def test_targeted_sanctions_are_warned_in_notes_only() -> None:
 
 
 SUNDAY_TO_THURSDAY_MICS = ("DSMD", "XKUW", "XBAH", "XAMM", "XCHG", "XPAE", "XKHA")
+SIBLING_ALIASES = {"BJSE": "XSHG", "XCNQ": "XTSE", "XNGM": "XSTO", "AQSE": "XLON", "XSHE": "XSHG"}
 
 
 @pytest.mark.parametrize("mic", SUNDAY_TO_THURSDAY_MICS)
@@ -342,6 +343,15 @@ def test_tehran_trades_saturday_to_wednesday() -> None:
     assert row["weekend"] == "THU,FRI"
     notes = _notes(row)
     assert "weekend:primary" in notes or "weekend:secondary" in notes
+
+
+@pytest.mark.parametrize(("mic", "library"), sorted(SIBLING_ALIASES.items()))
+def test_sibling_venues_use_the_library_calendar_they_share(mic: str, library: str) -> None:
+    row = _exchange_rows()[mic]
+    assert row["xcal_code"] == library, mic
+    notes = _notes(row)
+    assert "xcal:sibling" in notes, mic
+    assert "weekend:library" in notes and "close_local:library" in notes, mic
 
 
 def test_the_manifest_lists_the_four_exchanges_without_a_mic() -> None:

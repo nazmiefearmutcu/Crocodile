@@ -122,7 +122,7 @@ DEFAULT_WEEKEND = frozenset({5, 6})
 
 EXPECTED_EXCHANGE_ROWS = 172
 EXPECTED_CURRENCY_ROWS = 165
-EXPECTED_XCAL_ROWS = 64
+EXPECTED_XCAL_ROWS = 69
 EXPECTED_MIC_ROWS = 2889
 EXPECTED_SANCTIONED_ROWS = 5
 EXPECTED_SCALE_2 = frozenset({"XJSE", "XLON", "XTAE"})
@@ -140,7 +140,7 @@ CURATION_FIELDS: dict[str, frozenset[str]] = {
     "close_local": frozenset({"primary", "secondary"}),
     "timezone": frozenset({"library", "primary", "secondary"}),
     "currency": frozenset({"primary", "secondary", "unverified"}),
-    "xcal_code": frozenset({"library"}),
+    "xcal_code": frozenset({"library", "primary", "secondary"}),
 }
 LIBRARY_PROBE_WINDOW = ("2026-11-02", "2026-11-13")
 INSTALL_HINT = (
@@ -317,13 +317,13 @@ def load_curation(
             raise fail(f"duplicate curation row for ({mic}, {field})")
         if evidence != "unverified" and not source:
             raise fail(f"curation row ({mic}, {field}) has evidence but no source")
-        _validate_curated_value(mic, field, value, currencies, xc)
+        _validate_curated_value(mic, field, value, evidence, currencies, xc)
         curation[(mic, field)] = CurationRow(value, evidence, source)
     return curation
 
 
 def _validate_curated_value(
-    mic: str, field: str, value: str, currencies: frozenset[str], xc: ModuleType
+    mic: str, field: str, value: str, evidence: str, currencies: frozenset[str], xc: ModuleType
 ) -> None:
     if field == "weekend":
         parse_weekend(value)
@@ -337,13 +337,17 @@ def _validate_curated_value(
     elif field == "currency":
         if value not in currencies:
             raise fail(f"currency {value!r} for {mic} is not in ISO 4217")
-    elif field == "xcal_code":
+    elif field == "xcal_code" and evidence == "library":
         try:
             alias = xc.resolve_alias(mic)
         except Exception as exc:
             raise fail(f"library has no alias for {mic}") from exc
         if alias != value:
             raise fail(f"resolve_alias({mic}) is {alias!r}, curation says {value!r}")
+    elif field == "xcal_code":
+        # A sibling venue shares the calendar of a library code; the code must exist.
+        if value not in xc.get_calendar_names():
+            raise fail(f"{value!r} for {mic} is not a library calendar code")
 
 
 def library_facts(xc: ModuleType, code: str) -> CalendarFacts:
@@ -446,7 +450,7 @@ def build_exchange_rows(
             xcal_token = "xcal:matrix"
         elif curated_xcal is not None:
             xcal_code = curated_xcal.value
-            xcal_token = "xcal:alias"
+            xcal_token = "xcal:alias" if curated_xcal.evidence == "library" else "xcal:sibling"
         else:
             xcal_code = None
             xcal_token = ""
@@ -616,9 +620,10 @@ def _manifest(
                 "license": EXCHANGES_LICENSE,
                 "notes": (
                     "172 operating MICs from the research matrix, joined to the ISO 10383 "
-                    "snapshot. Weekend and close of the 64 rows with xcal_code come from "
+                    "snapshot. Weekend and close of the 69 rows with xcal_code come from "
                     "exchange_calendars (XNAS->XNYS and XTSX->XTSE via the library alias "
-                    "table); curated rows come from curation.csv; all other rows are "
+                    "table; XSHE, BJSE, XCNQ, XNGM and AQSE via curated sibling codes, "
+                    "xcal:sibling); curated rows come from curation.csv; all other rows are "
                     "SAT,SUN with weekend:unverified. Sanctioned rows follow sanctions.csv "
                     "(default-closed). Quote scale 2 only for XJSE, XLON and XTAE."
                 ),

@@ -3,7 +3,7 @@
   "files": {
     "exchanges.csv": {
       "curation": "scripts/markets_reference/curation.csv",
-      "curation_sha256": "6749be69f2b152db8da028a2fe8795d96e50d4d03180a7706f01a7e29492f90f",
+      "curation_sha256": "e46376df5a6c92bf087fcf3982ea6cd7a097f52d69b3fbf8bac470a295db625b",
       "exchange_calendars_version": "4.13.2",
       "excluded_without_mic": [
         "Ethiopian Securities Exchange (ESX)",
@@ -12,10 +12,10 @@
         "Yangon Stock Exchange (YSX)"
       ],
       "license": "Crocodile research matrix (this repository, Apache-2.0); weekend/close of library rows from exchange_calendars (Apache-2.0).",
-      "notes": "172 operating MICs from the research matrix, joined to the ISO 10383 snapshot. Weekend and close of the 64 rows with xcal_code come from exchange_calendars (XNAS->XNYS and XTSX->XTSE via the library alias table); curated rows come from curation.csv; all other rows are SAT,SUN with weekend:unverified. Sanctioned rows follow sanctions.csv (default-closed). Quote scale 2 only for XJSE, XLON and XTAE.",
+      "notes": "172 operating MICs from the research matrix, joined to the ISO 10383 snapshot. Weekend and close of the 69 rows with xcal_code come from exchange_calendars (XNAS->XNYS and XTSX->XTSE via the library alias table; XSHE, BJSE, XCNQ, XNGM and AQSE via curated sibling codes, xcal:sibling); curated rows come from curation.csv; all other rows are SAT,SUN with weekend:unverified. Sanctioned rows follow sanctions.csv (default-closed). Quote scale 2 only for XJSE, XLON and XTAE.",
       "retrieved": "2026-11-08",
       "rows": 172,
-      "sha256": "75f9378ad24f2aadba6befd11827ec6670ea84a9c47be8de5d639c22cde8f79f",
+      "sha256": "cb3a4936e2cc563e910cb14284406e1b7962edd072045b6fc9073f74a54fb2da",
       "source": "docs/superpowers/research/data/market-matrix-2026-11-08.json",
       "source_sha256_lf": "75d543d9f0165aed1194640aa92a27e8ffe56243a8c1b26592433064696078b8"
     },
