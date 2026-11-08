@@ -49,6 +49,12 @@ dependencies = [
     "pandas>=2.0",
     "beautifulsoup4>=4.12",
     "python-dateutil>=2.9",
+    # Exchange session calendars behind core/markets/calendar.py (Apache-2.0).
+    # exchange_calendars 4.13.2 cannot build its Orthodox-Easter calendars (ASEX, XBEL,
+    # XBSE, XCYS) on pandas 3.1.x; pandas is locked at 3.0.3 and
+    # tests/conformance/test_calendar_cross_checks.py builds every exchanges.csv calendar,
+    # so an upgrade that breaks one fails loudly.
+    "exchange-calendars>=4.13.2",
 ]
 
 [project.optional-dependencies]
