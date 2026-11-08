@@ -184,6 +184,15 @@ class Settings(msgspec.Struct, frozen=True):
     the limiter, so it defaults off and must be turned on deliberately.
     """
 
+    allow_sanctioned_markets: str = ""
+    """Comma-separated ISO 3166 alpha-2 countries whose default-closed markets are opted in.
+
+    Empty keeps every country in ``core/markets/data/sanctions.csv`` closed. Kept as the raw
+    string, like :attr:`base_rpc_urls`: :func:`crocodile.core.markets.sanctions.allowed_countries`
+    parses it where it is used and raises :class:`~crocodile.core.errors.ConfigError` on a
+    malformed or unlisted code, so a typo cannot open a market nobody chose. Not legal advice.
+    """
+
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
         """Read every known name out of ``env``, defaulting to :data:`os.environ`.
@@ -269,6 +278,7 @@ _VARS: Final[Mapping[str, str]] = {
     "recipient_wallet": "RECIPIENT_WALLET",
     "price_usdc": "PRICE_USDC",
     "trust_forwarded_for": "TRUST_FORWARDED_FOR",
+    "allow_sanctioned_markets": "ALLOW_SANCTIONED_MARKETS",
 }
 """Field name to unprefixed variable name.
 

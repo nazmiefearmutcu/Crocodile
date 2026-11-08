@@ -97,3 +97,21 @@ def test_binance_sbe_settings_and_key_redaction():
     assert settings.binance_market == "spot"
     assert settings.binance_sbe_api_key == "SENTINEL_KEY"
     assert "SENTINEL_KEY" not in repr(settings)
+
+
+def test_allow_sanctioned_markets_defaults_to_empty():
+    assert Settings.from_env({}).allow_sanctioned_markets == ""
+
+
+def test_allow_sanctioned_markets_passes_through_unparsed():
+    s = Settings.from_env({"CROCODILE_ALLOW_SANCTIONED_MARKETS": "RU, by"})
+    assert s.allow_sanctioned_markets == "RU, by"
+
+
+def test_allow_sanctioned_markets_is_a_known_name():
+    assert "CROCODILE_ALLOW_SANCTIONED_MARKETS" in Settings.known_names()
+
+
+def test_allow_sanctioned_markets_is_shown_in_repr():
+    s = Settings.from_env({"CROCODILE_ALLOW_SANCTIONED_MARKETS": "RU"})
+    assert "allow_sanctioned_markets='RU'" in repr(s)
