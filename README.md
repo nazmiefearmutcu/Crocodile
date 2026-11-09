@@ -7,6 +7,7 @@ Use it to build a research dataset, inspect order books and trades, calculate ma
 ## What it provides
 
 - **Market connectors:** native crypto adapters, a universal CCXT adapter, equity providers, SEC filings, macro series, and selected on-chain sources. Available channels depend on each source.
+- **Market reference data:** 172 exchanges in 129 countries and territories, with ISO 10383 MICs, ISO 4217 currencies, trading calendars, canonical `SYMBOL@MIC` listing symbols, and sanctioned markets closed by default ([coverage](docs/global-markets.md)). Price collection for these exchanges is not part of this release.
 - **A shared schema:** typed records for trades, books, quotes, bars, derivatives, filings, and related observations, with source identity and timestamps.
 - **Local storage and queries:** partitioned Parquet, channel discovery, DuckDB SQL, exports, and OHLCV resampling.
 - **Replay:** a globally ordered stream from stored records, plus a separate raw-capture path for supported native feeds.
@@ -88,7 +89,7 @@ Records distinguish `native`, `derived`, and `synthetic` observations. An unavai
 
 Native crypto adapters include Binance, Bybit, Coinbase, Deribit, and OKX; other adapters cover selected DEX and on-chain sources. The optional CCXT path broadens venue access, with REST polling and WebSocket support where implemented. Venue counts depend on the installed CCXT version and do not imply identical channel coverage.
 
-Equity adapters include Alpaca, Yahoo, SEC EDGAR, Treasury, Tiingo, Stooq, MSN Money, Google Finance, and Finnhub. Credentials and channel coverage differ by provider. Settings use the `CROCODILE_` environment prefix; [`core/config.py`](src/crocodile/core/config.py) defines defaults and credential names. Set `CROCODILE_DATA_DIR` or pass `--data-dir` to choose the lake.
+Equity adapters include Alpaca, Yahoo, SEC EDGAR, Treasury, Tiingo, Stooq, MSN Money, Google Finance, and Finnhub. Credentials and channel coverage differ by provider. Settings use the `CROCODILE_` environment prefix; [`core/config.py`](src/crocodile/core/config.py) defines defaults and credential names. Set `CROCODILE_DATA_DIR` or pass `--data-dir` to choose the lake. `CROCODILE_ALLOW_SANCTIONED_MARKETS` (comma-separated ISO country codes from RU, BY, IR, SY, KP) opens markets that are closed by default.
 
 ## Analytics
 
@@ -135,7 +136,7 @@ uv sync --all-extras
 uv run --all-extras pytest tests/
 ```
 
-Tests cover adapters, schemas, provenance, query boundaries, sequence handling, raw capture, and replay, including cross-process byte-identity checks. Static-analysis coverage and legacy exceptions are defined in [`pyproject.toml`](pyproject.toml); see [CHANGELOG.md](CHANGELOG.md) for changes and [release notes](docs/release-notes-0.3.2.md) for the current data model.
+Tests cover adapters, schemas, provenance, query boundaries, sequence handling, raw capture, and replay, including cross-process byte-identity checks. Static-analysis coverage and legacy exceptions are defined in [`pyproject.toml`](pyproject.toml); see [CHANGELOG.md](CHANGELOG.md) for changes and [release notes](docs/release-notes-0.3.3.md) for the current data model. [Global market coverage](docs/global-markets.md) lists the 172 exchanges in 129 countries and territories that the market reference layer knows.
 
 [Apache License 2.0](LICENSE).
 
