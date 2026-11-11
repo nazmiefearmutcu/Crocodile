@@ -1044,3 +1044,16 @@ def _rows(result: Any) -> list[dict[str, Any]] | None:
 def data_dir_for(settings: Settings, override: Path | None) -> Path:
     """Where the lake is: what the caller said, else what the environment said."""
     return override if override is not None else settings.data_dir
+
+
+#: The listing-master readers. They answer from the lake a surface was given, as ``universe-sync``
+#: and ``schedule`` write to it. Every other capability keeps CROCODILE_DATA_DIR as its lake root
+#: (README: ``collect`` and ``backfill`` always write there).
+LISTING_READERS: Final = frozenset({"universe", "markets"})
+
+
+def surface_settings(cap: Capability, settings: Settings, override: Path | None) -> Settings:
+    """The settings a surface hands ``cap``: its ``--data-dir`` is the lake root for the readers."""
+    if override is None or cap.name not in LISTING_READERS:
+        return settings
+    return msgspec.structs.replace(settings, data_dir=override)

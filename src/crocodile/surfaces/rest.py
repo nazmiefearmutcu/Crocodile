@@ -359,7 +359,7 @@ def _handler(
             ctx = dispatch.build_context(
                 catalog,
                 resolved,
-                settings=settings,
+                settings=dispatch.surface_settings(cap, settings, data_dir),
                 readonly=True,
                 row_limit=dispatch.NETWORK_ROW_LIMIT,
             )

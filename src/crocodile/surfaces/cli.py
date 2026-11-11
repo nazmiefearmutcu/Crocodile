@@ -263,7 +263,7 @@ def _runner(cap: Capability) -> Any:
             ctx = dispatch.build_context(
                 catalog,
                 resolved,
-                settings=settings,
+                settings=dispatch.surface_settings(cap, settings, data_dir),
                 # See the module docstring: local operator, own lake, no guard and no cap.
                 readonly=False,
                 row_limit=None,

@@ -130,7 +130,7 @@ def call_tool(
         ctx = dispatch.build_context(
             catalog,
             resolved,
-            settings=resolved_settings,
+            settings=dispatch.surface_settings(cap, resolved_settings, data_dir),
             readonly=True,
             row_limit=dispatch.NETWORK_ROW_LIMIT,
         )
