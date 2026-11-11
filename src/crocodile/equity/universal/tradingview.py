@@ -1010,7 +1010,7 @@ def universe_from_scan(
         if resolved is None:
             continue
         values = row.values
-        security_type =security_type_for(_text(values.get("type")), _text(values.get("subtype")))
+        security_type = security_type_for(_text(values.get("type")), _text(values.get("subtype")))
         name = _text(values.get("description"))
         isin_value = values.get("isin")
         isin = isin_value if isinstance(isin_value, str) and is_valid_isin(isin_value) else None
