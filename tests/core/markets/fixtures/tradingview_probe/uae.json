@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "2POINTZERO",
+    2.07,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:2POINTZERO"
+  },
+  {
+   "d": [
+    "ABNIC",
+    2.35,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ABNIC"
+  },
+  {
+   "d": [
+    "ADAVIATION",
+    5.72,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADAVIATION"
+  },
+  {
+   "d": [
+    "ADCB",
+    17.3,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADCB"
+  },
+  {
+   "d": [
+    "ADIB",
+    23.24,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADIB"
+  },
+  {
+   "d": [
+    "ADID",
+    2.2,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADID"
+  },
+  {
+   "d": [
+    "ADNH",
+    0.479,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADNH"
+  },
+  {
+   "d": [
+    "ADNHC",
+    0.61,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADNHC"
+  },
+  {
+   "d": [
+    "ADNIC",
+    7.06,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADNIC"
+  },
+  {
+   "d": [
+    "ADNOCDIST",
+    3.91,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADNOCDIST"
+  },
+  {
+   "d": [
+    "ADNOCDRILL",
+    5.82,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADNOCDRILL"
+  },
+  {
+   "d": [
+    "ADNOCGAS",
+    3.39,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADNOCGAS"
+  },
+  {
+   "d": [
+    "ADNOCLS",
+    6.71,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADNOCLS"
+  },
+  {
+   "d": [
+    "ADPORTS",
+    6.12,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADPORTS"
+  },
+  {
+   "d": [
+    "ADSB",
+    8.38,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ADSB"
+  },
+  {
+   "d": [
+    "AGILITY",
+    1.59,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:AGILITY"
+  },
+  {
+   "d": [
+    "AGIX",
+    140.7,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:AGIX"
+  },
+  {
+   "d": [
+    "AGTHIA",
+    3.17,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:AGTHIA"
+  },
+  {
+   "d": [
+    "AIPOWR",
+    2.23,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:AIPOWR"
+  },
+  {
+   "d": [
+    "ALDAR",
+    8.63,
+    "AED",
+    "ADX"
+   ],
+   "s": "ADX:ALDAR"
+  },
+  {
+   "d": [
+    "AIRARABIA",
+    5.1,
+    "AED",
+    "DFM"
+   ],
+   "s": "DFM:AIRARABIA"
+  },
+  {
+   "d": [
+    "AJMANBANK",
+    1.35,
+    "AED",
+    "DFM"
+   ],
+   "s": "DFM:AJMANBANK"
+  },
+  {
+   "d": [
+    "ALANSARI",
+    0.945,
+    "AED",
+    "DFM"
+   ],
+   "s": "DFM:ALANSARI"
+  },
+  {
+   "d": [
+    "ALEC",
+    1.25,
+    "AED",
+    "DFM"
+   ],
+   "s": "DFM:ALEC"
+  },
+  {
+   "d": [
+    "ABTC",
+    24.23,
+    "USD",
+    "NASDAQDUBAI"
+   ],
+   "s": "NASDAQDUBAI:ABTC"
+  }
+ ],
+ "totalCount": 188
+}

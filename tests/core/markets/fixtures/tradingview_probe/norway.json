@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "2020",
+    7.895,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:2020"
+  },
+  {
+   "d": [
+    "5PG",
+    0.688,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:5PG"
+  },
+  {
+   "d": [
+    "AASB",
+    141,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AASB"
+  },
+  {
+   "d": [
+    "ABG",
+    7.13,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:ABG"
+  },
+  {
+   "d": [
+    "ABS",
+    2.29,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:ABS"
+  },
+  {
+   "d": [
+    "ABTEC",
+    4.6,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:ABTEC"
+  },
+  {
+   "d": [
+    "ACED",
+    0.388,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:ACED"
+  },
+  {
+   "d": [
+    "ACR",
+    4.335,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:ACR"
+  },
+  {
+   "d": [
+    "ADS",
+    2.46,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:ADS"
+  },
+  {
+   "d": [
+    "AFG",
+    205,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AFG"
+  },
+  {
+   "d": [
+    "AFISH",
+    22.6,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AFISH"
+  },
+  {
+   "d": [
+    "AFK",
+    193,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AFK"
+  },
+  {
+   "d": [
+    "AGLX",
+    13.3,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AGLX"
+  },
+  {
+   "d": [
+    "AIX",
+    2.98,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AIX"
+  },
+  {
+   "d": [
+    "AJAXR",
+    1.0698,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AJAXR"
+  },
+  {
+   "d": [
+    "AKAST",
+    11.88,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AKAST"
+  },
+  {
+   "d": [
+    "AKER",
+    1130,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AKER"
+  },
+  {
+   "d": [
+    "AKOBO",
+    1.69,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AKOBO"
+  },
+  {
+   "d": [
+    "AKRBP",
+    322.2,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AKRBP"
+  },
+  {
+   "d": [
+    "AKSO",
+    37.68,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AKSO"
+  },
+  {
+   "d": [
+    "AKVA",
+    159.5,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AKVA"
+  },
+  {
+   "d": [
+    "ALNG",
+    3.72,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:ALNG"
+  },
+  {
+   "d": [
+    "ANDF",
+    24.9,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:ANDF"
+  },
+  {
+   "d": [
+    "APR",
+    33.5,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:APR"
+  },
+  {
+   "d": [
+    "AQUA",
+    8.62,
+    "NOK",
+    "OSL"
+   ],
+   "s": "OSL:AQUA"
+  }
+ ],
+ "totalCount": 289
+}

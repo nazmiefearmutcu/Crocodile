@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "ALVO",
+    610,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:ALVO"
+  },
+  {
+   "d": [
+    "AMRQ",
+    173,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:AMRQ"
+  },
+  {
+   "d": [
+    "ARION",
+    174,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:ARION"
+  },
+  {
+   "d": [
+    "ASAR",
+    12,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:ASAR"
+  },
+  {
+   "d": [
+    "BERA",
+    13.5,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:BERA"
+  },
+  {
+   "d": [
+    "BRIM",
+    92,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:BRIM"
+  },
+  {
+   "d": [
+    "EIK",
+    14.1,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:EIK"
+  },
+  {
+   "d": [
+    "EIM",
+    302,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:EIM"
+  },
+  {
+   "d": [
+    "FESTI",
+    308,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:FESTI"
+  },
+  {
+   "d": [
+    "HAGA",
+    124,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:HAGA"
+  },
+  {
+   "d": [
+    "HAMP",
+    79,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:HAMP"
+  },
+  {
+   "d": [
+    "HEIMAR",
+    34,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:HEIMAR"
+  },
+  {
+   "d": [
+    "ICEAIR",
+    0.688,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:ICEAIR"
+  },
+  {
+   "d": [
+    "ICESEA",
+    3.72,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:ICESEA"
+  },
+  {
+   "d": [
+    "ISB",
+    140,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:ISB"
+  },
+  {
+   "d": [
+    "ISF",
+    156,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:ISF"
+  },
+  {
+   "d": [
+    "JBTM",
+    15600,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:JBTM"
+  },
+  {
+   "d": [
+    "KALD",
+    23.1,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:KALD"
+  },
+  {
+   "d": [
+    "KLDVK",
+    31,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:KLDVK"
+  },
+  {
+   "d": [
+    "KVIKA",
+    13.7,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:KVIKA"
+  },
+  {
+   "d": [
+    "NOVA",
+    3.26,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:NOVA"
+  },
+  {
+   "d": [
+    "OCS",
+    968,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:OCS"
+  },
+  {
+   "d": [
+    "REITIR",
+    112,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:REITIR"
+  },
+  {
+   "d": [
+    "SJOVA",
+    44.2,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:SJOVA"
+  },
+  {
+   "d": [
+    "SKAGI",
+    19,
+    "ISK",
+    "OMXICE"
+   ],
+   "s": "OMXICE:SKAGI"
+  }
+ ],
+ "totalCount": 29
+}

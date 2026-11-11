@@ -1,0 +1,221 @@
+{
+ "data": [
+  {
+   "d": [
+    "AKO1L",
+    1.765,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:AKO1L"
+  },
+  {
+   "d": [
+    "AMG1L",
+    1.21,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:AMG1L"
+  },
+  {
+   "d": [
+    "APG1L",
+    3.87,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:APG1L"
+  },
+  {
+   "d": [
+    "AUG1L",
+    0.0876,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:AUG1L"
+  },
+  {
+   "d": [
+    "EWA1L",
+    11.2,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:EWA1L"
+  },
+  {
+   "d": [
+    "GRG1L",
+    0.93,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:GRG1L"
+  },
+  {
+   "d": [
+    "IGN1L",
+    22.05,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:IGN1L"
+  },
+  {
+   "d": [
+    "INC1L",
+    5.4,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:INC1L"
+  },
+  {
+   "d": [
+    "INL1L",
+    6.8,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:INL1L"
+  },
+  {
+   "d": [
+    "INR1L",
+    2.64,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:INR1L"
+  },
+  {
+   "d": [
+    "IVL1L",
+    27,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:IVL1L"
+  },
+  {
+   "d": [
+    "KNE1L",
+    0.486,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:KNE1L"
+  },
+  {
+   "d": [
+    "KNR1L",
+    2.06,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:KNR1L"
+  },
+  {
+   "d": [
+    "LGD1L",
+    1.16,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:LGD1L"
+  },
+  {
+   "d": [
+    "NEOFI",
+    2.92,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:NEOFI"
+  },
+  {
+   "d": [
+    "NTU1L",
+    0.734,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:NTU1L"
+  },
+  {
+   "d": [
+    "PZV1L",
+    1.795,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:PZV1L"
+  },
+  {
+   "d": [
+    "ROE1L",
+    0.834,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:ROE1L"
+  },
+  {
+   "d": [
+    "RSU1L",
+    4.4,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:RSU1L"
+  },
+  {
+   "d": [
+    "TEL1L",
+    2.23,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:TEL1L"
+  },
+  {
+   "d": [
+    "UTR1L",
+    0.358,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:UTR1L"
+  },
+  {
+   "d": [
+    "VBL1L",
+    9.8,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:VBL1L"
+  },
+  {
+   "d": [
+    "VLP1L",
+    15.5,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:VLP1L"
+  },
+  {
+   "d": [
+    "ZMP1L",
+    2.84,
+    "EUR",
+    "OMXVSE"
+   ],
+   "s": "OMXVSE:ZMP1L"
+  }
+ ],
+ "totalCount": 24
+}

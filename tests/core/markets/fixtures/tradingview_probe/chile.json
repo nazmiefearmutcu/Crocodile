@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AAISA",
+    619,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:AAISA"
+  },
+  {
+   "d": [
+    "AAPL1",
+    350.69,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:AAPL1"
+  },
+  {
+   "d": [
+    "AAPLCL",
+    344990,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:AAPLCL"
+  },
+  {
+   "d": [
+    "ABBV",
+    293.26,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:ABBV"
+  },
+  {
+   "d": [
+    "ABC",
+    8.35,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:ABC"
+  },
+  {
+   "d": [
+    "ABC1",
+    8.54,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:ABC1"
+  },
+  {
+   "d": [
+    "AFPCAPITAL",
+    285.99,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:AFPCAPITAL"
+  },
+  {
+   "d": [
+    "AGUAS_A",
+    334.2,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:AGUAS_A"
+  },
+  {
+   "d": [
+    "AGUAS_A0",
+    328.8,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:AGUAS_A0"
+  },
+  {
+   "d": [
+    "AGUAS_A1",
+    335.95,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:AGUAS_A1"
+  },
+  {
+   "d": [
+    "ALMENDRAL",
+    24.4,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:ALMENDRAL"
+  },
+  {
+   "d": [
+    "AMDCL",
+    490000,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:AMDCL"
+  },
+  {
+   "d": [
+    "AMDCL1",
+    535000,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:AMDCL1"
+  },
+  {
+   "d": [
+    "AMZN1",
+    266.93,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:AMZN1"
+  },
+  {
+   "d": [
+    "AMZNCL",
+    264600,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:AMZNCL"
+  },
+  {
+   "d": [
+    "AMZNCL1",
+    264600,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:AMZNCL1"
+  },
+  {
+   "d": [
+    "ANDINA_A",
+    4095,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:ANDINA_A"
+  },
+  {
+   "d": [
+    "ANDINA_A0",
+    4017.2,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:ANDINA_A0"
+  },
+  {
+   "d": [
+    "ANDINA_A1",
+    3901.4,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:ANDINA_A1"
+  },
+  {
+   "d": [
+    "ANDINA_B",
+    4743,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:ANDINA_B"
+  },
+  {
+   "d": [
+    "ANDINA_B0",
+    4660,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:ANDINA_B0"
+  },
+  {
+   "d": [
+    "ANDINA_B1",
+    4770,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:ANDINA_B1"
+  },
+  {
+   "d": [
+    "ANTARCHILE",
+    7087.2,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:ANTARCHILE"
+  },
+  {
+   "d": [
+    "ARACL",
+    1914.1,
+    "CLP",
+    "BCS"
+   ],
+   "s": "BCS:ARACL"
+  },
+  {
+   "d": [
+    "AVGO1",
+    324.2,
+    "USD",
+    "BCS"
+   ],
+   "s": "BCS:AVGO1"
+  }
+ ],
+ "totalCount": 305
+}

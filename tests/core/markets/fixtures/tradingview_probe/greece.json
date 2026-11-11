@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AAAK",
+    4.78,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:AAAK"
+  },
+  {
+   "d": [
+    "ACAG",
+    9.72,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ACAG"
+  },
+  {
+   "d": [
+    "ADMIE",
+    4.72,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ADMIE"
+  },
+  {
+   "d": [
+    "ADPS",
+    2.825,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ADPS"
+  },
+  {
+   "d": [
+    "AEGN",
+    11.56,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:AEGN"
+  },
+  {
+   "d": [
+    "AEM",
+    6.39,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:AEM"
+  },
+  {
+   "d": [
+    "AETF",
+    68.54,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:AETF"
+  },
+  {
+   "d": [
+    "AIA",
+    12.03,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:AIA"
+  },
+  {
+   "d": [
+    "AKTR",
+    10.22,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:AKTR"
+  },
+  {
+   "d": [
+    "ALMY",
+    5.75,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ALMY"
+  },
+  {
+   "d": [
+    "ALPHA",
+    4.846,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ALPHA"
+  },
+  {
+   "d": [
+    "ALWN",
+    10.05,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ALWN"
+  },
+  {
+   "d": [
+    "ANDRO",
+    8.34,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ANDRO"
+  },
+  {
+   "d": [
+    "ASCO",
+    4.6,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ASCO"
+  },
+  {
+   "d": [
+    "ASTAK",
+    6.95,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ASTAK"
+  },
+  {
+   "d": [
+    "ATEK",
+    1.03,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ATEK"
+  },
+  {
+   "d": [
+    "ATTICA",
+    1.45,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:ATTICA"
+  },
+  {
+   "d": [
+    "AVAX",
+    3.41,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:AVAX"
+  },
+  {
+   "d": [
+    "AVE",
+    0.459,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:AVE"
+  },
+  {
+   "d": [
+    "BELA",
+    28.3,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:BELA"
+  },
+  {
+   "d": [
+    "BIOKA",
+    1.51,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:BIOKA"
+  },
+  {
+   "d": [
+    "BIOSK",
+    2.1,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:BIOSK"
+  },
+  {
+   "d": [
+    "BLEKEDROS",
+    4.67,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:BLEKEDROS"
+  },
+  {
+   "d": [
+    "BOCHGR",
+    10.95,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:BOCHGR"
+  },
+  {
+   "d": [
+    "BRIQ",
+    3.32,
+    "EUR",
+    "ATHEX"
+   ],
+   "s": "ATHEX:BRIQ"
+  }
+ ],
+ "totalCount": 144
+}

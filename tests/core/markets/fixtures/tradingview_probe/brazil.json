@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "03BK11",
+    52.45,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:03BK11"
+  },
+  {
+   "d": [
+    "10BK11",
+    52.28,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:10BK11"
+  },
+  {
+   "d": [
+    "3PRE11",
+    52.77,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:3PRE11"
+  },
+  {
+   "d": [
+    "5PRE11",
+    51.24,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:5PRE11"
+  },
+  {
+   "d": [
+    "A1AP34",
+    16,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1AP34"
+  },
+  {
+   "d": [
+    "A1CR34",
+    245.32,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1CR34"
+  },
+  {
+   "d": [
+    "A1DC34",
+    48.15,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1DC34"
+  },
+  {
+   "d": [
+    "A1DI34",
+    56.8,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1DI34"
+  },
+  {
+   "d": [
+    "A1DM34",
+    49.8,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1DM34"
+  },
+  {
+   "d": [
+    "A1EG34",
+    48.25,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1EG34"
+  },
+  {
+   "d": [
+    "A1EP34",
+    71.26,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1EP34"
+  },
+  {
+   "d": [
+    "A1ES34",
+    82.08,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1ES34"
+  },
+  {
+   "d": [
+    "A1GI34",
+    94.1,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1GI34"
+  },
+  {
+   "d": [
+    "A1IV34",
+    8.5,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1IV34"
+  },
+  {
+   "d": [
+    "A1JG34",
+    762.75,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1JG34"
+  },
+  {
+   "d": [
+    "A1KA34",
+    39.73,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1KA34"
+  },
+  {
+   "d": [
+    "A1LB34",
+    22.36,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1LB34"
+  },
+  {
+   "d": [
+    "A1LG34",
+    241.5,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1LG34"
+  },
+  {
+   "d": [
+    "A1LK34",
+    229.54,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1LK34"
+  },
+  {
+   "d": [
+    "A1LL34",
+    132.08,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1LL34"
+  },
+  {
+   "d": [
+    "A1LN34",
+    43.68,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1LN34"
+  },
+  {
+   "d": [
+    "A1MD34",
+    386.02,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1MD34"
+  },
+  {
+   "d": [
+    "A1ME34",
+    52.64,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1ME34"
+  },
+  {
+   "d": [
+    "A1MP34",
+    72.94,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1MP34"
+  },
+  {
+   "d": [
+    "A1MT34",
+    223.2,
+    "BRL",
+    "BMFBOVESPA"
+   ],
+   "s": "BMFBOVESPA:A1MT34"
+  }
+ ],
+ "totalCount": 2342
+}

@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AGRO",
+    1.92,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:AGRO"
+  },
+  {
+   "d": [
+    "AIAS",
+    0.079,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:AIAS"
+  },
+  {
+   "d": [
+    "ATL",
+    2.36,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:ATL"
+  },
+  {
+   "d": [
+    "BLUE",
+    2.5,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:BLUE"
+  },
+  {
+   "d": [
+    "BOCH",
+    10.89,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:BOCH"
+  },
+  {
+   "d": [
+    "CBH",
+    0.2,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:CBH"
+  },
+  {
+   "d": [
+    "CCC",
+    1.325,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:CCC"
+  },
+  {
+   "d": [
+    "CFI",
+    1.46,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:CFI"
+  },
+  {
+   "d": [
+    "CLL",
+    0.005,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:CLL"
+  },
+  {
+   "d": [
+    "COS",
+    0.29,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:COS"
+  },
+  {
+   "d": [
+    "DEM",
+    1.325,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:DEM"
+  },
+  {
+   "d": [
+    "EUROBCY",
+    4.922,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:EUROBCY"
+  },
+  {
+   "d": [
+    "FBI",
+    0.52,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:FBI"
+  },
+  {
+   "d": [
+    "INF",
+    0.0285,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:INF"
+  },
+  {
+   "d": [
+    "KEO",
+    3.12,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:KEO"
+  },
+  {
+   "d": [
+    "KYTH",
+    0.498,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:KYTH"
+  },
+  {
+   "d": [
+    "LCH",
+    0.192,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:LCH"
+  },
+  {
+   "d": [
+    "LHH",
+    1.35,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:LHH"
+  },
+  {
+   "d": [
+    "LI",
+    0.106,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:LI"
+  },
+  {
+   "d": [
+    "LOG",
+    2.68,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:LOG"
+  },
+  {
+   "d": [
+    "LPL",
+    0.2,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:LPL"
+  },
+  {
+   "d": [
+    "LUI",
+    0.124,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:LUI"
+  },
+  {
+   "d": [
+    "MINE",
+    0.043,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:MINE"
+  },
+  {
+   "d": [
+    "MIT",
+    1.2,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:MIT"
+  },
+  {
+   "d": [
+    "PHL",
+    1.21,
+    "EUR",
+    "CSECY"
+   ],
+   "s": "CSECY:PHL"
+  }
+ ],
+ "totalCount": 30
+}

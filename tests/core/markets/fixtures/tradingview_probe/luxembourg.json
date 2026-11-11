@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "1FINH",
+    25.6,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:1FINH"
+  },
+  {
+   "d": [
+    "ACMR1",
+    137,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:ACMR1"
+  },
+  {
+   "d": [
+    "ACMRS",
+    137,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:ACMRS"
+  },
+  {
+   "d": [
+    "ALCHA",
+    111,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:ALCHA"
+  },
+  {
+   "d": [
+    "ALCHP",
+    111,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:ALCHP"
+  },
+  {
+   "d": [
+    "AMCEM",
+    4.14,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:AMCEM"
+  },
+  {
+   "d": [
+    "ANDA",
+    14.2,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:ANDA"
+  },
+  {
+   "d": [
+    "ANDS",
+    14.2,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:ANDS"
+  },
+  {
+   "d": [
+    "APAML",
+    35.16,
+    "EUR",
+    "LUXSE"
+   ],
+   "s": "LUXSE:APAML"
+  },
+  {
+   "d": [
+    "APMT",
+    44.6,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:APMT"
+  },
+  {
+   "d": [
+    "ASMTA",
+    36.4,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:ASMTA"
+  },
+  {
+   "d": [
+    "ASMTS",
+    36.4,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:ASMTS"
+  },
+  {
+   "d": [
+    "BREL",
+    100.6,
+    "EUR",
+    "LUXSE"
+   ],
+   "s": "LUXSE:BREL"
+  },
+  {
+   "d": [
+    "BRTOR",
+    0.102,
+    "EUR",
+    "LUXSE"
+   ],
+   "s": "LUXSE:BRTOR"
+  },
+  {
+   "d": [
+    "BZLH",
+    48,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:BZLH"
+  },
+  {
+   "d": [
+    "CATFH",
+    34.4,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CATFH"
+  },
+  {
+   "d": [
+    "CH0551992610",
+    118.96,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH0551992610"
+  },
+  {
+   "d": [
+    "CH0551992743",
+    99.16,
+    "CHF",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH0551992743"
+  },
+  {
+   "d": [
+    "CH0551992750",
+    103.66,
+    "CHF",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH0551992750"
+  },
+  {
+   "d": [
+    "CH0551992776",
+    110.46,
+    "CHF",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH0551992776"
+  },
+  {
+   "d": [
+    "CH0551992842",
+    107.55,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH0551992842"
+  },
+  {
+   "d": [
+    "CH0551992859",
+    91.74,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH0551992859"
+  },
+  {
+   "d": [
+    "CH0551992867",
+    104.18,
+    "EUR",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH0551992867"
+  },
+  {
+   "d": [
+    "CH0551992875",
+    102.13,
+    "USD",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH0551992875"
+  },
+  {
+   "d": [
+    "CH1185519621",
+    1147.54,
+    "EUR",
+    "LUXSE"
+   ],
+   "s": "LUXSE:CH1185519621"
+  }
+ ],
+ "totalCount": 293
+}

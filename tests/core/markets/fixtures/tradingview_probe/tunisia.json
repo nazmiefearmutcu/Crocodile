@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AB",
+    92.25,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:AB"
+  },
+  {
+   "d": [
+    "AL",
+    225.01,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:AL"
+  },
+  {
+   "d": [
+    "AMV",
+    12.34,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:AMV"
+  },
+  {
+   "d": [
+    "ARTES",
+    9.8,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:ARTES"
+  },
+  {
+   "d": [
+    "ASSAD",
+    2.46,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:ASSAD"
+  },
+  {
+   "d": [
+    "ASSMA",
+    79.1,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:ASSMA"
+  },
+  {
+   "d": [
+    "AST",
+    82,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:AST"
+  },
+  {
+   "d": [
+    "ATB",
+    3.65,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:ATB"
+  },
+  {
+   "d": [
+    "ATL",
+    14.55,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:ATL"
+  },
+  {
+   "d": [
+    "BH",
+    12.45,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:BH"
+  },
+  {
+   "d": [
+    "BHL",
+    4.68,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:BHL"
+  },
+  {
+   "d": [
+    "BIAT",
+    167,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:BIAT"
+  },
+  {
+   "d": [
+    "BL",
+    2.46,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:BL"
+  },
+  {
+   "d": [
+    "BNA",
+    19.83,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:BNA"
+  },
+  {
+   "d": [
+    "BNASS",
+    3.95,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:BNASS"
+  },
+  {
+   "d": [
+    "BT",
+    8.58,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:BT"
+  },
+  {
+   "d": [
+    "CC",
+    1.78,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:CC"
+  },
+  {
+   "d": [
+    "CELL",
+    1.35,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:CELL"
+  },
+  {
+   "d": [
+    "CIL",
+    40.55,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:CIL"
+  },
+  {
+   "d": [
+    "CITY",
+    20.84,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:CITY"
+  },
+  {
+   "d": [
+    "DH",
+    19,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:DH"
+  },
+  {
+   "d": [
+    "ECYCL",
+    10,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:ECYCL"
+  },
+  {
+   "d": [
+    "HL",
+    10.45,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:HL"
+  },
+  {
+   "d": [
+    "ICF",
+    146.99,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:ICF"
+  },
+  {
+   "d": [
+    "LNDOR",
+    14.35,
+    "TND",
+    "BVMT"
+   ],
+   "s": "BVMT:LNDOR"
+  }
+ ],
+ "totalCount": 68
+}

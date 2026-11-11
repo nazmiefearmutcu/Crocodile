@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AB",
+    2.05,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:AB"
+  },
+  {
+   "d": [
+    "ABA",
+    0.3,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ABA"
+  },
+  {
+   "d": [
+    "ABG",
+    21.9,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ABG"
+  },
+  {
+   "d": [
+    "ABS",
+    2.5,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ABS"
+  },
+  {
+   "d": [
+    "ABSP",
+    2.32,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ABSP"
+  },
+  {
+   "d": [
+    "AC",
+    560,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:AC"
+  },
+  {
+   "d": [
+    "ACE",
+    1.29,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ACE"
+  },
+  {
+   "d": [
+    "ACEN",
+    2.61,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ACEN"
+  },
+  {
+   "d": [
+    "ACPB4",
+    1955,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ACPB4"
+  },
+  {
+   "d": [
+    "ACR",
+    0.81,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ACR"
+  },
+  {
+   "d": [
+    "AETF",
+    96.9,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:AETF"
+  },
+  {
+   "d": [
+    "AEV",
+    37.75,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:AEV"
+  },
+  {
+   "d": [
+    "AGI",
+    8.89,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:AGI"
+  },
+  {
+   "d": [
+    "ALCO",
+    0.425,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ALCO"
+  },
+  {
+   "d": [
+    "ALCPF",
+    495,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ALCPF"
+  },
+  {
+   "d": [
+    "ALI",
+    15.34,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ALI"
+  },
+  {
+   "d": [
+    "ALLHC",
+    1.09,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ALLHC"
+  },
+  {
+   "d": [
+    "ALTER",
+    0.65,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ALTER"
+  },
+  {
+   "d": [
+    "ANS",
+    15.5,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:ANS"
+  },
+  {
+   "d": [
+    "AP",
+    44,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:AP"
+  },
+  {
+   "d": [
+    "APC",
+    0.096,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:APC"
+  },
+  {
+   "d": [
+    "APL",
+    0.0054,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:APL"
+  },
+  {
+   "d": [
+    "APO",
+    1,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:APO"
+  },
+  {
+   "d": [
+    "APVI",
+    10.92,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:APVI"
+  },
+  {
+   "d": [
+    "APX",
+    17.56,
+    "PHP",
+    "PSE"
+   ],
+   "s": "PSE:APX"
+  }
+ ],
+ "totalCount": 265
+}

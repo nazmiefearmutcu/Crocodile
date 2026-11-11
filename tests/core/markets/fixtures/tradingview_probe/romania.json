@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "2P",
+    0.995,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:2P"
+  },
+  {
+   "d": [
+    "4RT",
+    1.47,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:4RT"
+  },
+  {
+   "d": [
+    "AAB",
+    4.42,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:AAB"
+  },
+  {
+   "d": [
+    "AAG",
+    4.01,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:AAG"
+  },
+  {
+   "d": [
+    "ABN",
+    0.258,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ABN"
+  },
+  {
+   "d": [
+    "ADISS",
+    0.208,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ADISS"
+  },
+  {
+   "d": [
+    "ADMY",
+    17.2,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ADMY"
+  },
+  {
+   "d": [
+    "ADS",
+    956,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ADS"
+  },
+  {
+   "d": [
+    "AG",
+    1.27,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:AG"
+  },
+  {
+   "d": [
+    "ALDANI",
+    1.66,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ALDANI"
+  },
+  {
+   "d": [
+    "ALR",
+    1.425,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ALR"
+  },
+  {
+   "d": [
+    "ALT",
+    0.067,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ALT"
+  },
+  {
+   "d": [
+    "ALU",
+    2.7,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ALU"
+  },
+  {
+   "d": [
+    "ALW",
+    23.3,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ALW"
+  },
+  {
+   "d": [
+    "AMAL",
+    0.0425,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:AMAL"
+  },
+  {
+   "d": [
+    "APP",
+    1.35,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:APP"
+  },
+  {
+   "d": [
+    "AQ",
+    1.575,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:AQ"
+  },
+  {
+   "d": [
+    "ARAX",
+    1.57,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ARAX"
+  },
+  {
+   "d": [
+    "ARCU",
+    3.56,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ARCU"
+  },
+  {
+   "d": [
+    "ARCV",
+    0.2,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ARCV"
+  },
+  {
+   "d": [
+    "ARJI",
+    27.8,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ARJI"
+  },
+  {
+   "d": [
+    "ARM",
+    0.595,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ARM"
+  },
+  {
+   "d": [
+    "ARMT",
+    2.9,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ARMT"
+  },
+  {
+   "d": [
+    "AROBS",
+    0.758,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:AROBS"
+  },
+  {
+   "d": [
+    "ARS",
+    18.95,
+    "RON",
+    "BVB"
+   ],
+   "s": "BVB:ARS"
+  }
+ ],
+ "totalCount": 246
+}

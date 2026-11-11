@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "ABQK",
+    5.101,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:ABQK"
+  },
+  {
+   "d": [
+    "AHCS",
+    0.7,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:AHCS"
+  },
+  {
+   "d": [
+    "AKHI",
+    3.035,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:AKHI"
+  },
+  {
+   "d": [
+    "BEMA",
+    4.502,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:BEMA"
+  },
+  {
+   "d": [
+    "BLDN",
+    1.331,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:BLDN"
+  },
+  {
+   "d": [
+    "BRES",
+    2.28,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:BRES"
+  },
+  {
+   "d": [
+    "CBQK",
+    4.34,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:CBQK"
+  },
+  {
+   "d": [
+    "DBIS",
+    1.63,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:DBIS"
+  },
+  {
+   "d": [
+    "DHBK",
+    2.57,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:DHBK"
+  },
+  {
+   "d": [
+    "DOHI",
+    3.05,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:DOHI"
+  },
+  {
+   "d": [
+    "DUBK",
+    3.387,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:DUBK"
+  },
+  {
+   "d": [
+    "ERES",
+    0.819,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:ERES"
+  },
+  {
+   "d": [
+    "FALH",
+    0.576,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:FALH"
+  },
+  {
+   "d": [
+    "GISS",
+    1.843,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:GISS"
+  },
+  {
+   "d": [
+    "GWCS",
+    2.699,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:GWCS"
+  },
+  {
+   "d": [
+    "IGRD",
+    4.005,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:IGRD"
+  },
+  {
+   "d": [
+    "IHGS",
+    2.67,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:IHGS"
+  },
+  {
+   "d": [
+    "IQCD",
+    10.69,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:IQCD"
+  },
+  {
+   "d": [
+    "MARK",
+    2,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:MARK"
+  },
+  {
+   "d": [
+    "MCCS",
+    5.607,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:MCCS"
+  },
+  {
+   "d": [
+    "MCGS",
+    5.33,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:MCGS"
+  },
+  {
+   "d": [
+    "MERS",
+    12.48,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:MERS"
+  },
+  {
+   "d": [
+    "MEZA",
+    3.182,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:MEZA"
+  },
+  {
+   "d": [
+    "MFMS",
+    7.139,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:MFMS"
+  },
+  {
+   "d": [
+    "MHAR",
+    2.21,
+    "QAR",
+    "QSE"
+   ],
+   "s": "QSE:MHAR"
+  }
+ ],
+ "totalCount": 55
+}

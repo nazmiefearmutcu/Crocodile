@@ -1,0 +1,113 @@
+{
+ "data": [
+  {
+   "d": [
+    "BAL1R",
+    0.684,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:BAL1R"
+  },
+  {
+   "d": [
+    "DGR1R",
+    1.87,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:DGR1R"
+  },
+  {
+   "d": [
+    "EGG",
+    7.25,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:EGG"
+  },
+  {
+   "d": [
+    "ELEVR",
+    1.685,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:ELEVR"
+  },
+  {
+   "d": [
+    "IDX1R",
+    2.69,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:IDX1R"
+  },
+  {
+   "d": [
+    "IGR1R",
+    1.55,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:IGR1R"
+  },
+  {
+   "d": [
+    "KALVE",
+    11.8,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:KALVE"
+  },
+  {
+   "d": [
+    "MDARA",
+    10.6,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:MDARA"
+  },
+  {
+   "d": [
+    "RKB1R",
+    0.292,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:RKB1R"
+  },
+  {
+   "d": [
+    "SAF1R",
+    16.8,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:SAF1R"
+  },
+  {
+   "d": [
+    "SCM1R",
+    7.25,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:SCM1R"
+  },
+  {
+   "d": [
+    "VIRSI",
+    4.4,
+    "EUR",
+    "OMXRSE"
+   ],
+   "s": "OMXRSE:VIRSI"
+  }
+ ],
+ "totalCount": 12
+}

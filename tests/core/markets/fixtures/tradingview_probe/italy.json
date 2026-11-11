@@ -1,0 +1,239 @@
+{
+ "data": [
+  {
+   "d": [
+    "48TRA",
+    34.9,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:48TRA"
+  },
+  {
+   "d": [
+    "49MW",
+    155.92,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:49MW"
+  },
+  {
+   "d": [
+    "4A",
+    160.95,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4A"
+  },
+  {
+   "d": [
+    "4AA",
+    36.54,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4AA"
+  },
+  {
+   "d": [
+    "4AAD",
+    18.46,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4AAD"
+  },
+  {
+   "d": [
+    "4AAG",
+    13.85,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4AAG"
+  },
+  {
+   "d": [
+    "4AAL",
+    12.678,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4AAL"
+  },
+  {
+   "d": [
+    "4AAPL",
+    315.55,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4AAPL"
+  },
+  {
+   "d": [
+    "4ABBV",
+    262.1,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ABBV"
+  },
+  {
+   "d": [
+    "4ABI",
+    75.4,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ABI"
+  },
+  {
+   "d": [
+    "4ABNB",
+    162.24,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ABNB"
+  },
+  {
+   "d": [
+    "4AC",
+    52.36,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4AC"
+  },
+  {
+   "d": [
+    "4ACA",
+    15.915,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ACA"
+  },
+  {
+   "d": [
+    "4ACS",
+    92.8,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ACS"
+  },
+  {
+   "d": [
+    "4AD",
+    35.31,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4AD"
+  },
+  {
+   "d": [
+    "4ADBE",
+    214.45,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADBE"
+  },
+  {
+   "d": [
+    "4ADE",
+    23.1,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADE"
+  },
+  {
+   "d": [
+    "4ADI",
+    368.55,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADI"
+  },
+  {
+   "d": [
+    "4ADJ",
+    0.0908,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADJ"
+  },
+  {
+   "d": [
+    "4ADM",
+    63.06,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADM"
+  },
+  {
+   "d": [
+    "4ADP",
+    274.65,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADP"
+  },
+  {
+   "d": [
+    "4ADS",
+    176.8,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADS"
+  },
+  {
+   "d": [
+    "4ADSK",
+    230.7,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADSK"
+  },
+  {
+   "d": [
+    "4ADYEN",
+    877.6,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4ADYEN"
+  },
+  {
+   "d": [
+    "4AENA",
+    28.66,
+    "EUR",
+    "EUROTLX"
+   ],
+   "s": "EUROTLX:4AENA"
+  },
+  {
+   "d": [
+    "A2A",
+    2.305,
+    "EUR",
+    "MIL"
+   ],
+   "s": "MIL:A2A"
+  }
+ ],
+ "totalCount": 821
+}

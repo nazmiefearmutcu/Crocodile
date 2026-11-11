@@ -368,7 +368,7 @@ def test_every_manifest_entry_records_hash_rows_date_and_licence() -> None:
     expected_rows = {
         "exchanges.csv": 172,
         "grammar_google_finance.csv": 3,
-        "grammar_tradingview.csv": 13,
+        "grammar_tradingview.csv": 85,
         "grammar_yahoo_chart.csv": 55,
         "iso10383_mic.csv": 2889,
         "iso4217.csv": 165,

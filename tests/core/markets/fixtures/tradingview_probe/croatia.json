@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "7BET",
+    29.2,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:7BET"
+  },
+  {
+   "d": [
+    "7CASH",
+    107.9,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:7CASH"
+  },
+  {
+   "d": [
+    "7CRO",
+    41,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:7CRO"
+  },
+  {
+   "d": [
+    "7GROM",
+    11.02,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:7GROM"
+  },
+  {
+   "d": [
+    "7POL",
+    11.71,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:7POL"
+  },
+  {
+   "d": [
+    "7SLO",
+    62.4,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:7SLO"
+  },
+  {
+   "d": [
+    "ACI",
+    800,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:ACI"
+  },
+  {
+   "d": [
+    "ADPL",
+    21.3,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:ADPL"
+  },
+  {
+   "d": [
+    "ADRS",
+    173,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:ADRS"
+  },
+  {
+   "d": [
+    "ADRS2",
+    109,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:ADRS2"
+  },
+  {
+   "d": [
+    "ARNT",
+    44.4,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:ARNT"
+  },
+  {
+   "d": [
+    "ATGR",
+    55,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:ATGR"
+  },
+  {
+   "d": [
+    "AUHR",
+    300,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:AUHR"
+  },
+  {
+   "d": [
+    "BCIN",
+    35,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:BCIN"
+  },
+  {
+   "d": [
+    "BRIN",
+    15.4,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:BRIN"
+  },
+  {
+   "d": [
+    "BSQR",
+    28.6,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:BSQR"
+  },
+  {
+   "d": [
+    "CIAK",
+    12.1,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:CIAK"
+  },
+  {
+   "d": [
+    "CKML",
+    10.1,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:CKML"
+  },
+  {
+   "d": [
+    "CRAL",
+    2.3,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:CRAL"
+  },
+  {
+   "d": [
+    "CROS",
+    3160,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:CROS"
+  },
+  {
+   "d": [
+    "CROS2",
+    3180,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:CROS2"
+  },
+  {
+   "d": [
+    "CTKS",
+    167,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:CTKS"
+  },
+  {
+   "d": [
+    "DDJH",
+    38.4,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:DDJH"
+  },
+  {
+   "d": [
+    "DLKV",
+    14.9,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:DLKV"
+  },
+  {
+   "d": [
+    "ERNT",
+    217,
+    "EUR",
+    "ZSE"
+   ],
+   "s": "ZSE:ERNT"
+  }
+ ],
+ "totalCount": 73
+}

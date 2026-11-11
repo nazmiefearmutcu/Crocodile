@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AIR",
+    1.89,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:AIR"
+  },
+  {
+   "d": [
+    "ARC1T",
+    0.94,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:ARC1T"
+  },
+  {
+   "d": [
+    "BERCM",
+    1.05,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:BERCM"
+  },
+  {
+   "d": [
+    "CPA1T",
+    2.405,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:CPA1T"
+  },
+  {
+   "d": [
+    "EFCUPFFT",
+    9.2,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:EFCUPFFT"
+  },
+  {
+   "d": [
+    "EFT1T",
+    19.5,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:EFT1T"
+  },
+  {
+   "d": [
+    "GRB2G",
+    0.042,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:GRB2G"
+  },
+  {
+   "d": [
+    "HAE1T",
+    5.14,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:HAE1T"
+  },
+  {
+   "d": [
+    "HPR1T",
+    4.32,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:HPR1T"
+  },
+  {
+   "d": [
+    "INF1T",
+    66.8,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:INF1T"
+  },
+  {
+   "d": [
+    "LHV1T",
+    3.24,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:LHV1T"
+  },
+  {
+   "d": [
+    "LINDA",
+    4.06,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:LINDA"
+  },
+  {
+   "d": [
+    "LVN1T",
+    3.2,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:LVN1T"
+  },
+  {
+   "d": [
+    "MAGIC",
+    1.72,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:MAGIC"
+  },
+  {
+   "d": [
+    "MODE",
+    4.98,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:MODE"
+  },
+  {
+   "d": [
+    "MOLNR",
+    24,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:MOLNR"
+  },
+  {
+   "d": [
+    "MRK1T",
+    26.9,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:MRK1T"
+  },
+  {
+   "d": [
+    "NCN1T",
+    0.55,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:NCN1T"
+  },
+  {
+   "d": [
+    "NHCBHFFT",
+    0.182,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:NHCBHFFT"
+  },
+  {
+   "d": [
+    "PKG1T",
+    0.53,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:PKG1T"
+  },
+  {
+   "d": [
+    "PRF1T",
+    0.0526,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:PRF1T"
+  },
+  {
+   "d": [
+    "PRIMO",
+    3.14,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:PRIMO"
+  },
+  {
+   "d": [
+    "SAUNA",
+    2.29,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:SAUNA"
+  },
+  {
+   "d": [
+    "SFG1T",
+    1.055,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:SFG1T"
+  },
+  {
+   "d": [
+    "SKN1T",
+    0.42,
+    "EUR",
+    "OMXTSE"
+   ],
+   "s": "OMXTSE:SKN1T"
+  }
+ ],
+ "totalCount": 30
+}

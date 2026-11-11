@@ -30,11 +30,11 @@
     },
     "grammar_tradingview.csv": {
       "license": "Exchange codes observed in TradingView scanner responses; TradingView terms not read (grey source, spec 0); codes are identifiers, no market data is shipped.",
-      "notes": "HSTC's only measured code is UPCOM (segment XHNX); task 11 extends this table.",
+      "notes": "HSTC's measured codes are HNX (primary) and UPCOM (segment XHNX, demoted to 0) since the 2026-11-11 sweep; codes the sweep saw without an unambiguous MIC stay unmapped.",
       "retrieved": "2026-11-08",
-      "rows": 13,
-      "sha256": "d0eb029b9f95601a61317f29c4ee7b102d52522767dbd5af7a8e63d7fad1fbf5",
-      "source": "curated from tests/core/markets/fixtures/tradingview_probe/*.json (scanner responses 2026-11-08)"
+      "rows": 85,
+      "sha256": "a979044b236b415465d9a0643a14a28102a029398d4123ca2c8e3b34185df00d",
+      "source": "curated from tests/core/markets/fixtures/tradingview_probe/*.json (scanner responses 2026-11-08, and the 2026-11-11 market sweep for the rows added then)"
     },
     "grammar_yahoo_chart.csv": {
       "license": "Derived from the Crocodile research matrix (this repository, Apache-2.0); symbol spellings observed on Yahoo/Google pages, whose terms restrict automated use (spec 3.10a); not reviewed further here.",

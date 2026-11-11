@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "1AST",
+    53,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:1AST"
+  },
+  {
+   "d": [
+    "1COV",
+    60.6,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:1COV"
+  },
+  {
+   "d": [
+    "1SXP",
+    21.45,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:1SXP"
+  },
+  {
+   "d": [
+    "2B5",
+    0.0716,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:2B5"
+  },
+  {
+   "d": [
+    "2HRA",
+    6.84,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:2HRA"
+  },
+  {
+   "d": [
+    "4X0",
+    35.46,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:4X0"
+  },
+  {
+   "d": [
+    "690D",
+    1.81,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:690D"
+  },
+  {
+   "d": [
+    "8TRA",
+    35.22,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:8TRA"
+  },
+  {
+   "d": [
+    "A1OS",
+    77.8,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:A1OS"
+  },
+  {
+   "d": [
+    "A2A",
+    2.309,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:A2A"
+  },
+  {
+   "d": [
+    "AAD",
+    18.4,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:AAD"
+  },
+  {
+   "d": [
+    "AAGG",
+    13.85,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:AAGG"
+  },
+  {
+   "d": [
+    "AAL",
+    12.68,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:AAL"
+  },
+  {
+   "d": [
+    "AALB",
+    42.02,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:AALB"
+  },
+  {
+   "d": [
+    "AAPL",
+    311.7,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:AAPL"
+  },
+  {
+   "d": [
+    "ABBN",
+    76.54,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ABBN"
+  },
+  {
+   "d": [
+    "ABBV",
+    261.9,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ABBV"
+  },
+  {
+   "d": [
+    "ABC",
+    311.6,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ABC"
+  },
+  {
+   "d": [
+    "ABIN",
+    75.2,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ABIN"
+  },
+  {
+   "d": [
+    "ABNB",
+    162.04,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ABNB"
+  },
+  {
+   "d": [
+    "ABT",
+    98.94,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ABT"
+  },
+  {
+   "d": [
+    "ABVX",
+    82.15,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ABVX"
+  },
+  {
+   "d": [
+    "AC",
+    52.24,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:AC"
+  },
+  {
+   "d": [
+    "ACA",
+    15.865,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ACA"
+  },
+  {
+   "d": [
+    "ACAG",
+    9.75,
+    "EUR",
+    "VIE"
+   ],
+   "s": "VIE:ACAG"
+  }
+ ],
+ "totalCount": 1509
+}

@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AACT",
+    0.14,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:AACT"
+  },
+  {
+   "d": [
+    "AAIC",
+    0.202,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:AAIC"
+  },
+  {
+   "d": [
+    "ABOB",
+    0.2,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:ABOB"
+  },
+  {
+   "d": [
+    "ABRJ",
+    0.447,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:ABRJ"
+  },
+  {
+   "d": [
+    "AJSP",
+    0.567,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:AJSP"
+  },
+  {
+   "d": [
+    "AJSS",
+    0.27,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:AJSS"
+  },
+  {
+   "d": [
+    "AMAN",
+    0.063,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:AMAN"
+  },
+  {
+   "d": [
+    "AMAT",
+    0.104,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:AMAT"
+  },
+  {
+   "d": [
+    "AMCI",
+    0.26,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:AMCI"
+  },
+  {
+   "d": [
+    "AMII",
+    0.077,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:AMII"
+  },
+  {
+   "d": [
+    "ASCO",
+    0.208,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:ASCO"
+  },
+  {
+   "d": [
+    "ATMI",
+    0.903,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:ATMI"
+  },
+  {
+   "d": [
+    "BACS",
+    0.141,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:BACS"
+  },
+  {
+   "d": [
+    "BATP",
+    0.205,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:BATP"
+  },
+  {
+   "d": [
+    "BKDB",
+    0.222,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:BKDB"
+  },
+  {
+   "d": [
+    "BKMB",
+    0.417,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:BKMB"
+  },
+  {
+   "d": [
+    "BKNZ",
+    0.143,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:BKNZ"
+  },
+  {
+   "d": [
+    "BKSB",
+    0.174,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:BKSB"
+  },
+  {
+   "d": [
+    "BRDE",
+    0.152,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:BRDE"
+  },
+  {
+   "d": [
+    "BWPC",
+    0.15,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:BWPC"
+  },
+  {
+   "d": [
+    "CMII",
+    0.076,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:CMII"
+  },
+  {
+   "d": [
+    "DBIH",
+    0.067,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:DBIH"
+  },
+  {
+   "d": [
+    "DFIN",
+    0.289,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:DFIN"
+  },
+  {
+   "d": [
+    "DGEN",
+    0.076,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:DGEN"
+  },
+  {
+   "d": [
+    "DICS",
+    0.34,
+    "OMR",
+    "MSX"
+   ],
+   "s": "MSX:DICS"
+  }
+ ],
+ "totalCount": 87
+}

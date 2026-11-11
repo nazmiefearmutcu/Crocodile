@@ -96,7 +96,7 @@ TRADINGVIEW_GRAMMAR_LICENSE = (
 )
 TRADINGVIEW_GRAMMAR_SOURCE = (
     "curated from tests/core/markets/fixtures/tradingview_probe/*.json "
-    "(scanner responses 2026-11-08)"
+    "(scanner responses 2026-11-08, and the 2026-11-11 market sweep for the rows added then)"
 )
 YAHOO_GRAMMAR_NOTES = (
     "Rule: one row per suffix in symbol_format whose example the matrix records with an HTTP "
@@ -109,7 +109,8 @@ GOOGLE_GRAMMAR_NOTES = (
     "were not re-probed."
 )
 TRADINGVIEW_GRAMMAR_NOTES = (
-    "HSTC's only measured code is UPCOM (segment XHNX); task 11 extends this table."
+    "HSTC's measured codes are HNX (primary) and UPCOM (segment XHNX, demoted to 0) since the "
+    "2026-11-11 sweep; codes the sweep saw without an unambiguous MIC stay unmapped."
 )
 
 MIC_HEADER = (
@@ -154,7 +155,7 @@ TRADINGVIEW_GRAMMAR_HEADER = ("tv_code", "mic", "primary", "market", "sample_loc
 
 EXPECTED_YAHOO_GRAMMAR_ROWS = 55
 EXPECTED_GOOGLE_GRAMMAR_ROWS = 3
-EXPECTED_TRADINGVIEW_GRAMMAR_ROWS = 13
+EXPECTED_TRADINGVIEW_GRAMMAR_ROWS = 85
 YAHOO_SAMPLE_STATUSES = frozenset({"verified", "status_only"})
 YAHOO_SEGMENT_SUFFIXES: dict[str, str] = {".KQ": "XKOS"}
 US_COUNTRY = "US"

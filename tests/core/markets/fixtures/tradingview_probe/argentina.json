@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "A3",
+    2490,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:A3"
+  },
+  {
+   "d": [
+    "A3.CI",
+    2480,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:A3.CI"
+  },
+  {
+   "d": [
+    "A3D",
+    1.6,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:A3D"
+  },
+  {
+   "d": [
+    "AAL",
+    11680,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:AAL"
+  },
+  {
+   "d": [
+    "AAL.CI",
+    10650,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:AAL.CI"
+  },
+  {
+   "d": [
+    "AALC",
+    6.17,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:AALC"
+  },
+  {
+   "d": [
+    "AALD",
+    7.45,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:AALD"
+  },
+  {
+   "d": [
+    "AAP",
+    5240,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:AAP"
+  },
+  {
+   "d": [
+    "AAP.CI",
+    5540,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:AAP.CI"
+  },
+  {
+   "d": [
+    "AAPD",
+    3.51,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:AAPD"
+  },
+  {
+   "d": [
+    "AAPL",
+    29460,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:AAPL"
+  },
+  {
+   "d": [
+    "AAPL.CI",
+    28380,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:AAPL.CI"
+  },
+  {
+   "d": [
+    "AAPLC",
+    17.88,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:AAPLC"
+  },
+  {
+   "d": [
+    "AAPLD",
+    18.77,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:AAPLD"
+  },
+  {
+   "d": [
+    "ABBV",
+    48340,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:ABBV"
+  },
+  {
+   "d": [
+    "ABBV.CI",
+    48240,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:ABBV.CI"
+  },
+  {
+   "d": [
+    "ABBVC",
+    29.97,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:ABBVC"
+  },
+  {
+   "d": [
+    "ABBVD",
+    30.77,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:ABBVD"
+  },
+  {
+   "d": [
+    "ABEV",
+    13960,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:ABEV"
+  },
+  {
+   "d": [
+    "ABEV.CI",
+    13840,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:ABEV.CI"
+  },
+  {
+   "d": [
+    "ABEV3",
+    4672.5,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:ABEV3"
+  },
+  {
+   "d": [
+    "ABEVC",
+    8.26,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:ABEVC"
+  },
+  {
+   "d": [
+    "ABEVD",
+    8.89,
+    "USD",
+    "BCBA"
+   ],
+   "s": "BCBA:ABEVD"
+  },
+  {
+   "d": [
+    "ABNB",
+    19900,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:ABNB"
+  },
+  {
+   "d": [
+    "ABNB.CI",
+    18800,
+    "ARS",
+    "BCBA"
+   ],
+   "s": "BCBA:ABNB.CI"
+  }
+ ],
+ "totalCount": 1488
+}

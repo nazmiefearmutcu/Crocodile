@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AA",
+    0.05,
+    "CAD",
+    "CSE"
+   ],
+   "s": "CSE:AA"
+  },
+  {
+   "d": [
+    "AAWH.U",
+    0.37,
+    "USD",
+    "CSE"
+   ],
+   "s": "CSE:AAWH.U"
+  },
+  {
+   "d": [
+    "AAB",
+    0.015,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:AAB"
+  },
+  {
+   "d": [
+    "AAG",
+    0.51,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:AAG"
+  },
+  {
+   "d": [
+    "AAPL",
+    49.67,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:AAPL"
+  },
+  {
+   "d": [
+    "AAPP",
+    21.26,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:AAPP"
+  },
+  {
+   "d": [
+    "AAPU",
+    48.8,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:AAPU"
+  },
+  {
+   "d": [
+    "AAUC",
+    31.56,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:AAUC"
+  },
+  {
+   "d": [
+    "AAV",
+    10.59,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:AAV"
+  },
+  {
+   "d": [
+    "AAWH.U",
+    0.355,
+    "USD",
+    "NEO"
+   ],
+   "s": "NEO:AAWH.U"
+  },
+  {
+   "d": [
+    "AAZ",
+    0.02,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:AAZ"
+  },
+  {
+   "d": [
+    "ABA",
+    0.075,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:ABA"
+  },
+  {
+   "d": [
+    "ABB",
+    13.49,
+    "CAD",
+    "NEO"
+   ],
+   "s": "NEO:ABB"
+  },
+  {
+   "d": [
+    "AAB",
+    0.02,
+    "CAD",
+    "TSX"
+   ],
+   "s": "TSX:AAB"
+  },
+  {
+   "d": [
+    "AAPL",
+    49.65,
+    "CAD",
+    "TSX"
+   ],
+   "s": "TSX:AAPL"
+  },
+  {
+   "d": [
+    "AAPP",
+    21.2,
+    "CAD",
+    "TSX"
+   ],
+   "s": "TSX:AAPP"
+  },
+  {
+   "d": [
+    "AAPU",
+    50.88,
+    "CAD",
+    "TSX"
+   ],
+   "s": "TSX:AAPU"
+  },
+  {
+   "d": [
+    "AAUC",
+    31.45,
+    "CAD",
+    "TSX"
+   ],
+   "s": "TSX:AAUC"
+  },
+  {
+   "d": [
+    "AAV",
+    10.59,
+    "CAD",
+    "TSX"
+   ],
+   "s": "TSX:AAV"
+  },
+  {
+   "d": [
+    "A.H",
+    0.49,
+    "CAD",
+    "TSXV"
+   ],
+   "s": "TSXV:A.H"
+  },
+  {
+   "d": [
+    "AAA.P",
+    0.06,
+    "CAD",
+    "TSXV"
+   ],
+   "s": "TSXV:AAA.P"
+  },
+  {
+   "d": [
+    "AAG",
+    0.5,
+    "CAD",
+    "TSXV"
+   ],
+   "s": "TSXV:AAG"
+  },
+  {
+   "d": [
+    "AAN",
+    0.28,
+    "CAD",
+    "TSXV"
+   ],
+   "s": "TSXV:AAN"
+  },
+  {
+   "d": [
+    "AAZ",
+    0.02,
+    "CAD",
+    "TSXV"
+   ],
+   "s": "TSXV:AAZ"
+  },
+  {
+   "d": [
+    "ABA",
+    0.08,
+    "CAD",
+    "TSXV"
+   ],
+   "s": "TSXV:ABA"
+  }
+ ],
+ "totalCount": 8698
+}

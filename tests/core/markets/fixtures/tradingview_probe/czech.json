@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "ANDR",
+    2060,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:ANDR"
+  },
+  {
+   "d": [
+    "ATS",
+    3022,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:ATS"
+  },
+  {
+   "d": [
+    "BEZVA",
+    350,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:BEZVA"
+  },
+  {
+   "d": [
+    "BSWC",
+    222,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:BSWC"
+  },
+  {
+   "d": [
+    "BVB",
+    76.9,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:BVB"
+  },
+  {
+   "d": [
+    "CEZ",
+    1335,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:CEZ"
+  },
+  {
+   "d": [
+    "COLT",
+    798,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:COLT"
+  },
+  {
+   "d": [
+    "CPI",
+    377.5,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:CPI"
+  },
+  {
+   "d": [
+    "CSG",
+    265,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:CSG"
+  },
+  {
+   "d": [
+    "CTPNV",
+    317.2,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:CTPNV"
+  },
+  {
+   "d": [
+    "DBK",
+    815,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:DBK"
+  },
+  {
+   "d": [
+    "DOOR",
+    380,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:DOOR"
+  },
+  {
+   "d": [
+    "DSPW",
+    400,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:DSPW"
+  },
+  {
+   "d": [
+    "DTE",
+    632.2,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:DTE"
+  },
+  {
+   "d": [
+    "EFORU",
+    138,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:EFORU"
+  },
+  {
+   "d": [
+    "EMAN",
+    53.5,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:EMAN"
+  },
+  {
+   "d": [
+    "EOAN",
+    459,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:EOAN"
+  },
+  {
+   "d": [
+    "ERBAG",
+    2861,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:ERBAG"
+  },
+  {
+   "d": [
+    "FACC",
+    338,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:FACC"
+  },
+  {
+   "d": [
+    "FILL",
+    69,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:FILL"
+  },
+  {
+   "d": [
+    "FIXED",
+    42,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:FIXED"
+  },
+  {
+   "d": [
+    "FTSHP",
+    74,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:FTSHP"
+  },
+  {
+   "d": [
+    "GEN",
+    645,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:GEN"
+  },
+  {
+   "d": [
+    "GEV",
+    170,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:GEV"
+  },
+  {
+   "d": [
+    "HWIO",
+    8.05,
+    "CZK",
+    "PSECZ"
+   ],
+   "s": "PSECZ:HWIO"
+  }
+ ],
+ "totalCount": 58
+}

@@ -1,0 +1,176 @@
+{
+ "data": [
+  {
+   "d": [
+    "ABC",
+    0.291,
+    "USD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:ABC"
+  },
+  {
+   "d": [
+    "ALBH",
+    0.734,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:ALBH"
+  },
+  {
+   "d": [
+    "APMTB",
+    0.8,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:APMTB"
+  },
+  {
+   "d": [
+    "BBK",
+    0.536,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:BBK"
+  },
+  {
+   "d": [
+    "BCFC",
+    0.238,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:BCFC"
+  },
+  {
+   "d": [
+    "BEYON",
+    0.444,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:BEYON"
+  },
+  {
+   "d": [
+    "BISB",
+    0.067,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:BISB"
+  },
+  {
+   "d": [
+    "BNH",
+    0.48,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:BNH"
+  },
+  {
+   "d": [
+    "CINECO",
+    0.201,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:CINECO"
+  },
+  {
+   "d": [
+    "GFH",
+    0.44,
+    "USD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:GFH"
+  },
+  {
+   "d": [
+    "GHG",
+    0.355,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:GHG"
+  },
+  {
+   "d": [
+    "KFH",
+    2.435,
+    "USD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:KFH"
+  },
+  {
+   "d": [
+    "KHALEEJI",
+    0.07,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:KHALEEJI"
+  },
+  {
+   "d": [
+    "NBB",
+    0.51,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:NBB"
+  },
+  {
+   "d": [
+    "SALAM",
+    0.217,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:SALAM"
+  },
+  {
+   "d": [
+    "SEEF",
+    0.129,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:SEEF"
+  },
+  {
+   "d": [
+    "SILAH",
+    0.158,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:SILAH"
+  },
+  {
+   "d": [
+    "UGH",
+    0.86,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:UGH"
+  },
+  {
+   "d": [
+    "ZAINBH",
+    0.117,
+    "BHD",
+    "BAHRAIN"
+   ],
+   "s": "BAHRAIN:ZAINBH"
+  }
+ ],
+ "totalCount": 19
+}

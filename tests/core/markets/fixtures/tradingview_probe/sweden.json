@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "36GRP",
+    0.138,
+    "SEK",
+    "NGM"
+   ],
+   "s": "NGM:36GRP"
+  },
+  {
+   "d": [
+    "ABIG",
+    0.003,
+    "SEK",
+    "NGM"
+   ],
+   "s": "NGM:ABIG"
+  },
+  {
+   "d": [
+    "ADVT",
+    0.17,
+    "SEK",
+    "NGM"
+   ],
+   "s": "NGM:ADVT"
+  },
+  {
+   "d": [
+    "2020O",
+    7.585,
+    "NOK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:2020O"
+  },
+  {
+   "d": [
+    "4C",
+    5,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:4C"
+  },
+  {
+   "d": [
+    "8TRA",
+    386.8,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:8TRA"
+  },
+  {
+   "d": [
+    "AAC",
+    107,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:AAC"
+  },
+  {
+   "d": [
+    "AAK",
+    177.4,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:AAK"
+  },
+  {
+   "d": [
+    "ABB",
+    846.8,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ABB"
+  },
+  {
+   "d": [
+    "ABGO",
+    7.2,
+    "NOK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ABGO"
+  },
+  {
+   "d": [
+    "ABSO",
+    174.5,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ABSO"
+  },
+  {
+   "d": [
+    "ACAD",
+    125.2,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACAD"
+  },
+  {
+   "d": [
+    "ACARIX",
+    0.1618,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACARIX"
+  },
+  {
+   "d": [
+    "ACAST",
+    29.65,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACAST"
+  },
+  {
+   "d": [
+    "ACCON",
+    10.84,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACCON"
+  },
+  {
+   "d": [
+    "ACE",
+    0.52,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACE"
+  },
+  {
+   "d": [
+    "ACOU",
+    2.92,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACOU"
+  },
+  {
+   "d": [
+    "ACRI_A",
+    7.62,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACRI_A"
+  },
+  {
+   "d": [
+    "ACRI_B",
+    6,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACRI_B"
+  },
+  {
+   "d": [
+    "ACROUD",
+    0.084,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACROUD"
+  },
+  {
+   "d": [
+    "ACTI",
+    3.6,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACTI"
+  },
+  {
+   "d": [
+    "ACUVI",
+    5.82,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ACUVI"
+  },
+  {
+   "d": [
+    "ADDT_B",
+    334.8,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ADDT_B"
+  },
+  {
+   "d": [
+    "ADTR",
+    42.4,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ADTR"
+  },
+  {
+   "d": [
+    "ADVE",
+    18,
+    "SEK",
+    "OMXSTO"
+   ],
+   "s": "OMXSTO:ADVE"
+  }
+ ],
+ "totalCount": 979
+}

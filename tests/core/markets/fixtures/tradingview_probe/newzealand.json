@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AFI",
+    8.6,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AFI"
+  },
+  {
+   "d": [
+    "AFT",
+    4.52,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AFT"
+  },
+  {
+   "d": [
+    "AGG",
+    1.182,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AGG"
+  },
+  {
+   "d": [
+    "AGL",
+    0.143,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AGL"
+  },
+  {
+   "d": [
+    "AIA",
+    9,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AIA"
+  },
+  {
+   "d": [
+    "AIR",
+    0.38,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AIR"
+  },
+  {
+   "d": [
+    "ALF",
+    0.625,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ALF"
+  },
+  {
+   "d": [
+    "ANZ",
+    48.5,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ANZ"
+  },
+  {
+   "d": [
+    "AOF",
+    0.044,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AOF"
+  },
+  {
+   "d": [
+    "APA",
+    3.752,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:APA"
+  },
+  {
+   "d": [
+    "APL",
+    0.17,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:APL"
+  },
+  {
+   "d": [
+    "ARB",
+    0.065,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ARB"
+  },
+  {
+   "d": [
+    "ARG",
+    1.025,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ARG"
+  },
+  {
+   "d": [
+    "ASD",
+    2.354,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ASD"
+  },
+  {
+   "d": [
+    "ASF",
+    13.71,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ASF"
+  },
+  {
+   "d": [
+    "ASP",
+    1.569,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ASP"
+  },
+  {
+   "d": [
+    "ASR",
+    9.345,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ASR"
+  },
+  {
+   "d": [
+    "ATM",
+    8.87,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:ATM"
+  },
+  {
+   "d": [
+    "AUE",
+    3.902,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AUE"
+  },
+  {
+   "d": [
+    "AUS",
+    4.45,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:AUS"
+  },
+  {
+   "d": [
+    "BAI",
+    0.003,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:BAI"
+  },
+  {
+   "d": [
+    "BFG",
+    0.37,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:BFG"
+  },
+  {
+   "d": [
+    "BGH",
+    0.145,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:BGH"
+  },
+  {
+   "d": [
+    "BGP",
+    4.29,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:BGP"
+  },
+  {
+   "d": [
+    "BIT",
+    3.465,
+    "NZD",
+    "NZX"
+   ],
+   "s": "NZX:BIT"
+  }
+ ],
+ "totalCount": 166
+}

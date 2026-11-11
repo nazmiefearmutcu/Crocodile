@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "2INVE",
+    0.2625,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:2INVE"
+  },
+  {
+   "d": [
+    "480S",
+    16.9,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:480S"
+  },
+  {
+   "d": [
+    "A3M",
+    6.16,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:A3M"
+  },
+  {
+   "d": [
+    "ACS",
+    92.95,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ACS"
+  },
+  {
+   "d": [
+    "ACX",
+    15.97,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ACX"
+  },
+  {
+   "d": [
+    "ADX",
+    1.126,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ADX"
+  },
+  {
+   "d": [
+    "ADZ",
+    6.85,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ADZ"
+  },
+  {
+   "d": [
+    "AEDAS",
+    23.75,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AEDAS"
+  },
+  {
+   "d": [
+    "AENA",
+    28.58,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AENA"
+  },
+  {
+   "d": [
+    "AI",
+    0.0816,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AI"
+  },
+  {
+   "d": [
+    "AIG",
+    2.8,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AIG"
+  },
+  {
+   "d": [
+    "AIR",
+    209.3,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AIR"
+  },
+  {
+   "d": [
+    "AKL",
+    0.113,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AKL"
+  },
+  {
+   "d": [
+    "ALC",
+    5.7,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ALC"
+  },
+  {
+   "d": [
+    "ALM",
+    10.78,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ALM"
+  },
+  {
+   "d": [
+    "ALNT",
+    9.08,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ALNT"
+  },
+  {
+   "d": [
+    "ALQ",
+    16.2,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ALQ"
+  },
+  {
+   "d": [
+    "AMEN",
+    6.8,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AMEN"
+  },
+  {
+   "d": [
+    "AMIBX",
+    520.6,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AMIBX"
+  },
+  {
+   "d": [
+    "AMP",
+    4.82,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AMP"
+  },
+  {
+   "d": [
+    "AMS",
+    62.3,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:AMS"
+  },
+  {
+   "d": [
+    "ANA",
+    220.6,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ANA"
+  },
+  {
+   "d": [
+    "ANE",
+    21.92,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:ANE"
+  },
+  {
+   "d": [
+    "APAM",
+    35.04,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:APAM"
+  },
+  {
+   "d": [
+    "APG",
+    16.7,
+    "EUR",
+    "BME"
+   ],
+   "s": "BME:APG"
+  }
+ ],
+ "totalCount": 310
+}

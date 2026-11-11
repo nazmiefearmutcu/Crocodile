@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "3NOV25",
+    8.84,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:3NOV25"
+  },
+  {
+   "d": [
+    "AAB",
+    25.6,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:AAB"
+  },
+  {
+   "d": [
+    "AGAT",
+    0.81,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:AGAT"
+  },
+  {
+   "d": [
+    "AGF_B",
+    0.932,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:AGF_B"
+  },
+  {
+   "d": [
+    "AGILC",
+    6.25,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:AGILC"
+  },
+  {
+   "d": [
+    "ALEFRM",
+    2.97,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:ALEFRM"
+  },
+  {
+   "d": [
+    "ALK_B",
+    247.8,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:ALK_B"
+  },
+  {
+   "d": [
+    "ALMB",
+    17.5,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:ALMB"
+  },
+  {
+   "d": [
+    "ALSYDB",
+    764,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:ALSYDB"
+  },
+  {
+   "d": [
+    "AMBU_B",
+    87.1,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:AMBU_B"
+  },
+  {
+   "d": [
+    "AOJ_B",
+    107.2,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:AOJ_B"
+  },
+  {
+   "d": [
+    "ARAOPT",
+    6943,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:ARAOPT"
+  },
+  {
+   "d": [
+    "ATLA_DKK",
+    5.36,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:ATLA_DKK"
+  },
+  {
+   "d": [
+    "BACTIQ",
+    3.05,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BACTIQ"
+  },
+  {
+   "d": [
+    "BAIKDKOAKA",
+    131.9,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BAIKDKOAKA"
+  },
+  {
+   "d": [
+    "BARDJU",
+    2.66,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BARDJU"
+  },
+  {
+   "d": [
+    "BAVA",
+    238,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BAVA"
+  },
+  {
+   "d": [
+    "BETCO_DKK",
+    44.85,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BETCO_DKK"
+  },
+  {
+   "d": [
+    "BIF",
+    0.276,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BIF"
+  },
+  {
+   "d": [
+    "BIOMAR",
+    122.7,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BIOMAR"
+  },
+  {
+   "d": [
+    "BIOPOR",
+    0.99,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BIOPOR"
+  },
+  {
+   "d": [
+    "BO",
+    10.88,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BO"
+  },
+  {
+   "d": [
+    "BOOZT_DKK",
+    113.7,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:BOOZT_DKK"
+  },
+  {
+   "d": [
+    "CARL_A",
+    1115,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:CARL_A"
+  },
+  {
+   "d": [
+    "CARL_B",
+    1008,
+    "DKK",
+    "OMXCOP"
+   ],
+   "s": "OMXCOP:CARL_B"
+  }
+ ],
+ "totalCount": 184
+}

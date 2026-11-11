@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "AALLON",
+    8.96,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:AALLON"
+  },
+  {
+   "d": [
+    "ACG1V",
+    6.34,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ACG1V"
+  },
+  {
+   "d": [
+    "ADMCM",
+    28.8,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ADMCM"
+  },
+  {
+   "d": [
+    "ADMIN",
+    2.24,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ADMIN"
+  },
+  {
+   "d": [
+    "AFAGR",
+    0.225,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:AFAGR"
+  },
+  {
+   "d": [
+    "AIFORIA",
+    0.88,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:AIFORIA"
+  },
+  {
+   "d": [
+    "AKTIA",
+    12,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:AKTIA"
+  },
+  {
+   "d": [
+    "ALBAV",
+    43.1,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ALBAV"
+  },
+  {
+   "d": [
+    "ALBBV",
+    42.4,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ALBBV"
+  },
+  {
+   "d": [
+    "ALEX",
+    12.15,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ALEX"
+  },
+  {
+   "d": [
+    "ALISA",
+    0.109,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ALISA"
+  },
+  {
+   "d": [
+    "ALMA",
+    14.25,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ALMA"
+  },
+  {
+   "d": [
+    "ANORA",
+    4.555,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ANORA"
+  },
+  {
+   "d": [
+    "APETIT",
+    11.8,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:APETIT"
+  },
+  {
+   "d": [
+    "ARVOSK",
+    80.3,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ARVOSK"
+  },
+  {
+   "d": [
+    "ASPO",
+    6.58,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ASPO"
+  },
+  {
+   "d": [
+    "ASUNTO",
+    72,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ASUNTO"
+  },
+  {
+   "d": [
+    "ATRAV",
+    15.88,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:ATRAV"
+  },
+  {
+   "d": [
+    "AUROORA",
+    9.78,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:AUROORA"
+  },
+  {
+   "d": [
+    "BEER",
+    2.41,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:BEER"
+  },
+  {
+   "d": [
+    "BETOLAR",
+    0.738,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:BETOLAR"
+  },
+  {
+   "d": [
+    "BIOBV",
+    2.1,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:BIOBV"
+  },
+  {
+   "d": [
+    "BITTI",
+    34.5,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:BITTI"
+  },
+  {
+   "d": [
+    "BOREO",
+    27,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:BOREO"
+  },
+  {
+   "d": [
+    "BRETEC",
+    0.0224,
+    "EUR",
+    "OMXHEX"
+   ],
+   "s": "OMXHEX:BRETEC"
+  }
+ ],
+ "totalCount": 198
+}

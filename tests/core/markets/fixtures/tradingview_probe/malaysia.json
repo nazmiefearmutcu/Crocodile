@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "1TECH",
+    0.02,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:1TECH"
+  },
+  {
+   "d": [
+    "3A",
+    0.735,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:3A"
+  },
+  {
+   "d": [
+    "3REN",
+    0.325,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:3REN"
+  },
+  {
+   "d": [
+    "5ER",
+    0.25,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:5ER"
+  },
+  {
+   "d": [
+    "99SMART",
+    3.03,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:99SMART"
+  },
+  {
+   "d": [
+    "A1AKK",
+    0.175,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:A1AKK"
+  },
+  {
+   "d": [
+    "AAGB",
+    0.505,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AAGB"
+  },
+  {
+   "d": [
+    "AAI",
+    0.23,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AAI"
+  },
+  {
+   "d": [
+    "AASIA",
+    0.12,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AASIA"
+  },
+  {
+   "d": [
+    "ABFMY1",
+    1.189,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ABFMY1"
+  },
+  {
+   "d": [
+    "ABLEGLOB",
+    1.54,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ABLEGLOB"
+  },
+  {
+   "d": [
+    "ABLEGRP",
+    0.09,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ABLEGRP"
+  },
+  {
+   "d": [
+    "ABMB",
+    4.61,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ABMB"
+  },
+  {
+   "d": [
+    "ACO",
+    0.13,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ACO"
+  },
+  {
+   "d": [
+    "ADB",
+    0.44,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ADB"
+  },
+  {
+   "d": [
+    "ADNEX",
+    0.44,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ADNEX"
+  },
+  {
+   "d": [
+    "ADVCON",
+    0.18,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ADVCON"
+  },
+  {
+   "d": [
+    "ADVENTA",
+    0.145,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:ADVENTA"
+  },
+  {
+   "d": [
+    "AEM",
+    0.045,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AEM"
+  },
+  {
+   "d": [
+    "AEMULUS",
+    0.415,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AEMULUS"
+  },
+  {
+   "d": [
+    "AEON",
+    0.9,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AEON"
+  },
+  {
+   "d": [
+    "AEONCR",
+    4.52,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AEONCR"
+  },
+  {
+   "d": [
+    "AFFIN",
+    1.98,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AFFIN"
+  },
+  {
+   "d": [
+    "AFUJIYA",
+    0.215,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AFUJIYA"
+  },
+  {
+   "d": [
+    "AGMO",
+    0.25,
+    "MYR",
+    "MYX"
+   ],
+   "s": "MYX:AGMO"
+  }
+ ],
+ "totalCount": 1150
+}

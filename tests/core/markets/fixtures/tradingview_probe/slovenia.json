@@ -1,0 +1,212 @@
+{
+ "data": [
+  {
+   "d": [
+    "CICG",
+    27,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:CICG"
+  },
+  {
+   "d": [
+    "DEHG",
+    304,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:DEHG"
+  },
+  {
+   "d": [
+    "EQNX",
+    67,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:EQNX"
+  },
+  {
+   "d": [
+    "ICBET",
+    29.85,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:ICBET"
+  },
+  {
+   "d": [
+    "ICCRO",
+    40.9,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:ICCRO"
+  },
+  {
+   "d": [
+    "ICGRO",
+    11.06,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:ICGRO"
+  },
+  {
+   "d": [
+    "ICPOL",
+    11.65,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:ICPOL"
+  },
+  {
+   "d": [
+    "ICSLO",
+    62.9,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:ICSLO"
+  },
+  {
+   "d": [
+    "KRKG",
+    243,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:KRKG"
+  },
+  {
+   "d": [
+    "LKPG",
+    108,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:LKPG"
+  },
+  {
+   "d": [
+    "MKOG",
+    40,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:MKOG"
+  },
+  {
+   "d": [
+    "NLBR",
+    220,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:NLBR"
+  },
+  {
+   "d": [
+    "PETG",
+    57,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:PETG"
+  },
+  {
+   "d": [
+    "POSR",
+    77.4,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:POSR"
+  },
+  {
+   "d": [
+    "SALR",
+    62,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:SALR"
+  },
+  {
+   "d": [
+    "SKDR",
+    900,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:SKDR"
+  },
+  {
+   "d": [
+    "SLOTR",
+    9.85,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:SLOTR"
+  },
+  {
+   "d": [
+    "TCRG",
+    65,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:TCRG"
+  },
+  {
+   "d": [
+    "TLSG",
+    141,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:TLSG"
+  },
+  {
+   "d": [
+    "UKIG",
+    4.5,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:UKIG"
+  },
+  {
+   "d": [
+    "VZZR",
+    1.4,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:VZZR"
+  },
+  {
+   "d": [
+    "WORLD",
+    10.26,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:WORLD"
+  },
+  {
+   "d": [
+    "ZVTG",
+    68,
+    "EUR",
+    "LJSE"
+   ],
+   "s": "LJSE:ZVTG"
+  }
+ ],
+ "totalCount": 23
+}

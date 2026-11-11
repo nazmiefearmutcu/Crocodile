@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "1DIV",
+    13.81,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:1DIV"
+  },
+  {
+   "d": [
+    "1I01BSET50",
+    3.5,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:1I01BSET50"
+  },
+  {
+   "d": [
+    "2I01BSET50",
+    2.49,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:2I01BSET50"
+  },
+  {
+   "d": [
+    "2S",
+    3.5,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:2S"
+  },
+  {
+   "d": [
+    "2S.R",
+    3.5,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:2S.R"
+  },
+  {
+   "d": [
+    "2X01BSET50",
+    7.64,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:2X01BSET50"
+  },
+  {
+   "d": [
+    "3BBIF",
+    6.2,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:3BBIF"
+  },
+  {
+   "d": [
+    "88TH",
+    3.38,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:88TH"
+  },
+  {
+   "d": [
+    "88TH.R",
+    3.38,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:88TH.R"
+  },
+  {
+   "d": [
+    "A",
+    1.39,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:A"
+  },
+  {
+   "d": [
+    "A.R",
+    1.39,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:A.R"
+  },
+  {
+   "d": [
+    "A5",
+    1.76,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:A5"
+  },
+  {
+   "d": [
+    "A5.R",
+    1.76,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:A5.R"
+  },
+  {
+   "d": [
+    "AAI",
+    4.24,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAI"
+  },
+  {
+   "d": [
+    "AAI.R",
+    4.24,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAI.R"
+  },
+  {
+   "d": [
+    "AAOI03",
+    0.65,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAOI03"
+  },
+  {
+   "d": [
+    "AAOI23",
+    1.29,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAOI23"
+  },
+  {
+   "d": [
+    "AAPL01",
+    35,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAPL01"
+  },
+  {
+   "d": [
+    "AAPL03",
+    4,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAPL03"
+  },
+  {
+   "d": [
+    "AAPL19",
+    7.9,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAPL19"
+  },
+  {
+   "d": [
+    "AAPL80",
+    11.9,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAPL80"
+  },
+  {
+   "d": [
+    "AAV",
+    0.78,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAV"
+  },
+  {
+   "d": [
+    "AAV.R",
+    0.78,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:AAV.R"
+  },
+  {
+   "d": [
+    "ABBV19",
+    9.85,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:ABBV19"
+  },
+  {
+   "d": [
+    "ABBV80",
+    9.95,
+    "THB",
+    "SET"
+   ],
+   "s": "SET:ABBV80"
+  }
+ ],
+ "totalCount": 2342
+}

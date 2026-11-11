@@ -1,0 +1,230 @@
+{
+ "data": [
+  {
+   "d": [
+    "ABC.A",
+    2644,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:ABC.A"
+  },
+  {
+   "d": [
+    "ARC.B",
+    1284.45,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:ARC.B"
+  },
+  {
+   "d": [
+    "BNC",
+    238.97,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:BNC"
+  },
+  {
+   "d": [
+    "BPV",
+    8300,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:BPV"
+  },
+  {
+   "d": [
+    "BVCC",
+    861.99,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:BVCC"
+  },
+  {
+   "d": [
+    "BVL",
+    2115,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:BVL"
+  },
+  {
+   "d": [
+    "CCP.B",
+    770,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:CCP.B"
+  },
+  {
+   "d": [
+    "CCR",
+    8999,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:CCR"
+  },
+  {
+   "d": [
+    "CGQ",
+    2300,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:CGQ"
+  },
+  {
+   "d": [
+    "CRM.A",
+    780,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:CRM.A"
+  },
+  {
+   "d": [
+    "DOM",
+    1059,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:DOM"
+  },
+  {
+   "d": [
+    "EFE",
+    155,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:EFE"
+  },
+  {
+   "d": [
+    "ENV",
+    1124.99,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:ENV"
+  },
+  {
+   "d": [
+    "FNC",
+    2200,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:FNC"
+  },
+  {
+   "d": [
+    "GMC.B",
+    8000,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:GMC.B"
+  },
+  {
+   "d": [
+    "GZL",
+    1300,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:GZL"
+  },
+  {
+   "d": [
+    "ICP.B",
+    114,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:ICP.B"
+  },
+  {
+   "d": [
+    "IVC.A",
+    1599,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:IVC.A"
+  },
+  {
+   "d": [
+    "IVC.B",
+    810,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:IVC.B"
+  },
+  {
+   "d": [
+    "MPA",
+    185,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:MPA"
+  },
+  {
+   "d": [
+    "MTC.B",
+    160,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:MTC.B"
+  },
+  {
+   "d": [
+    "MVZ.A",
+    13101.01,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:MVZ.A"
+  },
+  {
+   "d": [
+    "MVZ.B",
+    9400,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:MVZ.B"
+  },
+  {
+   "d": [
+    "PCP.B",
+    180,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:PCP.B"
+  },
+  {
+   "d": [
+    "PGR",
+    179.01,
+    "VES",
+    "BVCV"
+   ],
+   "s": "BVCV:PGR"
+  }
+ ],
+ "totalCount": 32
+}
