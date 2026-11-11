@@ -113,6 +113,15 @@ def test_the_scanner_sees_every_spelling_of_an_environment_read() -> None:
         assert _env_reads(ast.parse(source)), f"scanner missed {source}"
 
 
+def test_legacy_lake_variables_are_no_longer_read() -> None:
+    """``CRYPCODILE_DATA_DIR`` and ``STOCKODILE_DATA_DIR`` were honoured for one minor version.
+
+    In 0.4 they are ignored: the lake root comes from ``CROCODILE_DATA_DIR`` or the default.
+    """
+    for legacy in ("CRYPCODILE_DATA_DIR", "STOCKODILE_DATA_DIR"):
+        assert Settings.from_env({legacy: "/old/lake"}).data_dir == pathlib.Path("data")
+
+
 def test_the_scanner_leaves_an_unrelated_directory_variable_alone() -> None:
     """``FLOWMAP_DATA_DIR`` was where a GUI window kept its files, not the lake.
 

@@ -13,10 +13,11 @@ def test_prefixed_variables_win():
     assert s.data_dir.as_posix() == "/tmp/lake"
 
 
-def test_legacy_names_are_accepted_with_a_warning():
-    with pytest.warns(DeprecationWarning, match="CRYPCODILE_DATA_DIR"):
-        s = Settings.from_env({"CRYPCODILE_DATA_DIR": "/tmp/old"})
-    assert s.data_dir.as_posix() == "/tmp/old"
+def test_legacy_names_are_ignored_without_warning(recwarn):
+    """CRYPCODILE_* and STOCKODILE_* were removed in 0.4: they are not read at all."""
+    s = Settings.from_env({"CRYPCODILE_DATA_DIR": "/tmp/old", "STOCKODILE_DATA_DIR": "/tmp/old2"})
+    assert s.data_dir.as_posix() == "data"
+    assert not [w for w in recwarn if issubclass(w.category, DeprecationWarning)]
 
 
 def test_prefixed_name_beats_legacy_without_warning(recwarn):
@@ -25,15 +26,9 @@ def test_prefixed_name_beats_legacy_without_warning(recwarn):
     assert not [w for w in recwarn if issubclass(w.category, DeprecationWarning)]
 
 
-def test_conflicting_legacy_names_are_an_error():
-    with pytest.raises(ConfigError, match="conflicting"):
-        Settings.from_env({"CRYPCODILE_DATA_DIR": "/a", "STOCKODILE_DATA_DIR": "/b"})
-
-
-def test_agreeing_legacy_names_are_not_an_error():
-    with pytest.warns(DeprecationWarning):
-        s = Settings.from_env({"CRYPCODILE_DATA_DIR": "/same", "STOCKODILE_DATA_DIR": "/same"})
-    assert s.data_dir.as_posix() == "/same"
+def test_conflicting_legacy_names_no_longer_raise():
+    s = Settings.from_env({"CRYPCODILE_DATA_DIR": "/a", "STOCKODILE_DATA_DIR": "/b"})
+    assert s.data_dir.as_posix() == "data"
 
 
 def test_known_names_are_enumerable():
@@ -72,8 +67,14 @@ def test_an_unparseable_boolean_is_an_error_not_a_silent_false():
 
 
 def test_a_bad_boolean_names_the_spelling_that_supplied_it():
-    with pytest.raises(ConfigError, match=r"CRYPCODILE_FINNHUB_FREE_TIER"):
-        Settings.from_env({"CRYPCODILE_FINNHUB_FREE_TIER": "sometimes"})
+    with pytest.raises(ConfigError, match=r"CROCODILE_FINNHUB_FREE_TIER"):
+        Settings.from_env({"CROCODILE_FINNHUB_FREE_TIER": "sometimes"})
+
+
+def test_a_legacy_boolean_is_ignored_rather_than_parsed():
+    """A retired spelling is not validated: it is simply not an input any more."""
+    s = Settings.from_env({"CRYPCODILE_FINNHUB_FREE_TIER": "sometimes"})
+    assert s.finnhub_free_tier is True
 
 
 def test_sec_user_agent_defaults_to_none_rather_than_a_fabricated_contact():

@@ -267,7 +267,7 @@ def test_samples_take_anchors_first_then_the_primary_mic_in_symbol_order() -> No
 
 
 def test_the_environment_is_scrubbed_of_crocodile_variables_and_values_are_never_echoed() -> None:
-    """Crocodile, crypcodile and stockodile variables are removed; only their names are returned."""
+    """Crocodile and stockodile variables are removed; only their names are returned."""
     env = {"CROCODILE_TIINGO_API_KEY": "secret", "STOCKODILE_X": "y", "PATH": "/bin"}
     removed = scrub_environment(env)
     assert sorted(removed) == ["CROCODILE_TIINGO_API_KEY", "STOCKODILE_X"]

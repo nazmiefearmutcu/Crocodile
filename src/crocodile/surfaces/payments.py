@@ -61,7 +61,7 @@ def payments_path() -> Path:
         return Path(override)
     if "pytest" in sys.modules:
         return Path(tempfile.gettempdir()) / _TEST_LEDGER
-    home = os.environ.get("CRYPCODILE_HOME") or os.path.join(os.path.expanduser("~"), ".crypcodile")
+    home = os.path.join(os.path.expanduser("~"), ".crypcodile")
     return Path(home) / "payments_db.json"
 
 

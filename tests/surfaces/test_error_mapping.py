@@ -347,9 +347,7 @@ string check and gives the regulator a dead mailbox — so an unconfigured insta
 
 
 def _unconfigured(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in ("CROCODILE_SEC_USER_AGENT", "CRYPCODILE_SEC_USER_AGENT",
-                 "STOCKODILE_SEC_USER_AGENT"):
-        monkeypatch.delenv(name, raising=False)
+    monkeypatch.delenv("CROCODILE_SEC_USER_AGENT", raising=False)
 
 
 def test_a_configuration_error_is_an_actionable_501_rather_than_a_bare_500(

@@ -1,9 +1,9 @@
 """One place that knows what an environment variable means.
 
 Crypcodile read 16 environment variables and Stockodile 23, each at its point of
-use, listed nowhere. ``Settings`` replaces that with one object and one prefix.
-Legacy ``CRYPCODILE_*`` / ``STOCKODILE_*`` names are honoured for one minor
-version, with a deprecation warning.
+use, listed nowhere. ``Settings`` replaces that with one object and one prefix:
+only ``CROCODILE_*`` is read. The legacy ``CRYPCODILE_*`` and ``STOCKODILE_*``
+names are ignored, not translated.
 
 ``Settings`` parses exactly as much as has a wrong answer. A flag becomes a
 ``bool`` here, because ``bool("false")`` is ``True`` and a reader that forgets is
@@ -15,7 +15,6 @@ has no ambiguity for this module to resolve, so the caller keeps it.
 from __future__ import annotations
 
 import os
-import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Final
@@ -28,9 +27,6 @@ __all__ = ["Settings"]
 
 PREFIX: Final = "CROCODILE_"
 """The one prefix Crocodile reads."""
-
-LEGACY_PREFIXES: Final = ("CRYPCODILE_", "STOCKODILE_")
-"""Accepted for one minor version, then removed. Deprecated, not supported."""
 
 _SECRET_SUFFIXES: Final = ("_key", "_keys", "_secret", "_token", "_password")
 """A field whose name ends in one of these carries a credential.
@@ -76,8 +72,7 @@ class Settings(msgspec.Struct, frozen=True):
 
     Resolving the default here would bake ``$HOME`` into the object at construction
     time; the consumer expands it. Note that the bare name ``HOME`` is never read —
-    only ``CROCODILE_HOME`` and the two legacy spellings — so there is no clash with
-    the POSIX variable.
+    only ``CROCODILE_HOME`` — so there is no clash with the POSIX variable.
     """
 
     alpaca_api_key: str | None = None
@@ -198,8 +193,7 @@ class Settings(msgspec.Struct, frozen=True):
         """Read every known name out of ``env``, defaulting to :data:`os.environ`.
 
         Raises:
-            ConfigError: Two legacy prefixes disagree about the same setting, or a
-                boolean field was given something that is not a boolean.
+            ConfigError: A boolean field was given something that is not a boolean.
         """
         source: Mapping[str, str] = os.environ if env is None else env
         values: dict[str, Any] = {}
@@ -326,39 +320,14 @@ def _parse_bool(spelling: str, raw: str) -> bool:
 
 
 def _lookup(env: Mapping[str, str], name: str) -> tuple[str, str] | None:
-    """Resolve one setting across the canonical prefix and the two legacy ones.
+    """Return the ``CROCODILE_*`` spelling of ``name`` and its value, or ``None`` if unset.
 
-    A present ``CROCODILE_*`` wins outright and warns about nothing, so migrating is
-    a matter of adding the new name rather than removing the old one.
-
-    Returns the spelling that supplied the value alongside it, so a later parse
-    failure can blame the variable the operator actually set rather than the
-    canonical name they may never have heard of.
+    Only the canonical prefix is consulted. Legacy ``CRYPCODILE_*`` and
+    ``STOCKODILE_*`` variables are ignored, so a deployment that still sets them
+    gets the defaults and no warning. The name is returned alongside the value so
+    a later parse failure can blame the variable the operator actually set.
     """
     canonical = PREFIX + name
     if canonical in env:
         return canonical, env[canonical]
-
-    legacy = {
-        prefix + name: env[prefix + name] for prefix in LEGACY_PREFIXES if prefix + name in env
-    }
-    if not legacy:
-        return None
-
-    distinct = set(legacy.values())
-    if len(distinct) > 1:
-        # Naming the variables and not their values: one of these could be a
-        # credential, and an exception message travels further than the object does.
-        raise ConfigError(
-            f"conflicting values for {canonical}: "
-            f"{' and '.join(sorted(legacy))} disagree. Set {canonical} instead."
-        )
-
-    warnings.warn(
-        f"{', '.join(sorted(legacy))} is deprecated and will be removed in the next "
-        f"minor version; use {canonical}.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-    spelling = sorted(legacy)[0]
-    return spelling, legacy[spelling]
+    return None

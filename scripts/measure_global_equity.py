@@ -20,7 +20,7 @@ to that host, and the report states what the host gave, not what it could be mad
 
 Outputs go to --out-dir as JSON and Markdown. The JSON carries every request, refusal and closed
 host; the Markdown is rendered from the same result. Neither holds keys, cookies, crumbs or contact
-strings, because every CROCODILE_*, CRYPCODILE_* and STOCKODILE_* variable is removed before any
+strings, because every CROCODILE_* and STOCKODILE_* variable is removed before any
 import of the orchestrator, and only the names of the removed variables are recorded.
 """
 
@@ -147,7 +147,7 @@ NOT_MEASURED: Final[tuple[str, ...]] = (
     "Whether any source's terms permit the use",
     "Listings outside the backfill samples and outside the universe-sync bound",
 )
-SCRUB_PREFIXES: Final = ("CROCODILE_", "CRYPCODILE_", "STOCKODILE_")
+SCRUB_PREFIXES: Final = ("CROCODILE_", "STOCKODILE_")
 
 Operation = Callable[[Any], Awaitable[Any]]
 PHASE: ContextVar[str] = ContextVar("measure_phase", default="setup")
