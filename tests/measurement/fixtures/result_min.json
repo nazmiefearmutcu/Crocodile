@@ -1,0 +1,76 @@
+{
+  "_comment": "synthetic; not a measurement",
+  "schema": "crocodile.measure_global_equity/1",
+  "status": "ok",
+  "abort": null,
+  "started_at_utc": "2026-11-12T10:00:00+00:00",
+  "finished_at_utc": "2026-11-12T10:12:00+00:00",
+  "duration_s": 720.0,
+  "weekday_utc": "Thursday",
+  "git": {"commit": "0000000000000000000000000000000000000000", "dirty": false, "branch": "feat/global-equity"},
+  "environment": {"python": "3.12.10", "platform": "synthetic", "packages": {"aiohttp": "3.14.0"}},
+  "arguments": {"countries": ["TR", "NG"], "samples": 3, "universe_bound_applied": true},
+  "data_dir": "synthetic",
+  "data_dir_kept": false,
+  "environment_scrubbed": [],
+  "eod_now_utc": "2026-11-12T10:10:00+00:00",
+  "budget": {
+    "per_endpoint_cap": 3,
+    "spacing_s": 1.0,
+    "max_requests": 250,
+    "cooldown_on_429_s": 60.0,
+    "user_agent_expected": "Mozilla/5.0 (crocodile)",
+    "requests_sent": 2,
+    "max_requests_per_endpoint_observed": 1,
+    "min_spacing_s_by_host": {"query2.finance.yahoo.com": 1.0},
+    "refusals": [
+      {"phase": "resume", "country": "NG", "method": "GET", "host": "consent.yahoo.com", "path": "/collectConsent", "reason": "host_not_allowed"}
+    ],
+    "hosts_closed": [],
+    "non_generic_user_agents": [],
+    "unattributed_hosts": ["consent.yahoo.com"]
+  },
+  "phases": {"setup": {"duration_s": 0.1}, "universe_sync": {"duration_s": 8.0}, "backfill": {"duration_s": 5.0}, "resume": {"duration_s": 1.0}, "collect_eod": {"duration_s": 3.0}, "markets": {"duration_s": 0.5}},
+  "countries": {
+    "TR": {
+      "mics": ["XIST"],
+      "primary_mic": "XIST",
+      "universe_sync": {"status": "ok", "error": null, "duration_s": 3.2, "report": {}, "listings": {"total": 120, "by_mic": {"XIST": 120}, "by_status": {"active": 120}}, "aliases_by_source": {"tradingview": 120}, "instrument_rows_by_source": null},
+      "backfill": {"status": "ok", "error": null, "duration_s": 4.0, "report": {}, "samples": [{"symbol": "THYAO@XIST", "anchor": "THYAO@XIST", "mic": "XIST", "bars": {"yahoo_chart": 1000}, "first_date": "2022-11-14", "last_date": "2026-11-11", "expected_latest_session": "2026-11-11", "lag_sessions": 0, "non_session_dates": {"count": 0, "first": []}, "out_of_calendar_range": false, "currencies": ["TRY"], "price_scales": [0], "adjustments": ["split_dividend"], "corp_actions": {"dividend": 10}}]},
+      "resume": {"status": "ok", "error": null, "symbol": "THYAO@XIST", "requests": 1, "period1": "2026-11-11", "rows_before": 1000, "rows_after": 1000, "duplicates": 0},
+      "collect_eod": {"status": "ok", "error": null, "duration_s": 1.0, "report": {}, "bars_by_source": {"tradingview": 120}, "session_dates": ["2026-11-11"]},
+      "markets": {"rows": [], "error": null}
+    },
+    "NG": {
+      "mics": ["XNSA"],
+      "primary_mic": "XNSA",
+      "universe_sync": {"status": "ok", "error": null, "duration_s": 2.1, "report": {}, "listings": {"total": 40, "by_mic": {"XNSA": 40}, "by_status": {"active": 40}}, "aliases_by_source": null, "instrument_rows_by_source": null},
+      "backfill": {"status": "error", "error": "SourceUnservableError: yahoo_chart: forbidden", "duration_s": 0.4, "report": {}, "samples": [{"symbol": "DANGCEM@XNSA", "anchor": "DANGCEM@XNSA", "mic": "XNSA", "bars": {}, "first_date": null, "last_date": null, "expected_latest_session": "2026-11-11", "lag_sessions": null, "non_session_dates": {"count": 0, "first": []}, "out_of_calendar_range": false, "currencies": [], "price_scales": [], "adjustments": [], "corp_actions": {}}]},
+      "resume": {"status": "skipped", "error": "no sample with yahoo bars", "symbol": null, "requests": 0, "period1": null, "rows_before": null, "rows_after": null, "duplicates": null},
+      "collect_eod": {"status": "ok", "error": null, "duration_s": 0.9, "report": {}, "bars_by_source": {}, "session_dates": []},
+      "markets": {"rows": [], "error": null}
+    }
+  },
+  "markets_all": {"rows": 172, "exchange_table_rows": 172, "equal": true, "error": null},
+  "sources": {
+    "yahoo_chart": {"requests": 2, "status_counts": {"200": 1, "404": 1}, "exceptions": {}, "elapsed_ms": {"p50": 120.0, "p95": 300.0, "max": 300.0}, "hosts": ["query2.finance.yahoo.com"]}
+  },
+  "acceptance": {
+    "universe_sync_countries": ["TR", "NG"],
+    "backfill_countries": ["TR"],
+    "both_countries": ["TR"],
+    "criterion5_strict_met": false,
+    "criterion5_loose_met": false,
+    "resume": {"checked": 1, "max_requests": 1, "duplicates_total": 0, "ok": true},
+    "minor_unit_evidence": [],
+    "non_session_violations": [],
+    "nvda_split_probe": null,
+    "markets_rows_equal_exchange_table": true
+  },
+  "not_measured": ["Quotas and rate limits beyond the requests this run made"],
+  "requests": [
+    {"seq": 1, "phase": "backfill", "country": "TR", "source": "yahoo_chart", "method": "GET", "host": "query2.finance.yahoo.com", "path": "/v8/finance/chart/THYAO.IS", "query": {"period1": "1600000000"}, "started_s": 0.5, "waited_s": 0.0, "redirect_of": null, "status": 200, "content_type": "application/json", "user_agent": "Mozilla/5.0 (crocodile)", "elapsed_ms": 120.0, "error": null},
+    {"seq": 2, "phase": "backfill", "country": "NG", "source": "yahoo_chart", "method": "GET", "host": "query2.finance.yahoo.com", "path": "/v8/finance/chart/DANGCEM.LG", "query": {"period1": "1600000000"}, "started_s": 3.0, "waited_s": 1.0, "redirect_of": null, "status": 404, "content_type": "text/html", "user_agent": "Mozilla/5.0 (crocodile)", "elapsed_ms": 300.0, "error": null},
+    {"seq": 3, "phase": "resume", "country": "NG", "source": "unattributed", "method": "GET", "host": "consent.yahoo.com", "path": "/collectConsent", "query": {}, "started_s": 5.0, "waited_s": 0.0, "redirect_of": 2, "status": null, "content_type": null, "user_agent": null, "elapsed_ms": null, "error": "HostNotAllowed"}
+  ]
+}
