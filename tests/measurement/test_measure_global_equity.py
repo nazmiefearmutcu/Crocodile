@@ -272,7 +272,9 @@ def test_the_environment_is_scrubbed_of_crocodile_variables_and_values_are_never
     assert "secret" not in repr(removed)
 
 
-def test_a_non_empty_data_dir_is_refused_before_any_network_use(tmp_path: pathlib.Path) -> None:
+def test_a_non_empty_data_dir_is_refused_before_any_network_use(
+    tmp_path: pathlib.Path, network_forbidden: None
+) -> None:
     """A non-empty data dir exits 2 before the output directory is created."""
     nonempty = tmp_path / "lake"
     nonempty.mkdir()
@@ -283,7 +285,7 @@ def test_a_non_empty_data_dir_is_refused_before_any_network_use(tmp_path: pathli
 
 
 def test_dry_plan_prints_the_plan_and_makes_no_request(
-    tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: pathlib.Path, capsys: pytest.CaptureFixture[str], network_forbidden: None
 ) -> None:
     """--dry-plan prints twelve countries and an estimate within the cap, and writes nothing."""
     out = tmp_path / "out"
