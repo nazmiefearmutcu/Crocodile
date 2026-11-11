@@ -111,7 +111,8 @@ def test_universal_source_names_do_not_collide_with_crypto_exchanges() -> None:
         if cls.__module__.startswith(PACKAGE_MODULE)
     }
     # Step 10 registers the first universal source; from then on the set is non-empty.
-    assert universal_names is not None
+    assert universal_names, "no universal source is registered in factory._REGISTRY"
+    assert "yahoo_chart" in universal_names
     assert universal_names.isdisjoint(crypto_names), universal_names & crypto_names
 
 

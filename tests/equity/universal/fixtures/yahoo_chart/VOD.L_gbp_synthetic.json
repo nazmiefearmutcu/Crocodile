@@ -1,0 +1,35 @@
+{
+  "_synthetic": "constructed for tests; not a recorded Yahoo response",
+  "chart": {
+    "result": [
+      {
+        "meta": {
+          "currency": "GBp",
+          "symbol": "VOD.L",
+          "exchangeName": "LSE",
+          "fullExchangeName": "London",
+          "instrumentType": "EQUITY",
+          "gmtoffset": 0,
+          "timezone": "GMT",
+          "exchangeTimezoneName": "Europe/London",
+          "dataGranularity": "1d",
+          "range": "5d"
+        },
+        "timestamp": [1793606400, 1793692800],
+        "indicators": {
+          "quote": [
+            {
+              "open": [72.0, 72.8],
+              "high": [73.0, 73.5],
+              "low": [71.8, 72.5],
+              "close": [72.5, 73.1],
+              "volume": [30000000, 28000000]
+            }
+          ],
+          "adjclose": [{"adjclose": [72.5, 73.1]}]
+        }
+      }
+    ],
+    "error": null
+  }
+}

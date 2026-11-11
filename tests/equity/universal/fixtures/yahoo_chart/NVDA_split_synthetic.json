@@ -1,0 +1,45 @@
+{
+  "_synthetic": "constructed for tests; not a recorded Yahoo response",
+  "chart": {
+    "result": [
+      {
+        "meta": {
+          "currency": "USD",
+          "symbol": "NVDA",
+          "exchangeName": "NMS",
+          "fullExchangeName": "NasdaqGS",
+          "instrumentType": "EQUITY",
+          "gmtoffset": -14400,
+          "timezone": "EDT",
+          "exchangeTimezoneName": "America/New_York",
+          "dataGranularity": "1d",
+          "range": "1mo"
+        },
+        "timestamp": [1718026200],
+        "events": {
+          "splits": {
+            "1718026200": {
+              "date": 1718026200,
+              "numerator": 10,
+              "denominator": 1,
+              "splitRatio": "10:1"
+            }
+          }
+        },
+        "indicators": {
+          "quote": [
+            {
+              "open": [1200.0],
+              "high": [1220.0],
+              "low": [1180.0],
+              "close": [1208.88],
+              "volume": [250000000]
+            }
+          ],
+          "adjclose": [{"adjclose": [1208.88]}]
+        }
+      }
+    ],
+    "error": null
+  }
+}

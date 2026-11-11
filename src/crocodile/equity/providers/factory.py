@@ -17,6 +17,7 @@ from crocodile.equity.providers.tiingo.connector import TiingoProvider
 from crocodile.equity.providers.treasury.connector import TreasuryProvider
 from crocodile.equity.providers.yahoo.connector import YahooProvider
 from crocodile.equity.reference.registry import InstrumentRegistry
+from crocodile.equity.universal.yahoo_chart import YahooChartProvider
 
 if TYPE_CHECKING:
     from crocodile.core.config import Settings
@@ -32,6 +33,7 @@ _REGISTRY: dict[str, type[Provider]] = {
     "tiingo": TiingoProvider,
     "treasury": TreasuryProvider,
     "yahoo": YahooProvider,
+    "yahoo_chart": YahooChartProvider,
 }
 """Every equity source ``collect`` and ``backfill`` can resolve, keyed by the name a user
 types.
@@ -192,7 +194,7 @@ def make_provider(
     provider:
         Lowercase provider name. Valid values: ``alpaca``, ``finnhub``,
         ``finra``, ``google_finance``, ``msn_money``, ``sec_edgar``, ``stooq``,
-        ``tiingo``, ``treasury``, ``yahoo`` — ``_REGISTRY`` below spelled out, with
+        ``tiingo``, ``treasury``, ``yahoo``, ``yahoo_chart`` — ``_REGISTRY`` below spelled out, with
         ``tests/conformance/test_prose_counts.py`` asserting the two agree.
 
         The last four arrived when the argument for keeping them out was measured and

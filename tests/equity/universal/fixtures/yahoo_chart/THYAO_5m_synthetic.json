@@ -1,0 +1,43 @@
+{
+  "_synthetic": "constructed for tests; not a recorded Yahoo response",
+  "chart": {
+    "result": [
+      {
+        "meta": {
+          "currency": "TRY",
+          "symbol": "THYAO.IS",
+          "exchangeName": "IST",
+          "fullExchangeName": "Istanbul",
+          "instrumentType": "EQUITY",
+          "gmtoffset": 10800,
+          "timezone": "TRT",
+          "exchangeTimezoneName": "Europe/Istanbul",
+          "dataGranularity": "5m",
+          "range": "1d"
+        },
+        "timestamp": [1793946600, 1793946900, 1793947200],
+        "events": {
+          "dividends": {
+            "1793946600": {
+              "amount": 3.5,
+              "date": 1793946600
+            }
+          }
+        },
+        "indicators": {
+          "quote": [
+            {
+              "open": [261.0, 262.5, 263.0],
+              "high": [262.0, 264.0, 263.5],
+              "low": [260.5, 262.0, 262.5],
+              "close": [262.5, 263.0, 263.25],
+              "volume": [150000, 120000, 98000]
+            }
+          ],
+          "adjclose": [{"adjclose": [262.5, 263.0, 263.25]}]
+        }
+      }
+    ],
+    "error": null
+  }
+}

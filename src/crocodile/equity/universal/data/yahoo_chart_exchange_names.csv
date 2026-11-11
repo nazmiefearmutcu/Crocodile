@@ -1,0 +1,14 @@
+exchange_name,mic,evidence_symbol,evidence_date,notes
+ASX,XASX,BHP.AX,2026-11-08,R&D fixture yahoo_chart_g8
+CPH,XCSE,NOVO-B.CO,2026-11-08,R&D fixture yahoo_chart_g8
+FRA,XFRA,ALV.F,2026-11-08,R&D fixture yahoo_chart_g8
+GER,XETR,SAP.DE,2026-11-08,R&D fixture yahoo_chart_g8
+HEL,XHEL,NOKIA.HE,2026-11-08,R&D fixture yahoo_chart_g8
+HKG,XHKG,0700.HK,2026-11-08,R&D fixture yahoo_chart_g8
+IST,XIST,THYAO.IS,2026-11-08,R&D fixture yahoo_chart_g8
+JPX,XJPX,7203.T,2026-11-08,R&D fixture yahoo_chart_g8
+KSC,XKRX,005930.KS,2026-11-08,R&D fixture yahoo_chart_g8
+NSI,XNSE,RELIANCE.NS,2026-11-08,R&D fixture yahoo_chart_g8
+SET,XBKK,PTT.BK,2026-11-08,R&D fixture yahoo_chart_g8
+SHH,XSHG,600519.SS,2026-11-08,R&D fixture yahoo_chart_g8
+TAI,XTAI,2330.TW,2026-11-08,R&D fixture yahoo_chart_g8
