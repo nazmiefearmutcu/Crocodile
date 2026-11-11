@@ -294,6 +294,7 @@ async def test_fetch_financial_statements(mock_financials: pd.DataFrame) -> None
         mock_ticker.quarterly_balance_sheet = pd.DataFrame()
         mock_ticker.cashflow = pd.DataFrame()
         mock_ticker.quarterly_cashflow = pd.DataFrame()
+        mock_ticker.info = {"financialCurrency": "USD"}
         mock_ticker_cls.return_value = mock_ticker
 
         records = await client.fetch_financial_statements("AAPL")
@@ -308,6 +309,7 @@ async def test_fetch_financial_statements(mock_financials: pd.DataFrame) -> None
         assert fund.start == "2024-12-31"  # Derived 1 year back for annual duration
         assert fund.fp == "FY"
         assert fund.form == "10-K"
+        assert fund.unit == "USD"
 
     await client.close()
 

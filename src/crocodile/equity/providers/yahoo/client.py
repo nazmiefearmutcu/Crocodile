@@ -842,7 +842,7 @@ class YahooClient:
             A list of Fundamental records.
         """
 
-        def _call_financials(session: requests.Session) -> dict[str, pd.DataFrame]:
+        def _call_financials(session: requests.Session) -> dict[str, Any]:
             ticker = yf.Ticker(symbol, session=session)
             return {
                 "annual_financials": ticker.financials,
@@ -851,6 +851,7 @@ class YahooClient:
                 "quarterly_balance_sheet": ticker.quarterly_balance_sheet,
                 "annual_cashflow": ticker.cashflow,
                 "quarterly_cashflow": ticker.quarterly_cashflow,
+                "info": ticker.info,
             }
 
         try:
@@ -871,6 +872,27 @@ class YahooClient:
             ("annual_cashflow", "FY", "10-K", True),
             ("quarterly_cashflow", None, "10-Q", True),
         ]
+
+        frames = [statements.get(name) for name, *_ in config]
+        if all(df is None or df.empty for df in frames):
+            return []
+
+        # The unit is the issuer's reporting currency. A missing or non-ISO value refuses the
+        # statements rather than filing them under a guessed unit (spec §3.12).
+        info = statements.get("info")
+        try:
+            currency = _financial_currency(info)
+        except UnknownCurrencyError as exc:
+            raw = info.get("financialCurrency") if isinstance(info, Mapping) else None
+            raise YahooError(
+                f"Yahoo financialCurrency {raw!r} for {symbol} is not an ISO 4217 code; "
+                "its statements are refused"
+            ) from exc
+        if currency is None:
+            raise YahooError(
+                f"Yahoo gave no financialCurrency for {symbol}; its statements have no stated "
+                "unit and are refused rather than filed under a guessed one"
+            )
 
         for name, fp_val, form, is_duration in config:
             df = statements.get(name)
@@ -923,7 +945,7 @@ class YahooClient:
                         local_ts=local_ts,
                         taxonomy="yahoo",
                         tag=tag_str,
-                        unit="USD",
+                        unit=currency,
                         val=val_float,
                         end=end_str,
                         start=start_str,

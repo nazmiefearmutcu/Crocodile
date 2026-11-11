@@ -12,7 +12,7 @@ import threading
 from datetime import UTC, date, datetime
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pandas as pd
 import pytest
@@ -21,6 +21,7 @@ import requests
 from crocodile.core.schema.enums import CorpActionType
 from crocodile.core.schema.records import OHLCV, CorporateAction, Fundamental
 from crocodile.equity.providers.yahoo import client as yahoo
+from crocodile.equity.providers.yahoo.client import YahooError
 
 pytestmark = pytest.mark.usefixtures("network_forbidden")
 
@@ -197,9 +198,27 @@ def _first_dividend(name: str) -> tuple[date, float]:
 @pytest.mark.parametrize(
     ("fixture", "tz", "ex_date", "amount", "source_ts"),
     [
-        ("2330_tw_1mo_2y_events.json", "Asia/Taipei", "2024-12-12", 3.999637, 1_733_961_600_000_000_000),
-        ("7203_t_1mo_2y_events.json", "Asia/Tokyo", "2025-03-28", 50.0, 1_743_120_000_000_000_000),
-        ("bhp_ax_1mo_2y_events.json", "Australia/Sydney", "2025-03-06", 0.790935, 1_741_219_200_000_000_000),
+        (
+            "2330_tw_1mo_2y_events.json",
+            "Asia/Taipei",
+            "2024-12-12",
+            3.999637,
+            1_733_961_600_000_000_000,
+        ),
+        (
+            "7203_t_1mo_2y_events.json",
+            "Asia/Tokyo",
+            "2025-03-28",
+            50.0,
+            1_743_120_000_000_000_000,
+        ),
+        (
+            "bhp_ax_1mo_2y_events.json",
+            "Australia/Sydney",
+            "2025-03-06",
+            0.790935,
+            1_741_219_200_000_000_000,
+        ),
     ],
 )
 def test_a_dividend_ex_date_comes_from_the_same_local_date(
@@ -278,5 +297,92 @@ async def test_eod_history_converts_off_the_event_loop_with_one_capture_time(mon
         assert threads[0] is not threading.current_thread()
         assert records
         assert all(r.local_ts == 42 for r in records)
+    finally:
+        await client.close()
+
+
+# --- fundamentals unit ----------------------------------------------------------------------
+
+
+def _statements(info: object) -> dict[str, Any]:
+    empty = pd.DataFrame()
+    return {
+        "annual_financials": pd.DataFrame(
+            {pd.Timestamp("2025-12-31"): [1e6]}, index=["Total Revenue"]
+        ),
+        "quarterly_financials": empty,
+        "annual_balance_sheet": empty,
+        "quarterly_balance_sheet": empty,
+        "annual_cashflow": empty,
+        "quarterly_cashflow": empty,
+        "info": info,
+    }
+
+
+@pytest.mark.parametrize(
+    ("symbol", "code"),
+    [("THYAO.IS", "TRY"), ("7203.T", "JPY"), ("2330.TW", "TWD"), ("BHP.AX", "USD")],
+)
+async def test_fundamentals_take_their_unit_from_financial_currency(
+    monkeypatch, symbol, code
+):
+    # BHP reports in USD while trading in AUD: the trading currency is not the unit.
+    client = _client()
+    monkeypatch.setattr(
+        client,
+        "_execute_yf_call",
+        AsyncMock(return_value=_statements({"financialCurrency": code})),
+    )
+    try:
+        records = await client.fetch_financial_statements(symbol)
+    finally:
+        await client.close()
+    assert records
+    assert all(isinstance(r, Fundamental) for r in records)
+    assert all(r.unit == code for r in records)
+
+
+@pytest.mark.parametrize(
+    "info", [{}, {"financialCurrency": None}, {"financialCurrency": "  "}, MagicMock()]
+)
+async def test_fundamentals_without_financial_currency_are_refused(monkeypatch, info):
+    client = _client()
+    monkeypatch.setattr(client, "_execute_yf_call", AsyncMock(return_value=_statements(info)))
+    try:
+        with pytest.raises(YahooError, match="financialCurrency"):
+            await client.fetch_financial_statements("THYAO.IS")
+    finally:
+        await client.close()
+
+
+async def test_a_non_iso_financial_currency_is_refused(monkeypatch):
+    client = _client()
+    monkeypatch.setattr(
+        client,
+        "_execute_yf_call",
+        AsyncMock(return_value=_statements({"financialCurrency": "ZZZ"})),
+    )
+    try:
+        with pytest.raises(YahooError, match="ISO 4217"):
+            await client.fetch_financial_statements("THYAO.IS")
+    finally:
+        await client.close()
+
+
+async def test_no_statements_is_still_an_empty_answer(monkeypatch):
+    client = _client()
+    empty = pd.DataFrame()
+    statements = {
+        "annual_financials": empty,
+        "quarterly_financials": empty,
+        "annual_balance_sheet": empty,
+        "quarterly_balance_sheet": empty,
+        "annual_cashflow": empty,
+        "quarterly_cashflow": empty,
+        "info": {},
+    }
+    monkeypatch.setattr(client, "_execute_yf_call", AsyncMock(return_value=statements))
+    try:
+        assert await client.fetch_financial_statements("THYAO.IS") == []
     finally:
         await client.close()
