@@ -19,7 +19,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable, Collection, Mapp
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
-from typing import Final, Protocol
+from typing import Any, Final, Protocol, TypeVar
 
 import msgspec
 
@@ -95,6 +95,9 @@ _EPOCH_UTC: Final = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
 _DAILY_INTERVAL: Final = "1d"
 _CORP_INTERVAL: Final = ""
 _LISTING_SCOPE_MESSAGE: Final = "a scope needs mic, country, all_markets or symbols"
+_EOD_INTERVAL: Final = "eod"
+_NS_PER_SECOND: Final = 1_000_000_000
+_T = TypeVar("_T")
 
 
 @dataclass(frozen=True, slots=True)
@@ -532,6 +535,8 @@ class UniversalOrchestrator:
         self._pending: list[_Pending] = []
         self._successes = 0
         self._closed = False
+        self._unattributed: set[tuple[str, str, datetime.date]] = set()
+        self._snapshot_failures: dict[str, Outcome] = {}
 
     def now(self) -> datetime.datetime:
         return self._clock()
@@ -1185,3 +1190,650 @@ class UniversalOrchestrator:
             else:
                 actions += 1
         return kept, bars, actions, last_bar
+
+    def _mic_of_symbol(self, symbol: str) -> str | None:
+        _local, mic = parse_listing_symbol(symbol)
+        if mic is not None:
+            return mic
+        listing = self._master.get(symbol)
+        return None if listing is None else listing.mic
+
+    async def _with_retries(self, call: Callable[[], Awaitable[_T]]) -> _T:
+        """Run one source call, retrying transient failures (spec section 5)."""
+        attempt = 0
+        while True:
+            try:
+                return await call()
+            except (TransientProviderError, TransientConnectorError):
+                attempt += 1
+                if attempt >= MAX_TRANSIENT_ATTEMPTS:
+                    raise
+                await self._sleep(backoff_delays(attempt - 1))
+
+    async def _commit_batch(self) -> None:
+        """Flush the sink, then commit the queued watermarks (a marker never outruns its rows)."""
+        await self._checkpoint()
+        await self._sink.flush()
+
+    async def _write_checked(self, run: _Run, record: OHLCV, listing: Listing | None) -> bool:
+        """Write one daily or intraday bar after the currency check; a mismatch goes to the DLQ."""
+        if listing is not None:
+            try:
+                check_currency_consistent(record.currency, record.price_scale, listing)
+            except CurrencyMismatchError as exc:
+                await self._dlq.put(
+                    self.now_ns(), msgspec.json.encode(record), "CurrencyMismatchError", str(exc)
+                )
+                return False
+        await self._sink.put(record)
+        run.records += 1
+        return True
+
+    async def _write_snapshot_bars(
+        self,
+        run: _Run,
+        batch: SnapshotBatch,
+        passed: Mapping[str, datetime.date],
+        explicit: Mapping[str, Listing] | None,
+    ) -> dict[str, int]:
+        """Write the bars of attributed MICs whose session day is the session passed for them."""
+        counts: dict[str, int] = {}
+        for record in batch.records:
+            if not isinstance(record, OHLCV) or record.source_ts is None:
+                continue
+            mic = self._mic_of_symbol(record.symbol)
+            if mic is None or mic not in passed or mic not in batch.attributed_mics:
+                continue
+            if explicit is not None and record.symbol not in explicit:
+                continue
+            if _session_of(record.source_ts) != passed[mic]:
+                continue
+            listing = self._master.get(record.symbol)
+            if await self._write_checked(run, record, listing):
+                counts[mic] = counts.get(mic, 0) + 1
+        return counts
+
+    async def _snapshot_pass(
+        self,
+        run: _Run,
+        sessions: Mapping[str, datetime.date],
+        pending: set[str],
+        chains: Mapping[str, tuple[str, ...]],
+        explicit: Mapping[str, Listing] | None,
+    ) -> None:
+        """Snapshot each due unit once; attributed MICs get their marker, the rest stay pending."""
+        names = list(dict.fromkeys(name for mic in sorted(pending) for name in chains[mic]))
+        for name in names:
+            source = self._bindings.snapshot[name]
+            due = [
+                mic
+                for mic in sorted(pending)
+                if name in chains[mic] and self._state.eod_session(name, mic) != sessions[mic]
+            ]
+            requested: list[str] = []
+            for mic in due:
+                if (name, mic, sessions[mic]) in self._unattributed:
+                    run.add(_not_attributable(mic, name))
+                else:
+                    requested.append(mic)
+            for unit, unit_mics in source.units_for(frozenset(requested)).items():
+                await self._snapshot_unit(run, source, unit, unit_mics, sessions, pending, explicit)
+
+    async def _snapshot_unit(
+        self,
+        run: _Run,
+        source: SnapshotSource,
+        unit: str,
+        unit_mics: frozenset[str],
+        sessions: Mapping[str, datetime.date],
+        pending: set[str],
+        explicit: Mapping[str, Listing] | None,
+    ) -> None:
+        name = source.name
+        mics = sorted(mic for mic in unit_mics if mic in pending)
+        passed = {mic: sessions[mic] for mic in mics}
+        if not passed:
+            return
+        try:
+            batch = await source.snapshot(unit, passed, captured_ns=self.now_ns())
+        except Exception as exc:
+            status, reason = _classify(exc)
+            if status is OutcomeStatus.FAILED:
+                logger.warning("snapshot unit %s/%s failed", name, unit, exc_info=True)
+            for mic in mics:
+                self._snapshot_failures[mic] = Outcome(
+                    subject=mic,
+                    mic=mic,
+                    source=name,
+                    channel="ohlcv",
+                    status=status,
+                    reason=reason,
+                )
+            return
+        counts = await self._write_snapshot_bars(run, batch, passed, explicit)
+        await self._commit_batch()
+        for mic in mics:
+            if mic not in batch.attributed_mics:
+                run.add(_not_attributable(mic, name))
+                self._unattributed.add((name, mic, sessions[mic]))
+                continue
+            count = counts.get(mic, 0)
+            self._state.record_eod(
+                source=name,
+                mic=mic,
+                session=sessions[mic],
+                at_ns=self.now_ns(),
+                status="ok" if count else "no_data",
+            )
+            run.add(
+                Outcome(
+                    subject=mic,
+                    mic=mic,
+                    source=name,
+                    channel="ohlcv",
+                    status=OutcomeStatus.OK if count else OutcomeStatus.NO_DATA,
+                    records=count,
+                )
+            )
+            pending.discard(mic)
+
+    async def _fallback_one(
+        self,
+        run: _Run,
+        semaphore: asyncio.Semaphore,
+        results: dict[str, tuple[int, Outcome | None]],
+        hist: HistorySource,
+        listing: Listing,
+        session: datetime.date,
+        captured: int,
+    ) -> None:
+        async with semaphore:
+            day_ns = _midnight_ns(session)
+            try:
+                records = await self._with_retries(
+                    lambda: _collect(
+                        hist.history(listing, "ohlcv", day_ns, day_ns, captured_ns=captured)
+                    )
+                )
+            except Exception as exc:
+                status, reason = _classify(exc)
+                if status is OutcomeStatus.FAILED:
+                    logger.warning(
+                        "fallback fetch %s %s failed", hist.name, listing.symbol, exc_info=True
+                    )
+                results[listing.symbol] = (
+                    0,
+                    Outcome(
+                        subject=listing.symbol,
+                        mic=listing.mic,
+                        source=hist.name,
+                        channel="ohlcv",
+                        status=status,
+                        reason=reason,
+                    ),
+                )
+                return
+            count = 0
+            for record in records:
+                if (
+                    not isinstance(record, OHLCV)
+                    or record.interval != _DAILY_INTERVAL
+                    or record.symbol != listing.symbol
+                    or record.source_ts != day_ns
+                ):
+                    continue
+                if await self._write_checked(run, record, listing):
+                    count += 1
+            if count:
+                await self._queue_success(
+                    _Pending(
+                        source=hist.name,
+                        symbol=listing.symbol,
+                        mic=listing.mic,
+                        channel="ohlcv",
+                        interval=_EOD_INTERVAL,
+                        lo=day_ns,
+                        hi=day_ns,
+                    )
+                )
+            results[listing.symbol] = (count, None)
+
+    async def _fallback_market(
+        self,
+        run: _Run,
+        hist: HistorySource,
+        mic: str,
+        session: datetime.date,
+        explicit: Mapping[str, Listing] | None,
+    ) -> None:
+        """The bounded history batch of one market for one session (spec section 3.10e)."""
+        marker = self._state.eod_marker(hist.name, mic)
+        if marker is not None and marker.session == session:
+            run.add(
+                Outcome(
+                    subject=mic,
+                    mic=mic,
+                    source=hist.name,
+                    channel="ohlcv",
+                    status=OutcomeStatus.ALREADY_COVERED,
+                    reason=marker.status,
+                )
+            )
+            return
+        if explicit is not None:
+            candidates = [listing for listing in explicit.values() if listing.mic == mic]
+        else:
+            candidates = list(self._master.listings(mic=mic, status=ListingStatus.ACTIVE))
+
+        def staleness(listing: Listing) -> tuple[bool, int, str]:
+            stamp = self._state.coverage(hist.name, listing.symbol, "ohlcv", _EOD_INTERVAL)
+            covered = None if stamp is None else stamp.covered_until_ns
+            return (covered is not None, covered or 0, listing.symbol)
+
+        candidates.sort(key=staleness)
+        batch = candidates[: self._eod_fallback_limit]
+        for listing in candidates[self._eod_fallback_limit :]:
+            run.add(
+                Outcome(
+                    subject=listing.symbol,
+                    mic=mic,
+                    source=hist.name,
+                    channel="ohlcv",
+                    status=OutcomeStatus.BUDGET_EXHAUSTED,
+                    reason=f"fallback limit of {self._eod_fallback_limit} per market and session",
+                )
+            )
+        captured = self.now_ns()
+        semaphore = asyncio.Semaphore(self._max_concurrency)
+        results: dict[str, tuple[int, Outcome | None]] = {}
+        async with asyncio.TaskGroup() as group:
+            for listing in batch:
+                group.create_task(
+                    self._fallback_one(run, semaphore, results, hist, listing, session, captured)
+                )
+        written = sum(count for count, _failure in results.values())
+        failures = [failure for _count, failure in results.values() if failure is not None]
+        for failure in failures:
+            run.add(failure)
+        if batch and len(failures) == len(batch):
+            # Every attempt failed: no marker (a retry must not look like "no data").
+            first = failures[0]
+            run.add(
+                Outcome(
+                    subject=mic,
+                    mic=mic,
+                    source=hist.name,
+                    channel="ohlcv",
+                    status=first.status,
+                    reason=first.reason,
+                )
+            )
+            return
+        await self._commit_batch()
+        self._state.record_eod(
+            source=hist.name,
+            mic=mic,
+            session=session,
+            at_ns=self.now_ns(),
+            status="ok" if written else "no_data",
+        )
+        run.add(
+            Outcome(
+                subject=mic,
+                mic=mic,
+                source=hist.name,
+                channel="ohlcv",
+                status=OutcomeStatus.OK if written else OutcomeStatus.NO_DATA,
+                records=written,
+            )
+        )
+
+    async def collect_eod(
+        self,
+        scope: Scope,
+        now: datetime.datetime,
+        *,
+        sources: Sequence[str] = (UNIVERSAL_ALIAS,),
+    ) -> RunReport:
+        """The latest completed daily session of every market in scope, once per session."""
+        names = _validate_sources(sources)
+        resolved = self.resolve_scope(scope)
+        run = _Run(kind="collect_eod", scope=scope, started_ns=self.now_ns())
+        self._refused_outcomes(run, resolved.refused, ("ohlcv",))
+        explicit: dict[str, Listing] | None = None
+        if resolved.explicit_listings:
+            explicit = {listing.symbol: listing for listing in resolved.listings}
+        sessions: dict[str, datetime.date] = {}
+        for mic in resolved.mics:
+            try:
+                session = calendar_for(mic).latest_completed_session(now, self._eod_delay)
+            except CalendarRangeError:
+                run.add(
+                    Outcome(
+                        subject=mic,
+                        mic=mic,
+                        source=None,
+                        channel="ohlcv",
+                        status=OutcomeStatus.FAILED,
+                        reason="calendar_range",
+                    )
+                )
+                continue
+            if session is None:
+                run.add(
+                    Outcome(
+                        subject=mic,
+                        mic=mic,
+                        source=None,
+                        channel="ohlcv",
+                        status=OutcomeStatus.NO_SESSION,
+                        reason="no completed session",
+                    )
+                )
+                continue
+            sessions[mic] = session
+        snap_chains = {
+            mic: self._chain(mic, "ohlcv", names, self._bindings.snapshot) for mic in sessions
+        }
+        hist_chains = {
+            mic: self._chain(mic, "ohlcv", names, self._bindings.history) for mic in sessions
+        }
+        pending: set[str] = set()
+        for mic in sorted(sessions):
+            serving_names = snap_chains[mic] or hist_chains[mic]
+            if not serving_names:
+                run.add(
+                    Outcome(
+                        subject=mic,
+                        mic=mic,
+                        source=None,
+                        channel="ohlcv",
+                        status=OutcomeStatus.NO_SOURCE,
+                        reason="no source serves this market and channel",
+                    )
+                )
+                continue
+            marker = self._state.eod_marker(serving_names[0], mic)
+            if marker is not None and marker.session == sessions[mic]:
+                run.add(
+                    Outcome(
+                        subject=mic,
+                        mic=mic,
+                        source=serving_names[0],
+                        channel="ohlcv",
+                        status=OutcomeStatus.ALREADY_COVERED,
+                        reason=marker.status,
+                    )
+                )
+                continue
+            pending.add(mic)
+        self._snapshot_failures = {}
+        await self._snapshot_pass(run, sessions, pending, snap_chains, explicit)
+        for mic in sorted(pending):
+            if not hist_chains[mic]:
+                failure = self._snapshot_failures.get(mic)
+                if failure is not None:
+                    run.add(failure)
+                else:
+                    run.add(
+                        Outcome(
+                            subject=mic,
+                            mic=mic,
+                            source=None,
+                            channel="ohlcv",
+                            status=OutcomeStatus.NO_SOURCE,
+                            reason="no history source serves this market and channel",
+                        )
+                    )
+                continue
+            hist = self._bindings.history[hist_chains[mic][0]]
+            await self._fallback_market(run, hist, mic, sessions[mic], explicit)
+        self._snapshot_failures = {}
+        return await self._finish(run)
+
+    async def _intraday_one(
+        self,
+        run: _Run,
+        semaphore: asyncio.Semaphore,
+        source: HistorySource,
+        listing: Listing,
+        interval: str,
+        now_ns: int,
+    ) -> None:
+        async with semaphore:
+            seconds_ns = INTRADAY_INTERVAL_SECONDS[interval] * _NS_PER_SECOND
+            cov = self._state.coverage(source.name, listing.symbol, "ohlcv", interval)
+            covered_until = None if cov is None else cov.covered_until_ns
+            captured = self.now_ns()
+            try:
+                records = await self._with_retries(
+                    lambda: _collect(source.intraday(listing, interval, captured_ns=captured))
+                )
+            except Exception as exc:
+                status, reason = _classify(exc)
+                if status is OutcomeStatus.FAILED:
+                    logger.warning(
+                        "intraday fetch %s %s failed", source.name, listing.symbol, exc_info=True
+                    )
+                run.add(
+                    Outcome(
+                        subject=listing.symbol,
+                        mic=listing.mic,
+                        source=source.name,
+                        channel="ohlcv",
+                        status=status,
+                        reason=reason,
+                    )
+                )
+                return
+            bars = [
+                record
+                for record in records
+                if isinstance(record, OHLCV)
+                and record.interval == interval
+                and record.symbol == listing.symbol
+                and record.source_ts is not None
+            ]
+            if not bars:
+                self._record_failure(
+                    source=source.name,
+                    symbol=listing.symbol,
+                    mic=listing.mic,
+                    channel="ohlcv",
+                    interval=interval,
+                    status=OutcomeStatus.NO_DATA,
+                    reason=None,
+                )
+                run.add(
+                    Outcome(
+                        subject=listing.symbol,
+                        mic=listing.mic,
+                        source=source.name,
+                        channel="ohlcv",
+                        status=OutcomeStatus.NO_DATA,
+                    )
+                )
+                return
+            fresh = [
+                bar
+                for bar in bars
+                if bar.source_ts is not None
+                and bar.source_ts + seconds_ns <= now_ns
+                and (covered_until is None or bar.source_ts > covered_until)
+            ]
+            if not fresh:
+                run.add(
+                    Outcome(
+                        subject=listing.symbol,
+                        mic=listing.mic,
+                        source=source.name,
+                        channel="ohlcv",
+                        status=OutcomeStatus.ALREADY_COVERED,
+                    )
+                )
+                return
+            written = 0
+            for bar in sorted(fresh, key=lambda item: item.source_ts or 0):
+                if await self._write_checked(run, bar, listing):
+                    written += 1
+            stamps = [bar.source_ts for bar in fresh if bar.source_ts is not None]
+            if written and stamps:
+                await self._queue_success(
+                    _Pending(
+                        source=source.name,
+                        symbol=listing.symbol,
+                        mic=listing.mic,
+                        channel="ohlcv",
+                        interval=interval,
+                        lo=min(stamps),
+                        hi=max(stamps),
+                    )
+                )
+            run.add(
+                Outcome(
+                    subject=listing.symbol,
+                    mic=listing.mic,
+                    source=source.name,
+                    channel="ohlcv",
+                    status=OutcomeStatus.OK if written else OutcomeStatus.ALREADY_COVERED,
+                    records=written,
+                )
+            )
+
+    async def collect_intraday(
+        self,
+        listings: Sequence[Listing | str],
+        interval: str,
+        *,
+        now: datetime.datetime | None = None,
+        sources: Sequence[str] = (UNIVERSAL_ALIAS,),
+    ) -> RunReport:
+        """Closed intraday bars of named listings, newer than their stored watermark."""
+        names = _validate_sources(sources)
+        if interval not in INTRADAY_INTERVAL_SECONDS:
+            raise ValueError(
+                f"interval {interval!r} is not an intraday interval; use one of "
+                f"{sorted(INTRADAY_INTERVAL_SECONDS)}"
+            )
+        if not listings:
+            raise ValueError("collect_intraday needs at least one listing")
+        if len(listings) > MAX_INTRADAY_LISTINGS:
+            raise ValueError(
+                f"at most {MAX_INTRADAY_LISTINGS} listings per intraday request, "
+                f"got {len(listings)}"
+            )
+        now_ns = _ns_of(self.now() if now is None else now)
+        resolved: list[Listing] = []
+        unknown: list[Outcome] = []
+        for entry in listings:
+            listing = entry if isinstance(entry, Listing) else _lookup(self._master, entry)
+            if listing is None:
+                unknown.append(
+                    Outcome(
+                        subject=str(entry),
+                        mic=None,
+                        source=None,
+                        channel="ohlcv",
+                        status=OutcomeStatus.UNKNOWN_LISTING,
+                        reason="unknown listing",
+                    )
+                )
+                continue
+            require_not_sanctioned(listing.mic, allow=self._allow)
+            if listing not in resolved:
+                resolved.append(listing)
+        if not resolved:
+            raise ValueError(
+                "none of the named listings is known to the listing master; run "
+                "crocodile universe-sync for them first"
+            )
+        run = _Run(
+            kind="collect_intraday",
+            scope=Scope(symbols=tuple(item.symbol for item in resolved)),
+            started_ns=self.now_ns(),
+        )
+        run.outcomes.extend(unknown)
+        semaphore = asyncio.Semaphore(self._max_concurrency)
+        async with asyncio.TaskGroup() as group:
+            for listing in resolved:
+                serving = [
+                    name
+                    for name in self._chain(listing.mic, "ohlcv", names, self._bindings.history)
+                    if self._bindings.history[name].serves(listing.mic, "ohlcv")
+                ]
+                if not serving:
+                    run.add(
+                        Outcome(
+                            subject=listing.symbol,
+                            mic=listing.mic,
+                            source=None,
+                            channel="ohlcv",
+                            status=OutcomeStatus.NO_SOURCE,
+                            reason="no history source serves this market and channel",
+                        )
+                    )
+                    continue
+                source = self._bindings.history[serving[0]]
+                group.create_task(
+                    self._intraday_one(run, semaphore, source, listing, interval, now_ns)
+                )
+        return await self._finish(run)
+
+
+def _not_attributable(mic: str, source: str) -> Outcome:
+    return Outcome(
+        subject=mic,
+        mic=mic,
+        source=source,
+        channel="ohlcv",
+        status=OutcomeStatus.NO_SESSION,
+        reason="not_attributable",
+    )
+
+
+async def _collect(stream: AsyncIterator[Record]) -> list[Record]:
+    return [record async for record in stream]
+
+
+def open_orchestrator(
+    settings: Settings,
+    sink: Sink,
+    *,
+    bindings: SourceBindings | None = None,
+    clock: Callable[[], datetime.datetime] | None = None,
+    dlq_report_path: Path | None = None,
+    scan_max_rows: int | None = None,
+    **options: Any,
+) -> UniversalOrchestrator:
+    """Open the listing master and the state, bind the sources, return the orchestrator."""
+    from crocodile.equity.universal import bindings as _bindings
+
+    if bindings is not None and scan_max_rows is not None:
+        raise ValueError("scan_max_rows is a binding option; it cannot be passed with bindings")
+    master = ListingMaster.for_data_dir(settings.data_dir)
+    try:
+        state = UniversalState.at(settings.data_dir)
+    except Exception:
+        master.close()
+        raise
+    try:
+        if bindings is None:
+            clock_ns = None if clock is None else (lambda: _ns_of(clock()))
+            bindings = _bindings.default_bindings(
+                settings, sink, master=master, clock_ns=clock_ns, scan_max_rows=scan_max_rows
+            )
+        return UniversalOrchestrator(
+            master=master,
+            state=state,
+            sink=sink,
+            bindings=bindings,
+            data_dir=settings.data_dir,
+            clock=clock,
+            allow=allowed_countries(settings),
+            dlq_report_path=dlq_report_path,
+            **options,
+        )
+    except Exception:
+        state.close()
+        master.close()
+        raise

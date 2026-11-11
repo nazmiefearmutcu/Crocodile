@@ -300,6 +300,8 @@ class FakeSnapshotSource:
     unattributed: dict[str, frozenset[str]] = field(default_factory=dict)
     errors: dict[str, BaseException] = field(default_factory=dict)
     calls: list[tuple[str, dict[str, datetime.date], int]] = field(default_factory=list)
+    # MIC of a bare (US) symbol, which carries no MIC suffix of its own.
+    mics_by_symbol: dict[str, str] = field(default_factory=dict)
 
     def units_for(self, mics: frozenset[str]) -> dict[str, frozenset[str]]:
         found: dict[str, frozenset[str]] = {}
@@ -320,6 +322,8 @@ class FakeSnapshotSource:
         kept: list[Record] = []
         for record in self.bars.get(unit, ()):
             _local, mic = parse_listing_symbol(record.symbol)
+            if mic is None:
+                mic = self.mics_by_symbol.get(record.symbol)
             if mic not in attributed:
                 continue
             if getattr(record, "source_ts", None) != daily_bar_ts_ns(sessions[mic]):
