@@ -125,6 +125,26 @@ def test_apply_universe_marks_unseen_only_for_a_complete_read() -> None:
     assert thyao is not None and thyao.status == "unseen"
 
 
+def test_apply_universe_skips_an_empty_sweep_and_marks_the_rest() -> None:
+    # An empty seen set is an outage: the MIC's listings stay active, apply_universe does not
+    # raise (mark_unseen would), and the sweep carries on with the next MIC in sorted order.
+    master = ListingMaster(":memory:")
+    master.upsert(_observation("THYAO", "XIST", observed_ns=1))
+    master.upsert(_observation("MSFT", "XNAS", observed_ns=1))
+    snapshot = _snapshot(
+        (_observation("AAPL", "XNAS", observed_ns=5),),
+        seen={"XIST": frozenset(), "XNAS": frozenset({"AAPL"})},
+        complete=True,
+    )
+    report = apply_universe(master, snapshot)
+    assert report.unseen_marked_mics == ("XNAS",)
+    assert "XIST" not in report.unseen_marked_mics
+    thyao = master.find("XIST", "THYAO")
+    assert thyao is not None and thyao.status == "active"
+    msft = master.find("XNAS", "MSFT")
+    assert msft is not None and msft.status == "unseen"
+
+
 def test_apply_universe_records_a_conflict_and_continues() -> None:
     master = ListingMaster(":memory:")
     snapshot = _snapshot(
