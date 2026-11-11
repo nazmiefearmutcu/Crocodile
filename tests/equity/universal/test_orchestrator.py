@@ -15,7 +15,13 @@ import msgspec
 import pytest
 
 from crocodile.core.config import Settings
-from crocodile.core.markets.errors import SanctionedMarketError
+from crocodile.core.errors import TransientConnectorError
+from crocodile.core.markets.errors import (
+    ListingConflictError,
+    NoGrammarForMarket,
+    SanctionedMarketError,
+    UnknownMarketError,
+)
 from crocodile.core.markets.exchanges import ExchangeRegistry
 from crocodile.core.markets.master import ListingMaster, ListingStatus
 from crocodile.core.markets.symbols import listing_symbol
@@ -341,6 +347,50 @@ async def test_identity_conflicts_are_reported_and_the_run_continues(
         assert [o.subject for o in conflicts] == ["tradingview"]
         assert "another ISIN" in (conflicts[0].reason or "")
         assert [o.status for o in report.market_outcomes("XIST")] == [OutcomeStatus.OK]
+    finally:
+        await orch.aclose()
+
+
+async def test_a_master_failure_is_isolated_to_its_unit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from crocodile.equity.universal import orchestrator as module
+    from crocodile.equity.universal.base import UniverseApplyReport
+
+    real_apply = module.apply_universe
+
+    def failing_for_xist(master: ListingMaster, snapshot: UniverseSnapshot) -> UniverseApplyReport:
+        if "XIST" in snapshot.seen:
+            raise RuntimeError("master unavailable")
+        return real_apply(master, snapshot)
+
+    monkeypatch.setattr(module, "apply_universe", failing_for_xist)
+    turkey = make_observation(
+        "tradingview", "BIST:THYAO", "XIST", "THYAO", currency="TRY", price_scale=0
+    )
+    global_ = make_observation(
+        "tradingview", "NASDAQ:AAPL", "XNAS", "AAPL", currency="USD", price_scale=0
+    )
+    universe = _universe_source(
+        "tradingview",
+        {"turkey": frozenset({"XIST"}), "global": frozenset({"XNAS"})},
+        snapshots={
+            "turkey": make_snapshot("tradingview", [turkey]),
+            "global": make_snapshot("tradingview", [global_]),
+        },
+    )
+    master = ListingMaster.for_data_dir(tmp_path)
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(universe={"tradingview": universe}), master=master
+    )
+    try:
+        report = await orch.sync_universe(Scope(all_markets=True), sources=("tradingview",))
+        assert master.get("THYAO@XIST") is None
+        assert master.get("AAPL") is not None
+        assert [(o.status, o.reason) for o in report.market_outcomes("XIST")] == [
+            (OutcomeStatus.FAILED, "RuntimeError: master unavailable")
+        ]
+        assert [o.status for o in report.market_outcomes("XNAS")] == [OutcomeStatus.OK]
     finally:
         await orch.aclose()
 
@@ -938,3 +988,185 @@ async def test_a_native_source_name_is_refused(tmp_path: Path) -> None:
             )
     finally:
         await orch.aclose()
+
+
+class _WalledError(Exception):
+    """A source error carrying a generic ``reason`` attribute (the table's last generic row)."""
+
+    reason = "rate_limited"
+
+
+async def _no_sleep(seconds: float) -> None:
+    return None
+
+
+_CLASSIFICATION_ROWS = [
+    pytest.param(
+        SanctionedMarketError("XIST", "TR", "test"),
+        OutcomeStatus.SANCTIONED,
+        "market XIST (TR) is sanctioned and default-closed: test",
+        id="sanctioned",
+    ),
+    pytest.param(
+        UnsupportedMarketError("XIST is not served"),
+        OutcomeStatus.UNSERVABLE,
+        "UnsupportedMarketError",
+        id="unsupported-market",
+    ),
+    pytest.param(
+        NoGrammarForMarket("yahoo_chart", "XIST"),
+        OutcomeStatus.UNSERVABLE,
+        "NoGrammarForMarket",
+        id="no-grammar",
+    ),
+    pytest.param(
+        UnknownMarketError("XIST"),
+        OutcomeStatus.UNSERVABLE,
+        "UnknownMarketError",
+        id="unknown-market",
+    ),
+    pytest.param(_WalledError(), OutcomeStatus.UNSERVABLE, "rate_limited", id="generic-reason"),
+    pytest.param(
+        NotImplementedError("no daily bars"),
+        OutcomeStatus.UNSERVABLE,
+        "not_supported_by_source",
+        id="not-implemented",
+    ),
+    pytest.param(TimeoutError("read timed out"), OutcomeStatus.UNSERVABLE, "timeout", id="timeout"),
+    pytest.param(
+        ListingConflictError("THYAO@XIST", "ISIN-A", "ISIN-B"),
+        OutcomeStatus.IDENTITY_CONFLICT,
+        "canonical symbol 'THYAO@XIST' already identifies ISIN-A; refusing to point it at ISIN-B",
+        id="identity-conflict",
+    ),
+    pytest.param(
+        TransientProviderError("HTTP 503"),
+        OutcomeStatus.TRANSIENT_ERROR,
+        "HTTP 503",
+        id="transient-provider",
+    ),
+    pytest.param(
+        TransientConnectorError("connection reset"),
+        OutcomeStatus.TRANSIENT_ERROR,
+        "connection reset",
+        id="transient-connector",
+    ),
+    pytest.param(RuntimeError("boom"), OutcomeStatus.FAILED, "RuntimeError: boom", id="unexpected"),
+]
+
+
+@pytest.mark.parametrize(("error", "status", "reason"), _CLASSIFICATION_ROWS)
+async def test_each_classification_row_reaches_the_report_with_its_status_and_reason(
+    tmp_path: Path, error: Exception, status: OutcomeStatus, reason: str
+) -> None:
+    history = FakeHistorySource(raises={"THYAO@XIST": error})
+    orch = make_orchestrator(
+        tmp_path,
+        SourceBindings(history={"yahoo_chart": history}),
+        master=_thyao_master(tmp_path),
+        sleep=_no_sleep,
+    )
+    try:
+        report = await orch.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M8, end=M8, sources=("yahoo_chart",)
+        )
+    finally:
+        await orch.aclose()
+    assert [(o.subject, o.status, o.reason) for o in report.outcomes] == [
+        ("THYAO@XIST", status, reason)
+    ]
+
+
+async def test_a_market_no_history_source_serves_is_reported_no_source(tmp_path: Path) -> None:
+    history = FakeHistorySource(mics=frozenset({"XNAS"}), bars={"THYAO@XIST": _series(M8)})
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(history={"yahoo_chart": history}), master=_thyao_master(tmp_path)
+    )
+    try:
+        report = await orch.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M8, end=M8, sources=("yahoo_chart",)
+        )
+    finally:
+        await orch.aclose()
+    assert history.calls == []
+    assert [(o.channel, o.status) for o in report.outcomes] == [("ohlcv", OutcomeStatus.NO_SOURCE)]
+
+
+async def test_an_all_markets_backfill_reports_a_refused_sanctioned_listing(tmp_path: Path) -> None:
+    master = _thyao_master(tmp_path)
+    refused_symbol = f"FOO@{SANCTIONED_MIC}"
+    seed_master(
+        master,
+        [make_observation("tradingview", f"{SANCTIONED_MIC}:FOO", SANCTIONED_MIC, "FOO")],
+    )
+    history = FakeHistorySource(bars={"THYAO@XIST": _series(M8)})
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(history={"yahoo_chart": history}), master=master
+    )
+    try:
+        report = await orch.backfill(
+            Scope(all_markets=True), ("ohlcv",), start=M8, end=M8, sources=("yahoo_chart",)
+        )
+    finally:
+        await orch.aclose()
+    refused = [o for o in report.outcomes if o.subject == refused_symbol]
+    assert [(o.channel, o.status, o.source) for o in refused] == [
+        ("ohlcv", OutcomeStatus.SANCTIONED, None)
+    ]
+    assert {call[0] for call in history.calls} == {"THYAO@XIST"}
+
+
+async def test_an_unknown_symbol_is_reported_as_unknown_listing_by_backfill(tmp_path: Path) -> None:
+    history = FakeHistorySource(bars={"THYAO@XIST": _series(M8)})
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(history={"yahoo_chart": history}), master=_thyao_master(tmp_path)
+    )
+    try:
+        report = await orch.backfill(
+            Scope(symbols=("THYAO@XIST", "NOPE@XIST")),
+            ("ohlcv",),
+            start=M8,
+            end=M8,
+            sources=("yahoo_chart",),
+        )
+    finally:
+        await orch.aclose()
+    assert {o.subject: o.status for o in report.outcomes} == {
+        "THYAO@XIST": OutcomeStatus.OK,
+        "NOPE@XIST": OutcomeStatus.UNKNOWN_LISTING,
+    }
+
+
+async def test_an_incremental_fetch_with_nothing_new_is_ok_with_no_new_sessions(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    first = FakeHistorySource(bars={"THYAO@XIST": _series(M4, M5)})
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(history={"yahoo_chart": first}), master=master
+    )
+    try:
+        await orch.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M4, end=M5, sources=("yahoo_chart",)
+        )
+    finally:
+        await orch.aclose()
+    second = FakeHistorySource(bars={"THYAO@XIST": _series(M4, M5)})
+    resumed = make_orchestrator(
+        tmp_path,
+        SourceBindings(history={"yahoo_chart": second}),
+        master=ListingMaster.for_data_dir(tmp_path),
+    )
+    try:
+        report = await resumed.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M4, end=M8, sources=("yahoo_chart",)
+        )
+    finally:
+        await resumed.aclose()
+    assert second.calls == [("THYAO@XIST", "ohlcv", _midnight(M6), _midnight(M8))]
+    (outcome,) = report.outcomes
+    assert (outcome.status, outcome.reason, outcome.records) == (
+        OutcomeStatus.OK,
+        "no new sessions",
+        0,
+    )

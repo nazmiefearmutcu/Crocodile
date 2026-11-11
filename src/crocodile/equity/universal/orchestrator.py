@@ -735,7 +735,14 @@ class UniversalOrchestrator:
         captured = self.now_ns()
         try:
             snapshot = await source.universe(unit, captured_ns=captured)
+            report = apply_universe(self._master, snapshot)
+            for record in snapshot.records:
+                await self._sink.put(record)
+                run.records += 1
         except Exception as exc:
+            # Every failure of this unit (fetch, master write or sink write) is classified
+            # per the table of spec 3.10e; nothing further is applied for its MICs and the
+            # caller continues with the next unit.
             status, reason = _classify(exc)
             if status is OutcomeStatus.FAILED:
                 logger.warning("universe unit %s/%s failed", source.name, unit, exc_info=True)
@@ -751,10 +758,6 @@ class UniversalOrchestrator:
                     )
                 )
             return
-        report = apply_universe(self._master, snapshot)
-        for record in snapshot.records:
-            await self._sink.put(record)
-            run.records += 1
         notes = [f"{key}={value}" for key, value in sorted(snapshot.skipped.items())]
         if not snapshot.complete:
             notes.append("incomplete read: unseen marking skipped")
