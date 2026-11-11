@@ -865,3 +865,130 @@ async def test_collect_intraday_refuses_a_sanctioned_market_before_any_request(
     finally:
         await orch.aclose()
     assert history.intraday_calls == []
+
+
+# ------------------------------------------- state writes classified per unit (fix round 2)
+
+
+def _failing_marker(monkeypatch: pytest.MonkeyPatch, mic: str | None) -> None:
+    """Make UniversalState.record_eod raise OSError for one MIC (every MIC when mic is None)."""
+    original = UniversalState.record_eod
+
+    def record_eod(self: UniversalState, **kwargs: object) -> None:
+        if mic is None or kwargs["mic"] == mic:
+            raise OSError("state marker write failed")
+        original(self, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(UniversalState, "record_eod", record_eod)
+
+
+def _failing_outcome(monkeypatch: pytest.MonkeyPatch, symbol: str) -> None:
+    """Make UniversalState.record_outcome raise OSError for one symbol."""
+    original = UniversalState.record_outcome
+
+    def record_outcome(self: UniversalState, **kwargs: object) -> None:
+        if kwargs["symbol"] == symbol:
+            raise OSError("state outcome write failed")
+        original(self, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(UniversalState, "record_outcome", record_outcome)
+
+
+async def test_a_snapshot_marker_write_error_is_classified_and_the_other_units_still_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    master = _thyao_master(tmp_path)
+    seed_master(
+        master,
+        [
+            make_observation(
+                "tradingview", "NASDAQ:AAPL", "XNYS", "AAPL", currency="USD", price_scale=0
+            )
+        ],
+    )
+    snapshot = FakeSnapshotSource(
+        "tradingview",
+        units={"turkey": frozenset({"XIST"}), "us": frozenset({"XNYS"})},
+        bars={
+            "turkey": (
+                daily_bar(
+                    "tradingview",
+                    "THYAO@XIST",
+                    TURKEY_SESSION,
+                    300.0,
+                    currency="TRY",
+                    price_scale=0,
+                ),
+            ),
+            "us": (
+                daily_bar(
+                    "tradingview", "AAPL", NEW_YORK_SESSION, 170.0, currency="USD", price_scale=0
+                ),
+            ),
+        },
+        mics_by_symbol={"AAPL": "XNYS"},
+    )
+    sink = RecordingSink()
+    _failing_marker(monkeypatch, "XIST")
+    orch = make_orchestrator(tmp_path, _bindings(snapshot=(snapshot,)), master=master, sink=sink)
+    try:
+        report = await orch.collect_eod(Scope(symbols=("THYAO@XIST", "AAPL")), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert isinstance(report, module.RunReport)
+    (xist,) = report.market_outcomes("XIST")
+    assert xist.status is OutcomeStatus.FAILED
+    assert xist.source == "tradingview"
+    assert xist.reason is not None and xist.reason.startswith("OSError")
+    (xnys,) = [o for o in report.market_outcomes("XNYS") if o.source == "tradingview"]
+    assert xnys.status is OutcomeStatus.OK
+    assert sorted(record.symbol for record in sink.records) == ["AAPL", "THYAO@XIST"]
+    assert UniversalState.at(tmp_path).eod_marker("tradingview", "XNYS") is not None
+    assert UniversalState.at(tmp_path).eod_marker("tradingview", "XIST") is None
+
+
+async def test_a_fallback_marker_write_error_is_classified_and_leaves_no_marker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    master = _thyao_master(tmp_path)
+    history = FakeHistorySource("yahoo_chart", bars={"THYAO@XIST": [(TURKEY_SESSION, 300.0)]})
+    sink = RecordingSink()
+    _failing_marker(monkeypatch, None)
+    orch = make_orchestrator(tmp_path, _bindings(history=(history,)), master=master, sink=sink)
+    try:
+        report = await orch.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert isinstance(report, module.RunReport)
+    (outcome,) = [o for o in report.market_outcomes("XIST") if o.source == "yahoo_chart"]
+    assert outcome.status is OutcomeStatus.FAILED
+    assert outcome.reason is not None and outcome.reason.startswith("OSError")
+    assert outcome.records == 1
+    assert UniversalState.at(tmp_path).eod_marker("yahoo_chart", "XIST") is None
+
+
+async def test_an_intraday_outcome_write_error_is_classified_and_the_other_listings_still_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    master = _thyao_master(tmp_path, "GARAN")
+    closed_at = int(FIXED_NS) - 2 * NS_PER_MINUTE
+    history = FakeHistorySource(
+        "yahoo_chart",
+        intraday_bars={"GARAN@XIST": [_minute_bar("GARAN@XIST", closed_at, 10.0)]},
+    )
+    _failing_outcome(monkeypatch, "THYAO@XIST")
+    orch = make_orchestrator(tmp_path, _bindings(history=(history,)), master=master)
+    try:
+        report = await orch.collect_intraday(["THYAO@XIST", "GARAN@XIST"], "1m", now=FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert isinstance(report, module.RunReport)
+    by_symbol = {outcome.subject: outcome for outcome in report.outcomes}
+    assert by_symbol["THYAO@XIST"].status is OutcomeStatus.FAILED
+    assert by_symbol["THYAO@XIST"].reason is not None
+    assert by_symbol["THYAO@XIST"].reason.startswith("OSError")
+    assert by_symbol["GARAN@XIST"].status is OutcomeStatus.OK
+    assert report.records_written == 1

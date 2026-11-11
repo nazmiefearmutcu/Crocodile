@@ -1323,13 +1323,30 @@ class UniversalOrchestrator:
                 self._unattributed.add((name, mic, sessions[mic]))
                 continue
             count = counts.get(mic, 0)
-            self._state.record_eod(
-                source=name,
-                mic=mic,
-                session=sessions[mic],
-                at_ns=self.now_ns(),
-                status="ok" if count else "no_data",
-            )
+            try:
+                self._state.record_eod(
+                    source=name,
+                    mic=mic,
+                    session=sessions[mic],
+                    at_ns=self.now_ns(),
+                    status="ok" if count else "no_data",
+                )
+            except Exception as exc:
+                # The rows of this MIC are already committed, but its marker is not: the MIC stays
+                # pending and falls back to history, which classifies its own outcome. The other
+                # MICs of the unit keep their markers.
+                status, reason = _classify(exc)
+                logger.warning("snapshot marker %s/%s failed", name, mic, exc_info=True)
+                self._snapshot_failures[mic] = Outcome(
+                    subject=mic,
+                    mic=mic,
+                    source=name,
+                    channel="ohlcv",
+                    status=status,
+                    reason=reason,
+                    records=count,
+                )
+                continue
             run.add(
                 Outcome(
                     subject=mic,
@@ -1510,13 +1527,30 @@ class UniversalOrchestrator:
                 )
             )
             return
-        self._state.record_eod(
-            source=hist.name,
-            mic=mic,
-            session=session,
-            at_ns=self.now_ns(),
-            status="ok" if written else "no_data",
-        )
+        try:
+            self._state.record_eod(
+                source=hist.name,
+                mic=mic,
+                session=session,
+                at_ns=self.now_ns(),
+                status="ok" if written else "no_data",
+            )
+        except Exception as exc:
+            # The bars are committed but the marker is not: the next call retries this session.
+            status, reason = _classify(exc)
+            logger.warning("fallback marker %s/%s failed", hist.name, mic, exc_info=True)
+            run.add(
+                Outcome(
+                    subject=mic,
+                    mic=mic,
+                    source=hist.name,
+                    channel="ohlcv",
+                    status=status,
+                    reason=reason,
+                    records=written,
+                )
+            )
+            return
         run.add(
             Outcome(
                 subject=mic,
@@ -1675,15 +1709,34 @@ class UniversalOrchestrator:
                 and record.source_ts is not None
             ]
             if not bars:
-                self._record_failure(
-                    source=source.name,
-                    symbol=listing.symbol,
-                    mic=listing.mic,
-                    channel="ohlcv",
-                    interval=interval,
-                    status=OutcomeStatus.NO_DATA,
-                    reason=None,
-                )
+                try:
+                    self._record_failure(
+                        source=source.name,
+                        symbol=listing.symbol,
+                        mic=listing.mic,
+                        channel="ohlcv",
+                        interval=interval,
+                        status=OutcomeStatus.NO_DATA,
+                        reason=None,
+                    )
+                except Exception as exc:
+                    # The state write failed: the listing is reported with the classified failure
+                    # and the other listings of the request keep running.
+                    status, reason = _classify(exc)
+                    logger.warning(
+                        "intraday outcome %s %s failed", source.name, listing.symbol, exc_info=True
+                    )
+                    run.add(
+                        Outcome(
+                            subject=listing.symbol,
+                            mic=listing.mic,
+                            source=source.name,
+                            channel="ohlcv",
+                            status=status,
+                            reason=reason,
+                        )
+                    )
+                    return
                 run.add(
                     Outcome(
                         subject=listing.symbol,
