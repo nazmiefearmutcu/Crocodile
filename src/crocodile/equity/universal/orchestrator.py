@@ -461,12 +461,21 @@ def _coverage_items(
     covered: tuple[int, int] | None,
     done: Sequence[tuple[int, int, int | None]],
 ) -> list[_Pending]:
-    """The watermark ranges of the successful gaps of one group (head: start, tail: end)."""
+    """The watermark ranges of the successful gaps of one group (head: start, tail: end).
+
+    A gap that does not touch the stored range emits nothing: its bars stay in the lake, and a
+    watermark spanning the stored range would cover the sessions between the gap and that range,
+    which were never fetched. Coverage is one range per key, so it cannot hold two islands.
+    """
     items: list[_Pending] = []
     for gap_from, gap_to, last_bar in done:
         if covered is not None and gap_to < covered[0]:
+            if gap_to + NS_PER_DAY < covered[0]:
+                continue
             lo, hi = gap_from, covered[1]
         else:
+            if covered is not None and gap_from > covered[1] + NS_PER_DAY:
+                continue
             if "ohlcv" in group:
                 if last_bar is None:
                     continue

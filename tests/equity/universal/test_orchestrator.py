@@ -1259,3 +1259,108 @@ async def test_a_run_cut_off_mid_round_still_persists_its_partial_report(tmp_pat
     assert report.kind == "collect_intraday"
     assert report.interrupted
     assert report.report_path == str(paths[0])
+
+
+def _stored_range(tmp_path: Path) -> tuple[int, int] | None:
+    """The THYAO daily coverage as a fresh reader sees it after the run has closed its state."""
+    coverage = UniversalState.at(tmp_path).coverage("yahoo_chart", "THYAO@XIST", "ohlcv", "1d")
+    if coverage is None or coverage.covered_from_ns is None or coverage.covered_until_ns is None:
+        return None
+    return coverage.covered_from_ns, coverage.covered_until_ns
+
+
+async def test_a_backfill_ending_before_the_stored_range_does_not_mark_the_hole_covered(
+    tmp_path: Path,
+) -> None:
+    # The stored coverage is [M6, M8]; the backfill window [Feb 1, Feb 20] does not touch it, so
+    # the fetched bars stay in the lake and the hole between them is still uncovered.
+    first = FakeHistorySource(bars={"THYAO@XIST": _series(M6, M7, M8)})
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(history={"yahoo_chart": first}), master=_thyao_master(tmp_path)
+    )
+    try:
+        await orch.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M6, end=M8, sources=("yahoo_chart",)
+        )
+    finally:
+        await orch.aclose()
+    stored = (_midnight(M6), _midnight(M8))
+    assert _stored_range(tmp_path) == stored
+    early = datetime.date(2024, 2, 1)
+    early_end = datetime.date(2024, 2, 20)
+    second = FakeHistorySource(bars={"THYAO@XIST": _series(early, early_end)})
+    resumed = make_orchestrator(
+        tmp_path,
+        SourceBindings(history={"yahoo_chart": second}),
+        master=ListingMaster.for_data_dir(tmp_path),
+    )
+    try:
+        await resumed.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=early, end=early_end, sources=("yahoo_chart",)
+        )
+        assert second.calls == [("THYAO@XIST", "ohlcv", _midnight(early), _midnight(early_end))]
+        assert _stored_range(tmp_path) == stored
+    finally:
+        await resumed.aclose()
+
+
+async def test_a_backfill_starting_after_the_stored_range_does_not_mark_the_hole_covered(
+    tmp_path: Path,
+) -> None:
+    # The stored coverage is [M4, M5]; the tail gap [M8, M8] does not touch it, so the hole
+    # between M5 and M8 must stay uncovered and be refetched by a later run.
+    first = FakeHistorySource(bars={"THYAO@XIST": _series(M4, M5)})
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(history={"yahoo_chart": first}), master=_thyao_master(tmp_path)
+    )
+    try:
+        await orch.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M4, end=M5, sources=("yahoo_chart",)
+        )
+    finally:
+        await orch.aclose()
+    stored = (_midnight(M4), _midnight(M5))
+    assert _stored_range(tmp_path) == stored
+    second = FakeHistorySource(bars={"THYAO@XIST": _series(M8)})
+    resumed = make_orchestrator(
+        tmp_path,
+        SourceBindings(history={"yahoo_chart": second}),
+        master=ListingMaster.for_data_dir(tmp_path),
+    )
+    try:
+        await resumed.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M8, end=M8, sources=("yahoo_chart",)
+        )
+        assert second.calls == [("THYAO@XIST", "ohlcv", _midnight(M8), _midnight(M8))]
+        assert _stored_range(tmp_path) == stored
+    finally:
+        await resumed.aclose()
+
+
+async def test_an_adjacent_earlier_start_still_extends_the_stored_coverage(tmp_path: Path) -> None:
+    first = FakeHistorySource(bars={"THYAO@XIST": _series(M6, M7, M8)})
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(history={"yahoo_chart": first}), master=_thyao_master(tmp_path)
+    )
+    try:
+        await orch.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M6, end=M8, sources=("yahoo_chart",)
+        )
+    finally:
+        await orch.aclose()
+    second = FakeHistorySource(bars={"THYAO@XIST": _series(M4, M5, M6, M7, M8)})
+    resumed = make_orchestrator(
+        tmp_path,
+        SourceBindings(history={"yahoo_chart": second}),
+        master=ListingMaster.for_data_dir(tmp_path),
+    )
+    try:
+        await resumed.backfill(
+            Scope(mic="XIST"), ("ohlcv",), start=M4, end=M8, sources=("yahoo_chart",)
+        )
+        assert _stored_range(tmp_path) == (
+            _midnight(M4),
+            _midnight(M8),
+        )
+    finally:
+        await resumed.aclose()
