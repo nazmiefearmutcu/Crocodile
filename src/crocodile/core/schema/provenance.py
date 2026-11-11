@@ -660,6 +660,25 @@ def _reference_merge(inputs: Mapping[str, Any]) -> float:
     return n / _REFERENCE_SOURCES
 
 
+@register_basis("listing_directory", level=Provenance.NATIVE, inputs=[])
+def _listing_directory(_: Mapping[str, Any]) -> float:
+    """An official listing directory's row: 1.0, by definition.
+
+    A directory row is its publisher's own statement that a listing exists on the directory's
+    as-of date. It is read, not reconstructed, so it is fully sampled at its own level, which
+    is native's argument. The basis exists for its name, as caller_supplied's does:
+    ``WHERE prov_basis = 'listing_directory'`` selects the official survivorship snapshots,
+    which native cannot separate from an aggregator's reference row. Nothing about the method
+    varies between rows, so there is nothing to measure.
+
+    Fields a directory does not publish -- currency on all four shipped directories, ISIN
+    outside NSE -- are left NULL rather than filled from elsewhere, so a row never claims more
+    than its publisher said. Absence from a directory makes a listing ``unseen``, never
+    ``delisted``.
+    """
+    return 1.0
+
+
 _SESSION_SNAPSHOT_WITNESSES: Final[int] = 2
 """Independent witnesses the session-snapshot method can have for which session an undated
 scanner row describes: the exchange calendar, and the row's own update stamp. The denominator

@@ -2057,6 +2057,15 @@ CONSTANT_BY_DEFINITION: dict[str, tuple[float, str]] = {
         "sampling evidence to grade because nothing on the record was sampled, which is "
         "the same reading scraped_last_price carries for the same reason.",
     ),
+    "listing_directory": (
+        1.0,
+        "An official directory row is its publisher's own statement that a listing exists on "
+        "the directory's as-of date. It is read, not reconstructed, so it is fully sampled at "
+        "its own level, which is native's argument. The basis exists for its name, as "
+        "caller_supplied's does: WHERE prov_basis = 'listing_directory' selects the official "
+        "survivorship snapshots, which native cannot separate from an aggregator's reference "
+        "row. Nothing about the method varies between rows, so there is nothing to measure.",
+    ),
 }
 """Bases whose confidence is a constant, the value, and the argument for it.
 

@@ -26,6 +26,7 @@ _EXPECTED_BASES = frozenset(
         "book_snapshot_slice",
         "caller_supplied",
         "farcaster_cast_search",
+        "listing_directory",
         "native",
         "ohlcv_from_ohlcv",
         "ohlcv_from_quotes",
@@ -953,3 +954,20 @@ def test_session_snapshot_refuses_a_count_the_method_cannot_produce():
             confidence_for("session_snapshot", {"n_session_witnesses": bad})
     with pytest.raises(ConfidenceInputError):
         confidence_for("session_snapshot", {})
+
+
+# listing_directory — the official survivorship snapshots
+# ---------------------------------------------------------------------------
+
+
+def test_a_listing_directory_row_is_native_and_certain():
+    """An official directory row is its publisher's own statement that the listing existed."""
+    assert level_for("listing_directory") is Provenance.NATIVE
+    assert confidence_for("listing_directory", {}) == 1.0
+    assert provenance_fields("listing_directory").prov_inputs == []
+
+
+def test_listing_directory_is_not_the_native_basis_under_another_name():
+    """The basis name is the claim: a directory row, not any venue-reported value."""
+    assert "directory" in describe("listing_directory").lower()
+    assert describe("listing_directory") != describe("native")
