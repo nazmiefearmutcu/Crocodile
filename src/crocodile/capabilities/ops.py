@@ -682,8 +682,8 @@ class CollectParams(msgspec.Struct, frozen=True):
     ``size_unit``: an optional parameter costs a caller that omits it nothing, while dropping
     it deletes the only way to say where a run's dead-letter report lands. Both halves honour
     it now: equity providers mirror their dead letters into ``<data_dir>/dlq/`` (spec 3.9), and
-    an equity run drains them into this report, or into ``dlq_report.json`` under the lake root
-    when no path is given.
+    an equity run drains them into this report, or into ``state/runs/<run_id>-dlq.json`` under
+    the lake root when no path is given.
 
     ``mic`` and ``country`` slice an equity run through the universal sources (spec 3.11):
     ``sources=("universal",)`` resolves the listings from the listing master, so ``symbols``
