@@ -774,7 +774,8 @@ def test_synthetic_rows_on_a_friday_evening_belong_to_friday():
 
 def test_a_snapshot_inside_the_settle_delay_emits_nothing():
     # 11-06 closes at 15:00Z and settles at 15:45Z; at 15:30Z 11-05 is the latest completed
-    # session while 11-06 has already opened, so every unstamped row is skipped.
+    # session while 11-06 has already opened, so every unstamped row is skipped; the guard runs
+    # before the volume rule, so the zero-volume row is counted as session_open too.
     calendar = _turkey("2026-11-05", "2026-11-06", "2026-11-09")
     eod = tv.eod_bars_from_scan(
         _eod_turkey_scan("eod_turkey_next_day_synthetic.json"),
@@ -784,7 +785,7 @@ def test_a_snapshot_inside_the_settle_delay_emits_nothing():
         row_timestamp_field=None,
     )
     assert eod.bars == ()
-    assert eod.skipped == {"session_open": 2, "no_volume": 1}
+    assert eod.skipped == {"session_open": 3}
     assert eod.sessions == {}
 
 
@@ -850,11 +851,13 @@ def test_zero_or_missing_volume_emits_no_bar():
         _one_row_scan("turkey", columns, rows),
         captured_at_ns=_ns("2026-11-06T16:00:00Z"),
         previous={},
-        calendars=lambda mic: _turkey("2026-11-05", "2026-11-06"),
+        calendars=lambda mic: _turkey("2026-11-05", "2026-11-06", "2026-11-09"),
         row_timestamp_field=None,
     )
     assert eod.bars == ()
     assert eod.skipped == {"no_volume": 2}
+    # Both rows passed the calendar guard, so the MIC is attributed even though no bar survived.
+    assert eod.sessions == {"XIST": date(2026, 11, 6)}
 
 
 def test_a_row_identical_to_the_previous_snapshot_is_stale():

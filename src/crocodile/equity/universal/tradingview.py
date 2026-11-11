@@ -1018,22 +1018,23 @@ def eod_bars_from_scan(
     decided in order:
 
     1. any of open, high, low or close null or non-positive: ``null_price``;
-    2. volume null, zero or negative: ``no_volume``;
-    3. a row stamp (``row_timestamp_field`` set, and the row carries a numeric stamp in epoch
+    2. a row stamp (``row_timestamp_field`` set, and the row carries a numeric stamp in epoch
        seconds) decides the session. Its exchange-local date before ``d``: ``row_timestamp_before_
        session``; after ``d``: ``row_timestamp_after_session``; on ``d`` but before the session's
        open: ``row_timestamp_before_session``; on ``d`` and after the open: attributed with two
        witnesses, and the next-open guard does not apply to it;
-    4. an unstamped row is held to the calendar's next-open guard: no session in the following
+    3. an unstamped row is held to the calendar's next-open guard: no session in the following
        31 days, or a date before the calendar's window, is ``calendar_range``; a capture at or
        after the next session's open is ``session_open`` (the row may describe a session in
        progress). Attributed with one witness;
+    4. an attributed row with volume null, zero or negative: ``no_volume``;
     5. an attributed row whose values equal ``previous[symbol]`` exactly is ``stale_identical``.
 
-    ``sessions`` names a MIC iff at least one of its rows reached step 3 or 4 (whether or not a
-    bar survived step 5). On ``WEEKDAY_FALLBACK`` calendars (most TradingView-only markets: XNSA,
-    XNAI, XDHA, XCAI, XSTC) and on library calendars past their bound (XSHG, XBOM and XSES after
-    2026-12-31, where ``quality_for(d)`` is ``WEEKDAY_FALLBACK``), the guard uses the calendar's
+    ``sessions`` names a MIC iff at least one of its rows was attributed in step 2 or 3 (whether
+    or not a bar survived steps 4 and 5). On ``WEEKDAY_FALLBACK`` calendars (most TradingView-only
+    markets: XNSA, XNAI, XDHA, XCAI, XSTC) and on library calendars past their bound (XSHG, XBOM
+    and XSES after 2026-12-31, where ``quality_for(d)`` is ``WEEKDAY_FALLBACK``), the guard uses
+    the calendar's
     local-midnight placeholder for the next open and its 23:00 local placeholder close, so an
     unstamped capture is attributable only between close plus the delay and local midnight before
     a weekday session. A bar is built only from an attributed row, so every emitted bar has a
@@ -1075,9 +1076,6 @@ def eod_bars_from_scan(
                 continue
             open_, high, low, close = (float(price) for price in prices if price is not None)
             volume = _number(values.get("volume"))
-            if volume is None or volume <= 0:
-                _count(skipped, "no_volume")
-                continue
             witnesses = 1
             stamp = _number(values.get(row_timestamp_field)) if row_timestamp_field else None
             if row_timestamp_field is not None and stamp is not None:
@@ -1099,6 +1097,9 @@ def eod_bars_from_scan(
                     _count(skipped, guard)
                     continue
             sessions[mic] = d
+            if volume is None or volume <= 0:
+                _count(skipped, "no_volume")
+                continue
             values_now = SnapshotValues(
                 open=open_, high=high, low=low, close=close, volume=float(volume)
             )
