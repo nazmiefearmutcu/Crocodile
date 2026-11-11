@@ -3,14 +3,16 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import random
 import traceback
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable, Mapping
+from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
 
-from crocodile.core.ingest.deadletter import DeadLetterQueue
+from crocodile.core.ingest.deadletter import DeadLetterQueue, dlq_db_path
 from crocodile.core.ingest.transport import Transport
 from crocodile.core.schema.records import Record
 
@@ -227,6 +229,21 @@ class Provider(ABC):
                 f"{self.symbols!r} is on those markets"
             )
         self.symbols = servable
+
+    def use_durable_dlq(self, data_dir: str | os.PathLike[str]) -> Path:
+        """Mirror this provider's dead letters into ``dlq_db_path(data_dir, self.name)`` (spec 3.9).
+
+        Letters already queued in memory move into the durable queue, and letters a crashed run
+        left in that file are reloaded by ``DeadLetterQueue`` itself, so the next drain reports
+        them. Returns the path.
+        """
+        path = dlq_db_path(data_dir, self.name)
+        pending = self._dlq.drain()
+        durable = DeadLetterQueue(db_path=str(path))
+        for item in pending:
+            durable.put(item.local_ts, item.raw, item.error_type, item.traceback)
+        self._dlq = durable
+        return path
 
     @abstractmethod
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]: ...

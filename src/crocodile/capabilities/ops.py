@@ -664,11 +664,12 @@ class CollectParams(msgspec.Struct, frozen=True):
     already knows; a caller-supplied lake root in a published schema is a network caller
     choosing where the server writes.
 
-    ``dlq_report_path`` **stays**, equity-ignored, on the argument ``SlippageParams`` makes
-    for ``size_unit``: an optional parameter costs a caller that omits it nothing, while
-    dropping it deletes the only way to say where a crypto run's dead-letter report lands.
-    Equity providers have no dead-letter queue at all, so there is nothing there for it to
-    mean and nothing lost by its being ignored.
+    ``dlq_report_path`` **stays**, on the argument ``SlippageParams`` makes for
+    ``size_unit``: an optional parameter costs a caller that omits it nothing, while dropping
+    it deletes the only way to say where a run's dead-letter report lands. Both halves honour
+    it now: equity providers mirror their dead letters into ``<data_dir>/dlq/`` (spec 3.9), and
+    an equity run drains them into this report, or into ``dlq_report.json`` under the lake root
+    when no path is given.
     """
 
     sources: tuple[str, ...]
@@ -801,9 +802,12 @@ def collect_equities(ctx: CapabilityContext, params: CollectParams) -> Subscript
 
     A separate adapter rather than a branch on :attr:`CapabilityContext.asset_class`
     because the two halves genuinely differ below the surface: the factories build
-    different base classes from different registries, and the crypto orchestrator drains a
-    dead-letter queue the equity one does not have. One function with a mode flag would put
-    that difference inside an ``if`` where the calling-convention gate cannot see it.
+    different base classes from different registries, and the two halves reach their dead
+    letters through different entry points. One function with a mode flag would put that
+    difference inside an ``if`` where the calling-convention gate cannot see it.
+
+    The providers mirror their dead letters into ``<data_dir>/dlq/`` and the run reports them
+    once the sink is closed (spec 3.9).
     """
     _refuse_readonly(ctx, "collect")
     _require_collect_inputs(params)
@@ -823,13 +827,20 @@ def collect_equities(ctx: CapabilityContext, params: CollectParams) -> Subscript
             out=sink,
             registry=registry,
             settings=ctx.settings,
+            data_dir=ctx.settings.data_dir,
         )
         if provider.transport is None:
             provider.transport = AiohttpWsTransport(provider.ws_url)
         providers.append(provider)
 
     async def begin() -> None:
-        await collect_equity(providers, sink, max_reconnects=params.max_reconnects)
+        await collect_equity(
+            providers,
+            sink,
+            max_reconnects=params.max_reconnects,
+            dlq_report_path=params.dlq_report_path,
+            data_dir=ctx.settings.data_dir,
+        )
 
     return Subscription(
         sources=params.sources,
@@ -1083,12 +1094,19 @@ def collect_market_equities(ctx: CapabilityContext, params: CollectMarketParams)
                 out=sink,
                 registry=registry,
                 settings=ctx.settings,
+                data_dir=ctx.settings.data_dir,
             )
             if provider.transport is None:
                 provider.transport = AiohttpWsTransport(provider.ws_url)
             providers.append(provider)
 
-        await collect_equity(providers, sink, max_reconnects=params.max_reconnects)
+        await collect_equity(
+            providers,
+            sink,
+            max_reconnects=params.max_reconnects,
+            dlq_report_path=params.dlq_report_path,
+            data_dir=ctx.settings.data_dir,
+        )
 
     return Subscription(
         sources=params.sources,
@@ -1186,10 +1204,15 @@ async def _drain_provider_backfill(
     The sink is closed in a ``finally`` on the same rule ``run_historical_backfill``
     follows: a partial fetch that raised has still written rows, and rows buffered in a
     sink nobody closed are rows that were fetched and lost.
+
+    The provider's dead letters are mirrored under the lake root and reported once the
+    provider is closed, as ``collect`` reports its queues (spec 3.9).
     """
+    from crocodile.core.ingest.deadletter import report_drained_dlqs
     from crocodile.equity.providers.factory import make_provider
     from crocodile.equity.reference.registry import InstrumentRegistry
 
+    data_dir = settings.data_dir if settings is not None else None
     provider = make_provider(
         provider=source,
         symbols=list(params.symbols),
@@ -1197,6 +1220,7 @@ async def _drain_provider_backfill(
         out=sink,
         registry=InstrumentRegistry(),
         settings=settings,
+        data_dir=data_dir,
     )
     written = 0
     try:
@@ -1215,6 +1239,14 @@ async def _drain_provider_backfill(
         closer = getattr(provider, "close", None)
         if callable(closer):
             await closer()
+        try:
+            report_drained_dlqs([provider], data_dir=data_dir)
+        except Exception as exc:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "DLQ drain/report failed for backfill of %s (%s)", source, exc
+            )
     return written
 
 

@@ -10,10 +10,12 @@ import pytest
 
 from crocodile.core.ingest.deadletter import (
     DEFAULT_DLQ_REPORT_NAME,
+    DLQ_DIR_NAME,
     DeadLetter,
     DeadLetterQueue,
     build_dlq_report,
     dead_letter_to_dict,
+    dlq_db_path,
     drain_connector_dlqs,
     report_drained_dlqs,
     write_dlq_report,
@@ -131,3 +133,28 @@ async def test_drain_connector_dlqs_skips_missing() -> None:
     )
     assert len(entries) == 1
     assert entries[0][0] == "ok"
+
+
+def test_dlq_db_path_is_under_the_lake_dlq_directory(tmp_path: Path) -> None:
+    assert DLQ_DIR_NAME == "dlq"
+    assert dlq_db_path(tmp_path, "yahoo_chart") == tmp_path / "dlq" / "yahoo_chart.sqlite"
+    assert dlq_db_path(str(tmp_path), "yahoo_chart") == tmp_path / "dlq" / "yahoo_chart.sqlite"
+
+
+@pytest.mark.parametrize("source", ["", "../x", "a/b", "a\b", "Yahoo"])
+def test_dlq_db_path_refuses_a_name_that_could_leave_the_directory(
+    tmp_path: Path, source: str
+) -> None:
+    with pytest.raises(ValueError):
+        dlq_db_path(tmp_path, source)
+
+
+def test_a_durable_queue_creates_its_directory(tmp_path: Path) -> None:
+    db = tmp_path / "dlq" / "x.sqlite"
+    first = DeadLetterQueue(db_path=str(db))
+    first.put(7, b"raw", "E", "tb")
+
+    assert db.exists()
+    second = DeadLetterQueue(db_path=str(db))
+    assert len(second) == 1
+    assert second.drain()[0].local_ts == 7

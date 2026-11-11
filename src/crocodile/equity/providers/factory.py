@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any, Final
 
 from crocodile.core.schema.enums import CHANNEL_SUCCESSORS, Channel
@@ -180,6 +181,8 @@ def make_provider(
     out: Sink,
     registry: InstrumentRegistry,
     settings: Settings | None = None,
+    *,
+    data_dir: str | os.PathLike[str] | None = None,
     **kw: Any,
 ) -> Provider:
     """Instantiate and return the correct Provider subclass.
@@ -230,6 +233,10 @@ def make_provider(
         <crocodile.core.capability.CapabilityContext.settings>` here is what stops a
         deployment configured from anywhere but ``os.environ`` being quietly ignored by
         the ingest layer.
+    data_dir:
+        When given, the provider mirrors its dead letters into
+        ``<data_dir>/dlq/<name>.sqlite`` (spec 3.9), so they survive a crash and the
+        run that drains them reports them. Omitted, the queue stays in memory.
     **kw:
         Extra keyword arguments forwarded verbatim to the provider constructor.
 
@@ -244,10 +251,13 @@ def make_provider(
         raise ValueError(f"Unknown provider {provider!r}. Valid names: {_VALID_NAMES}")
     if cls.wants_settings and settings is not None:
         kw.setdefault("settings", settings)
-    return cls(
+    instance = cls(
         symbols=symbols,
         channels=channels,
         out=out,
         registry=registry,
         **kw,
     )
+    if data_dir is not None:
+        instance.use_durable_dlq(data_dir)
+    return instance

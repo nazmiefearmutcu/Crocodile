@@ -39,12 +39,13 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sqlite3
 import threading
 from collections import deque
 from collections.abc import Awaitable, Generator, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 import msgspec
 
@@ -52,6 +53,24 @@ log = logging.getLogger(__name__)
 
 # Default filename when writing under data_dir without an explicit path.
 DEFAULT_DLQ_REPORT_NAME = "dlq_report.json"
+
+# Directory under the lake root that holds one durable dead-letter file per source (spec 3.9).
+DLQ_DIR_NAME: Final = "dlq"
+_SOURCE_NAME = re.compile(r"[a-z0-9][a-z0-9_]*")
+
+
+def dlq_db_path(data_dir: Path | str, source: str) -> Path:
+    """``<data_dir>/dlq/<source>.sqlite``: one durable dead-letter file per source per lake.
+
+    Composed like ``default_listings_path`` and the report file of ``report_drained_dlqs``;
+    it never reads the environment. ``ValueError`` unless ``source`` is a provider name
+    (``^[a-z0-9][a-z0-9_]*$``), so a name can never step outside the directory.
+    """
+    if not _SOURCE_NAME.fullmatch(source):
+        raise ValueError(
+            f"dead-letter source {source!r} must match [a-z0-9][a-z0-9_]* (a provider name)"
+        )
+    return Path(data_dir) / DLQ_DIR_NAME / f"{source}.sqlite"
 
 
 class DeadLetter(msgspec.Struct, frozen=True):
@@ -122,6 +141,9 @@ class DeadLetterQueue:
         if self.db_path is None:
             return
         try:
+            # A durable queue under a lake that has no dlq/ directory yet creates it here;
+            # without this the connect below fails and the queue silently stays in memory.
+            Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
             with self._connect() as conn:
                 conn.execute(
                     """
@@ -133,9 +155,9 @@ class DeadLetterQueue:
                     )
                     """
                 )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_dead_letters_rowid ON dead_letters(rowid)"
-                )
+                # No index on rowid: SQLite refuses to name it in CREATE INDEX ("no such
+                # column: rowid"), which aborted every reload and left durable queues empty.
+                # rowid is the table's implicit key, so ORDER BY rowid needs no index.
                 conn.commit()
                 maxlen = self._dq.maxlen
                 limit = maxlen if maxlen is not None else -1
