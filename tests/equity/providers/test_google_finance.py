@@ -45,58 +45,58 @@ def test_google_finance_helpers() -> None:
 
     # 4. parse_val_and_unit
     # Currency
-    val, unit = parse_val_and_unit("$150.25", "Open")
+    val, unit = parse_val_and_unit("$150.25", "Open", listing_currency="USD")
     assert val == 150.25
     assert unit == "USD"
 
-    val, unit = parse_val_and_unit("€120.00", "High")
+    val, unit = parse_val_and_unit("€120.00", "High", listing_currency="USD")
     assert val == 120.0
     assert unit == "EUR"
 
-    val, unit = parse_val_and_unit("£90.00", "Low")
+    val, unit = parse_val_and_unit("£90.00", "Low", listing_currency="USD")
     assert val == 90.0
     assert unit == "GBP"
 
     # Percentages
-    val, unit = parse_val_and_unit("1.5%", "Dividend")
+    val, unit = parse_val_and_unit("1.5%", "Dividend", listing_currency="USD")
     assert val == 1.5
     assert unit == "percent"
 
-    val, unit = parse_val_and_unit("invalid%", "Dividend")
+    val, unit = parse_val_and_unit("invalid%", "Dividend", listing_currency="USD")
     assert val is None
     assert unit == "percent"
 
     # Multipliers
-    val, unit = parse_val_and_unit("2.5T", "Mkt. cap")
+    val, unit = parse_val_and_unit("2.5T", "Mkt. cap", listing_currency="USD")
     assert val == 2.5e12
     assert unit == "USD"
 
-    val, unit = parse_val_and_unit("2.5B", "Mkt. cap")
+    val, unit = parse_val_and_unit("2.5B", "Mkt. cap", listing_currency="USD")
     assert val == 2.5e9
     assert unit == "USD"
 
-    val, unit = parse_val_and_unit("2.5M", "Mkt. cap")
+    val, unit = parse_val_and_unit("2.5M", "Mkt. cap", listing_currency="USD")
     assert val == 2.5e6
     assert unit == "USD"
 
-    val, unit = parse_val_and_unit("2.5K", "Volume")
+    val, unit = parse_val_and_unit("2.5K", "Volume", listing_currency="USD")
     assert val == 2500.0
     assert unit == "shares"
 
     # Counts and ratios
-    val, unit = parse_val_and_unit("123", "No. of employees")
+    val, unit = parse_val_and_unit("123", "No. of employees", listing_currency="USD")
     assert val == 123.0
     assert unit == "count"
 
-    val, unit = parse_val_and_unit("15.5", "P/E ratio")
+    val, unit = parse_val_and_unit("15.5", "P/E ratio", listing_currency="USD")
     assert val == 15.5
     assert unit == "ratio"
 
-    val, unit = parse_val_and_unit("invalid_num", "P/E ratio")
+    val, unit = parse_val_and_unit("invalid_num", "P/E ratio", listing_currency="USD")
     assert val is None
     assert unit == "unknown"
 
-    val, unit = parse_val_and_unit("123", "Unknown Key")
+    val, unit = parse_val_and_unit("123", "Unknown Key", listing_currency="USD")
     assert val == 123.0
     assert unit == "unknown"
 

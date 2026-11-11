@@ -1,17 +1,22 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import logging
 import random
 import time
 from collections.abc import Iterable, Mapping
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import datetime, tzinfo
 from types import MappingProxyType
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Final
+from zoneinfo import ZoneInfo
 
 import aiohttp
 from bs4 import BeautifulSoup, Tag
 
+from crocodile.core.markets.errors import InvalidSymbolError
+from crocodile.core.markets.symbols import parse_listing_symbol
 from crocodile.core.schema.enums import AssetClass, SecurityType, Side
 from crocodile.core.schema.provenance import provenance_fields
 from crocodile.core.schema.records import Fundamental, IndexValue, Record, Trade
@@ -19,6 +24,10 @@ from crocodile.core.sink.base import Sink
 from crocodile.equity.providers.base import Provider
 from crocodile.equity.reference.identity import InstrumentIdentity
 from crocodile.equity.reference.registry import InstrumentRegistry
+
+if TYPE_CHECKING:
+    from crocodile.core.markets.exchanges import ExchangeRegistry
+    from crocodile.core.markets.grammar import SymbolGrammar
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +51,94 @@ def get_spoofed_headers() -> dict[str, str]:
     }
 
 
+@dataclass(frozen=True, slots=True)
+class ListingContext:
+    """What the scrape needs to know about the listing it asked for."""
+
+    mic: str | None  # operating MIC; None for a bare (US) symbol
+    currency: str  # ISO 4217, the MIC's currency (ExchangeInfo.currency)
+    tz: tzinfo  # the MIC's timezone (ExchangeInfo.tz)
+
+
+_US_CONTEXT: Final = ListingContext(mic=None, currency="USD", tz=ZoneInfo("America/New_York"))
+"""A symbol with no ``@MIC`` is a US listing (spec §3.4, frozen US tickers). Every US row of
+exchanges.csv is USD in America/New_York; tests/equity/providers/test_google_finance_markets.py
+asserts it, so this is a checked constant and not a default."""
+
+_US_GOOGLE_CODES: Final[frozenset[str]] = frozenset(
+    {"NASDAQ", "NYSE", "NYSEARCA", "NYSEAMERICAN", "INDEXSP", "INDEXNASDAQ", "INDEXDJX"}
+)
+
+_DOLLAR_SIGN_CURRENCIES: Final[frozenset[str]] = frozenset(
+    {
+        "ARS", "AUD", "BBD", "BMD", "BSD", "CAD", "CLP", "COP", "FJD", "HKD", "JMD", "KYD",
+        "MXN", "NAD", "NZD", "SGD", "TTD", "TWD", "USD", "UYU", "XCD",
+    }
+)
+"""Currencies in the market matrix whose own notation is a bare dollar or peso sign. A ``$``
+on a page is read as the listing's currency only when that currency is one of these (spec
+§3.12); anywhere else it is ambiguous and the value is refused."""
+
+_MONEY_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "Open",
+        "High",
+        "Low",
+        "Mkt. cap",
+        "Quarterly dividend",
+        "52-wk high",
+        "52-wk low",
+        "EPS",
+    }
+)
+"""Keys whose value is an amount of money, and so carries the listing's currency."""
+
+
+@functools.cache
+def _google_grammar() -> SymbolGrammar:
+    from crocodile.core.markets.grammar import load_grammar
+
+    return load_grammar("google_finance")
+
+
+@functools.cache
+def _exchange_registry() -> ExchangeRegistry:
+    from crocodile.core.markets.exchanges import ExchangeRegistry
+
+    return ExchangeRegistry()
+
+
+def _context_for_mic(mic: str) -> ListingContext:
+    info = _exchange_registry().get(mic)
+    return ListingContext(mic=mic, currency=info.currency, tz=info.tz)
+
+
+def listing_context(symbol: str) -> ListingContext:
+    """The market a symbol belongs to, read from the listing and not from the host.
+
+    Rules, in order:
+    1. ``@`` in the symbol: ``LOCAL@MIC`` is parsed; a bare (US) listing gets the US context,
+       any other MIC gets its exchange row. An unlisted MIC propagates the registry's refusal
+       (spec §5: no guessing).
+    2. ``:`` in the symbol: a raw Google symbol such as ``AAPL:NASDAQ``. A US Google code gets
+       the US context; any other code is resolved through the Google grammar to its MIC.
+       ``NoGrammarForMarket`` and ``AmbiguousSourceSymbol`` propagate.
+    3. Otherwise: a bare ticker or an index alias such as ``^SPX``, which is US.
+    """
+    if "@" in symbol:
+        _, mic = parse_listing_symbol(symbol)
+        if mic is None:
+            return _US_CONTEXT
+        return _context_for_mic(mic)
+    if ":" in symbol:
+        code = symbol.rsplit(":", 1)[1]
+        if code.upper() in _US_GOOGLE_CODES:
+            return _US_CONTEXT
+        _, mic = _google_grammar().from_source(symbol)
+        return _context_for_mic(mic)
+    return _US_CONTEXT
+
+
 def get_possible_google_symbols(symbol: str) -> list[str]:
     symbol_upper = symbol.upper()
     if ":" in symbol_upper:
@@ -52,6 +149,11 @@ def get_possible_google_symbols(symbol: str) -> list[str]:
         return [".IXIC:INDEXNASDAQ"]
     if symbol_upper in ("^DJI", "DJI"):
         return [".DJI:INDEXDJX"]
+    if "@" in symbol:
+        local, mic = parse_listing_symbol(symbol)
+        if mic is None:
+            raise InvalidSymbolError(symbol, "US listings use the bare ticker, not a Google code")
+        return [_google_grammar().to_source(local, mic)]
     return [
         f"{symbol_upper}:NASDAQ",
         f"{symbol_upper}:NYSE",
@@ -60,11 +162,18 @@ def get_possible_google_symbols(symbol: str) -> list[str]:
     ]
 
 
-def parse_val_and_unit(val_str: str, key: str) -> tuple[float | None, str]:
+def parse_val_and_unit(
+    val_str: str, key: str, *, listing_currency: str
+) -> tuple[float | None, str]:
     """Parse a Google Finance metric string.
 
     Returns ``(None, unit)`` when the value is missing/unparseable so callers
     can skip emission instead of writing fake zeros.
+
+    The currency of a money row comes from the listing: an explicit ``€`` or ``£`` wins; a
+    ``$`` is the listing's currency only on a dollar-sign market, and otherwise the money row is
+    refused; an unmarked amount is in the listing's currency. Non-money keys do not depend on
+    the currency.
     """
     val_str = val_str.strip()
     # Missing placeholders (ASCII hyphen + common unicode dashes)
@@ -75,9 +184,9 @@ def parse_val_and_unit(val_str: str, key: str) -> tuple[float | None, str]:
     ):
         return None, "unknown"
 
-    currency = "USD"
+    currency: str | None = listing_currency
     if val_str.startswith("$"):
-        currency = "USD"
+        currency = listing_currency if listing_currency in _DOLLAR_SIGN_CURRENCIES else None
         val_str = val_str[1:]
     elif val_str.startswith("€"):
         currency = "EUR"
@@ -113,16 +222,9 @@ def parse_val_and_unit(val_str: str, key: str) -> tuple[float | None, str]:
     except ValueError:
         return None, "unknown"
 
-    if key in (
-        "Open",
-        "High",
-        "Low",
-        "Mkt. cap",
-        "Quarterly dividend",
-        "52-wk high",
-        "52-wk low",
-        "EPS",
-    ):
+    if key in _MONEY_KEYS:
+        if currency is None:
+            return None, "unknown"
         unit = currency
     elif key in ("Volume", "Avg. vol.", "Shares outstanding"):
         unit = "shares"
@@ -289,6 +391,11 @@ class GoogleFinanceProvider(Provider):
         if not self.session:
             return None
 
+        # Resolved before the try: a refusal (no Google code, unlisted MIC) must reach the caller
+        # rather than read as "this page is not it" in the blanket except below.
+        context = listing_context(symbol)
+        record_symbol = symbol if "@" in symbol else symbol.upper()
+
         url = f"{self.rest_url}/quote/{g_sym}"
         headers = get_spoofed_headers()
         try:
@@ -366,7 +473,7 @@ class GoogleFinanceProvider(Provider):
 
                             dt = date_parser.parse(as_of_text, fuzzy=True)
                             if dt.tzinfo is None:
-                                dt = dt.replace(tzinfo=datetime.now().astimezone().tzinfo)
+                                dt = dt.replace(tzinfo=context.tz)
                             source_ts = int(dt.timestamp() * 1e9)
                     except Exception:
                         pass
@@ -386,7 +493,7 @@ class GoogleFinanceProvider(Provider):
                         records.append(
                             IndexValue(
                                 source=self.name,
-                                symbol=symbol.upper(),
+                                symbol=record_symbol,
                                 symbol_raw=symbol,
                                 source_ts=source_ts,
                                 local_ts=local_ts,
@@ -400,7 +507,7 @@ class GoogleFinanceProvider(Provider):
                         records.append(
                             Trade(
                                 source=self.name,
-                                symbol=symbol.upper(),
+                                symbol=record_symbol,
                                 symbol_raw=symbol,
                                 source_ts=source_ts,
                                 local_ts=local_ts,
@@ -463,13 +570,15 @@ class GoogleFinanceProvider(Provider):
                                     # date-valued fact, so the row is dropped rather than
                                     # given an invented quantity.
                                     continue
-                                val, unit = parse_val_and_unit(val_text, key_text)
+                                val, unit = parse_val_and_unit(
+                                    val_text, key_text, listing_currency=context.currency
+                                )
                                 if val is None:
                                     continue
                                 records.append(
                                     Fundamental(
                                         source=self.name,
-                                        symbol=symbol.upper(),
+                                        symbol=record_symbol,
                                         symbol_raw=symbol,
                                         source_ts=source_ts,
                                         local_ts=local_ts,
