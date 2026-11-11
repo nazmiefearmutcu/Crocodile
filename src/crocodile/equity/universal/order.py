@@ -49,6 +49,7 @@ from crocodile.core.markets.errors import CalendarRangeError, NotASessionError
 from crocodile.core.markets.exchanges import ExchangeInfo, ExchangeRegistry
 from crocodile.core.markets.master import Listing
 from crocodile.core.markets.symbols import parse_listing_symbol
+from crocodile.core.markets.usage import UsageClass
 
 if TYPE_CHECKING:
     from crocodile.core.markets.calendar import ExchangeCalendar
@@ -424,6 +425,27 @@ def source_order() -> SourceOrder:
     known = frozenset(info.mic for info in ExchangeRegistry().all())
     order.validate(capabilities=registry_capabilities(), known_mics=known)
     return order
+
+
+def usage_class_of(name: str) -> str | None:
+    """The usage class a registered source declares, as its string value; None if it declares none.
+
+    A native provider may declare none, so None is an answer, not a failure. A name the provider
+    factory does not register is None too: ``markets`` reports the sources the factory knows.
+    """
+    # Lazy, like registry_capabilities: the factory imports the sources, which import this package.
+    from crocodile.equity.providers import factory
+
+    try:
+        cls = factory.provider_class(name)
+    except ValueError:
+        return None
+    declared: object = getattr(cls, "usage_class", None)
+    if isinstance(declared, UsageClass):
+        return declared.value
+    if isinstance(declared, str):
+        return declared
+    return None
 
 
 # ---------------------------------------------------------------------------

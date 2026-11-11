@@ -116,6 +116,12 @@ from crocodile.equity.analytics.oi_aggregator import aggregate_option_open_inter
 from crocodile.equity.depth import alpaca_is_keyed, select_depth_source
 from crocodile.equity.providers import factory as provider_factory
 from crocodile.equity.reference import universe as reference
+from crocodile.equity.universal.order import (
+    SourceOrder,
+    source_order,
+    usage_class_of,
+)
+from crocodile.equity.universal.state import MarketCoverage, read_market_coverage
 
 __all__ = [
     "CALENDAR",
@@ -405,21 +411,29 @@ def list_providers(ctx: CapabilityContext, params: ListExchangesParams) -> list[
 
 
 _MARKETS_SCHEMA: Final[Mapping[str, pl.DataType]] = {
-    "venue": pl.String(),             # crypto: venue id; equity: operating MIC (same as mic)
-    "native": pl.Boolean(),           # equity: _EQUITY_VENUE_IS_NATIVE
-    "ccxt": pl.Boolean(),             # equity: _EQUITY_VENUE_IS_CCXT
-    "mic": pl.String(),               # equity only (crypto rows: null)
-    "name": pl.String(),              # ExchangeInfo.name
-    "country": pl.String(),           # ISO 3166-1 alpha-2
-    "timezone": pl.String(),          # ExchangeInfo.tz.key (IANA)
-    "currency": pl.String(),          # ISO 4217 trading currency
-    "quote_scale": pl.Int64(),        # 0 major unit, 2 minor unit (pence, cents, agorot)
+    "venue": pl.String(),  # crypto: venue id; equity: operating MIC (same as mic)
+    "native": pl.Boolean(),  # equity: _EQUITY_VENUE_IS_NATIVE
+    "ccxt": pl.Boolean(),  # equity: _EQUITY_VENUE_IS_CCXT
+    "mic": pl.String(),  # equity only (crypto rows: null)
+    "name": pl.String(),  # ExchangeInfo.name
+    "country": pl.String(),  # ISO 3166-1 alpha-2
+    "timezone": pl.String(),  # ExchangeInfo.tz.key (IANA)
+    "currency": pl.String(),  # ISO 4217 trading currency
+    "quote_scale": pl.Int64(),  # 0 major unit, 2 minor unit (pence, cents, agorot)
     "calendar_quality": pl.String(),  # CalendarQuality member .value
-    "sources": pl.List(pl.String()),  # registered equity sources serving the MIC, sorted by name
-    "tier_research": pl.String(),     # "A".."D"
-    "sanctioned": pl.Boolean(),       # ExchangeInfo.sanctioned (data fact, not the opt-in)
+    "sources": pl.List(pl.String()),  # equity: serving sources, in order-table rank
+    "usage_classes": pl.List(pl.String()),  # equity: usage_class_of(sources[i]); None allowed
+    "tier_research": pl.String(),  # "A".."D"
+    "sanctioned": pl.Boolean(),  # ExchangeInfo.sanctioned (data fact, not the opt-in)
+    "listings_known": pl.Int64(),  # equity: non-delisted listing rows (0 when none)
+    "last_success": pl.Int64(),  # equity: latest universal success, epoch ns; null if none
 }
 """One schema for both halves of ``markets``, with nulls where a half does not observe a column.
+
+The sixteen columns are task 08's thirteen with ``usage_classes`` after ``sources`` and
+``listings_known`` and ``last_success`` after ``sanctioned`` (spec 3.11, ruling 9). The three
+local-state columns are counts and stamps read from this lake, not market observations, so no
+lake channel is named in their basis.
 
 Stated so an empty result is still a table with the columns a caller selects on. A null says
 "this half does not observe it", not "this venue lacks it": the same argument
@@ -895,8 +909,32 @@ def _serving_sources(mic: str, grammar_mics: Mapping[str, frozenset[str]]) -> li
     return serving
 
 
-def _exchange_row(info: ExchangeInfo, grammar_mics: Mapping[str, frozenset[str]]) -> dict[str, Any]:
+_RANKED_CHANNELS: Final[tuple[str, ...]] = ("ohlcv", "instrument", "corp_action")
+
+
+def _ranked_sources(mic: str, serving: list[str], order: SourceOrder) -> list[str]:
+    """``serving`` in the order table's rank: first appearance in the ohlcv, instrument, then
+    corp_action chain of ``mic``; sources in none of the chains follow in name order.
+
+    The ohlcv chain is the order ``resolve_daily_bars`` applies, so the first name here is the
+    source a reader asks first. A broken table raises from ``source_order`` before this runs.
+    """
+    rank: dict[str, int] = {}
+    for channel in _RANKED_CHANNELS:
+        for name in order.order_for(mic, channel):
+            rank.setdefault(name, len(rank))
+    unranked = len(rank)
+    return sorted(serving, key=lambda name: (rank.get(name, unranked), name))
+
+
+def _exchange_row(
+    info: ExchangeInfo,
+    grammar_mics: Mapping[str, frozenset[str]],
+    order: SourceOrder,
+    coverage: MarketCoverage,
+) -> dict[str, Any]:
     """One ``markets`` row for an allow-listed exchange, with every column of the schema."""
+    sources = _ranked_sources(info.mic, _serving_sources(info.mic, grammar_mics), order)
     return {
         "venue": info.mic,
         "native": _EQUITY_VENUE_IS_NATIVE,
@@ -908,9 +946,12 @@ def _exchange_row(info: ExchangeInfo, grammar_mics: Mapping[str, frozenset[str]]
         "currency": info.currency,
         "quote_scale": info.quote_scale,
         "calendar_quality": _calendar_quality(info),
-        "sources": _serving_sources(info.mic, grammar_mics),
+        "sources": sources,
+        "usage_classes": [usage_class_of(name) for name in sources],
         "tier_research": info.tier_research,
         "sanctioned": info.sanctioned,
+        "listings_known": coverage.listings_known(info.mic),
+        "last_success": coverage.last_success_ns(info.mic),
     }
 
 
@@ -947,15 +988,15 @@ def markets_equities(ctx: CapabilityContext, params: MarketsParams) -> pl.DataFr
     infos = (registry.get(mic),) if mic is not None else registry.all()
     needle = params.search.lower() if params.search is not None else None
     grammar_mics = _grammar_mics()
+    order = source_order()
+    coverage = read_market_coverage(ctx.settings.data_dir)
     rows: list[dict[str, Any]] = []
     for info in infos:
         if country is not None and info.country != country:
             continue
-        if needle is not None and not (
-            needle in info.mic.lower() or needle in info.name.lower()
-        ):
+        if needle is not None and not (needle in info.mic.lower() or needle in info.name.lower()):
             continue
-        rows.append(_exchange_row(info, grammar_mics))
+        rows.append(_exchange_row(info, grammar_mics, order, coverage))
     return pl.DataFrame(rows, schema=_MARKETS_SCHEMA)
 
 

@@ -51,6 +51,7 @@ from crocodile.equity.providers.openfigi.models import FigiRecord
 from crocodile.equity.providers.sec_edgar.client import SecCompanyTicker
 from crocodile.equity.providers.tiingo.client import TiingoTicker
 from crocodile.equity.reference import universe as reference
+from crocodile.equity.universal.order import SourceOrder
 from crocodile.surfaces import dispatch
 
 _BASE_NS = 1_704_067_200_000_000_000
@@ -615,7 +616,8 @@ def test_an_equity_markets_row_states_the_exchange_reference_columns() -> None:
     reference_columns = {
         key: value
         for key, value in row.items()
-        if key not in _EQUITY_TIER_COLUMNS and key != "sources"
+        if key not in _EQUITY_TIER_COLUMNS
+        and key not in {"sources", "usage_classes", "listings_known", "last_success"}
     }
     assert reference_columns == {
         "mic": "XIST",
@@ -738,6 +740,9 @@ def test_equity_markets_lists_the_registered_sources_that_serve_a_mic(
     monkeypatch.setattr(
         market.provider_factory, "supported_mics", {"fake_feed": frozenset({"XIST"})}.get
     )
+    # The fake provider is not in the registry that source_order() validates against, so the
+    # packaged table is read unvalidated here; the rank is not what this test asserts.
+    monkeypatch.setattr(market, "source_order", lambda: SourceOrder.load())
     rows = {
         row["mic"]: row["sources"]
         for row in market.markets_equities(_equity_ctx(), market.MarketsParams()).to_dicts()

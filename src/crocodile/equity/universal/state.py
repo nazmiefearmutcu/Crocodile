@@ -10,15 +10,25 @@ The module is ASCII-only, as every new file in ``equity/universal`` must be.
 
 from __future__ import annotations
 
+import contextlib
 import datetime
 import logging
 import sqlite3
+from collections import Counter
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
 import msgspec
 
 from crocodile.core.errors import StoreError
+from crocodile.core.markets.master import (
+    ListingMaster,
+    ListingStatus,
+    default_listings_path,
+    open_sqlite_readonly,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -81,8 +91,23 @@ class EodMarker(msgspec.Struct, frozen=True, kw_only=True):
 class UniversalState:
     """The watermark and EOD-marker store. Not shared between event loops."""
 
-    def __init__(self, path: Path | str = _MEMORY) -> None:
+    def __init__(self, path: Path | str = _MEMORY, *, readonly: bool = False) -> None:
         self._path = str(path)
+        self._readonly = readonly
+        if readonly:
+            # Task 15 (ruling 27): an existing file only, opened without creating a sidecar.
+            # No parent mkdir, no WAL pragma, no DDL and no write; the version is still checked.
+            if self._path == _MEMORY or not Path(self._path).is_file():
+                raise StoreError(
+                    f"universal state opened read-only needs an existing file, got {self._path}"
+                )
+            self._conn = open_sqlite_readonly(self._path)
+            try:
+                self._check_version(self._stored_version())
+            except BaseException:
+                self._conn.close()
+                raise
+            return
         if self._path != _MEMORY:
             Path(self._path).parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(self._path)
@@ -93,6 +118,26 @@ class UniversalState:
         except BaseException:
             self._conn.close()
             raise
+
+    def _refuse_if_readonly(self) -> None:
+        if self._readonly:
+            raise StoreError(f"universal state opened read-only: {self._path}")
+
+    def _stored_version(self) -> list[tuple[int]]:
+        return self._conn.execute("SELECT version FROM schema_version").fetchall()
+
+    def _check_version(self, rows: list[tuple[int]]) -> None:
+        """Newer than this build is refused; a missing version row is refused for a read."""
+        if not rows:
+            if self._readonly:
+                raise StoreError(f"universal state has no schema version recorded: {self._path}")
+            return
+        stored = int(rows[0][0])
+        if stored > STATE_SCHEMA_VERSION:
+            raise RuntimeError(
+                f"universal state schema version {stored} is newer than this build's "
+                f"{STATE_SCHEMA_VERSION}; upgrade crocodile before reading it"
+            )
 
     @staticmethod
     def path_for(data_dir: Path) -> Path:
@@ -155,6 +200,7 @@ class UniversalState:
         covered_until_ns: int,
         at_ns: int,
     ) -> Coverage:
+        self._refuse_if_readonly()
         current = self.coverage(source, symbol, channel, interval)
         if current is None or current.covered_from_ns is None or current.covered_until_ns is None:
             lo, hi = covered_from_ns, covered_until_ns
@@ -198,6 +244,7 @@ class UniversalState:
         reason: str | None,
         at_ns: int,
     ) -> None:
+        self._refuse_if_readonly()
         self._conn.execute(
             "INSERT INTO coverage (source, symbol, channel, interval, mic, covered_from_ns, "
             "covered_until_ns, status, reason, attempts, updated_ns, last_success_ns) "
@@ -235,6 +282,7 @@ class UniversalState:
         at_ns: int,
         status: str = "ok",
     ) -> None:
+        self._refuse_if_readonly()
         self._conn.execute(
             "INSERT INTO eod (source, mic, session, status, updated_ns) VALUES (?, ?, ?, ?, ?) "
             "ON CONFLICT (source, mic) DO UPDATE SET session = excluded.session, "
@@ -302,3 +350,66 @@ def missing_ranges(
     if tail_from <= req_to:
         gaps.append((tail_from, req_to))
     return gaps
+
+
+@dataclass(frozen=True, slots=True)
+class MarketCoverage:
+    """What local state says about each MIC, for ``markets``: ``None`` means unreadable.
+
+    ``listings`` counts the listing master's non-delisted rows per operating MIC; ``last_success``
+    holds the latest universal success per MIC in epoch nanoseconds. A missing file is an empty
+    mapping (it has no rows), an unreadable one is ``None`` (the answer is unknown).
+    """
+
+    listings: Mapping[str, int] | None
+    last_success: Mapping[str, int] | None
+
+    def listings_known(self, mic: str) -> int | None:
+        if self.listings is None:
+            return None
+        return self.listings.get(mic, 0)
+
+    def last_success_ns(self, mic: str) -> int | None:
+        if self.last_success is None:
+            return None
+        return self.last_success.get(mic)
+
+
+def read_market_coverage(data_dir: Path) -> MarketCoverage:
+    """Read the listing counts and the last successes of ``data_dir`` without creating a file.
+
+    Each read stands on its own: a listing master that cannot be read leaves ``listings`` unknown
+    while the state is still read, and the reverse. Every failure is one warning naming the file,
+    so ``markets`` never fails because local state is unreadable.
+    """
+    return MarketCoverage(
+        listings=_read_listing_counts(default_listings_path(data_dir)),
+        last_success=_read_last_success(UniversalState.path_for(data_dir)),
+    )
+
+
+def _read_listing_counts(path: Path) -> Mapping[str, int] | None:
+    if not path.is_file():
+        return {}
+    try:
+        with ListingMaster(path, readonly=True) as master:
+            counts = Counter(
+                listing.mic
+                for listing in master.listings()
+                if listing.status is not ListingStatus.DELISTED
+            )
+    except (sqlite3.Error, StoreError, RuntimeError) as exc:
+        logger.warning("listing master %s is unreadable; listings_known is unknown: %s", path, exc)
+        return None
+    return dict(counts)
+
+
+def _read_last_success(path: Path) -> Mapping[str, int] | None:
+    if not path.is_file():
+        return {}
+    try:
+        with contextlib.closing(UniversalState(path, readonly=True)) as state:
+            return state.last_success_by_mic()
+    except (sqlite3.Error, StoreError, RuntimeError) as exc:
+        logger.warning("universal state %s is unreadable; last_success is unknown: %s", path, exc)
+        return None
