@@ -13,6 +13,7 @@ The module is ASCII-only, as every new file in ``equity/universal`` must be.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 import logging
 from collections.abc import AsyncIterator, Awaitable, Callable, Collection, Mapping, Sequence
@@ -152,6 +153,8 @@ class RunReport(msgspec.Struct, frozen=True, kw_only=True):
     dead_letters: int
     outcomes: tuple[Outcome, ...]
     report_path: str | None = None
+    interrupted: bool = False
+    """True when the run was cancelled mid-way: the outcomes are those gathered so far."""
 
     def by_status(self) -> dict[str, int]:
         counts: dict[str, int] = {}
@@ -623,7 +626,23 @@ class UniversalOrchestrator:
             at_ns=self.now_ns(),
         )
 
-    async def _finish(self, run: _Run) -> RunReport:
+    @contextlib.asynccontextmanager
+    async def _reporting_interruption(self, run: _Run) -> AsyncIterator[None]:
+        """Persist the partial run report when the run is cancelled mid-way, then re-raise.
+
+        A bounded collect that expires during a round must still leave its report behind; the
+        checkpoint of the watermarks gathered so far runs inside :meth:`_finish`.
+        """
+        try:
+            yield
+        except asyncio.CancelledError:
+            try:
+                await self._finish(run, interrupted=True)
+            except Exception:
+                logger.exception("universal %s: the partial run report was not written", run.kind)
+            raise
+
+    async def _finish(self, run: _Run, *, interrupted: bool = False) -> RunReport:
         """Checkpoint, drain the DLQs, persist the report and log one summary line."""
         await self._checkpoint_quietly()
         started = run.started_ns
@@ -654,10 +673,12 @@ class UniversalOrchestrator:
                 )
             ),
             report_path=None if report_path is None else str(report_path),
+            interrupted=interrupted,
         )
         if report_path is not None:
             report_path.write_bytes(msgspec.json.encode(report))
-        logger.info("universal %s %s: %s", run.kind, run_id, report.by_status())
+        suffix = " (interrupted)" if interrupted else ""
+        logger.info("universal %s %s%s: %s", run.kind, run_id, suffix, report.by_status())
         return report
 
     def _runs_dir(self) -> Path | None:
@@ -805,47 +826,48 @@ class UniversalOrchestrator:
         names = _validate_sources(sources)
         resolved = self.resolve_scope(scope)
         run = _Run(kind="sync_universe", scope=scope, started_ns=self.now_ns())
-        self._refused_outcomes(run, resolved.refused, ("instrument",))
-        mics = resolved.mics
-        chains = {
-            mic: self._chain(mic, "instrument", names, self._bindings.universe) for mic in mics
-        }
-        for mic in mics:
-            if not chains[mic]:
-                run.add(
-                    Outcome(
-                        subject=mic,
-                        mic=mic,
-                        source=None,
-                        channel="instrument",
-                        status=OutcomeStatus.NO_SOURCE,
-                        reason="no universe source is bound for this market",
+        async with self._reporting_interruption(run):
+            self._refused_outcomes(run, resolved.refused, ("instrument",))
+            mics = resolved.mics
+            chains = {
+                mic: self._chain(mic, "instrument", names, self._bindings.universe) for mic in mics
+            }
+            for mic in mics:
+                if not chains[mic]:
+                    run.add(
+                        Outcome(
+                            subject=mic,
+                            mic=mic,
+                            source=None,
+                            channel="instrument",
+                            status=OutcomeStatus.NO_SOURCE,
+                            reason="no universe source is bound for this market",
+                        )
                     )
-                )
-        order: list[str] = []
-        for mic in mics:
-            for name in chains[mic]:
-                if name not in order:
-                    order.append(name)
-        for name in order:
-            source = self._bindings.universe[name]
-            wanted = frozenset(mic for mic in mics if name in chains[mic])
-            units = source.units_for(wanted)
-            covered: set[str] = set()
-            for unit in sorted(units):
-                await self._sync_unit(run, source, unit, units[unit])
-                covered.update(units[unit])
-            for mic in sorted(wanted - covered):
-                run.add(
-                    Outcome(
-                        subject=mic,
-                        mic=mic,
-                        source=name,
-                        channel="instrument",
-                        status=OutcomeStatus.NO_SOURCE,
-                        reason="no unit enumerates this market",
+            order: list[str] = []
+            for mic in mics:
+                for name in chains[mic]:
+                    if name not in order:
+                        order.append(name)
+            for name in order:
+                source = self._bindings.universe[name]
+                wanted = frozenset(mic for mic in mics if name in chains[mic])
+                units = source.units_for(wanted)
+                covered: set[str] = set()
+                for unit in sorted(units):
+                    await self._sync_unit(run, source, unit, units[unit])
+                    covered.update(units[unit])
+                for mic in sorted(wanted - covered):
+                    run.add(
+                        Outcome(
+                            subject=mic,
+                            mic=mic,
+                            source=name,
+                            channel="instrument",
+                            status=OutcomeStatus.NO_SOURCE,
+                            reason="no unit enumerates this market",
+                        )
                     )
-                )
         return await self._finish(run)
 
     def _cap_ns(self, mic: str, now: datetime.datetime) -> int:
@@ -900,39 +922,46 @@ class UniversalOrchestrator:
                 "no listing is known for this scope; run crocodile universe-sync for it first"
             )
         run = _Run(kind="backfill", scope=scope, started_ns=self.now_ns())
-        self._refused_outcomes(
-            run,
-            [entry for entry in resolved.refused if entry[2] != "sanctioned"],
-            wanted,
-        )
-        for listing in refused_listings:
-            for channel in wanted:
-                run.add(
-                    Outcome(
-                        subject=listing.symbol,
-                        mic=listing.mic,
-                        source=None,
-                        channel=channel,
-                        status=OutcomeStatus.SANCTIONED,
-                        reason=(
-                            "sanctioned: default-closed market "
-                            "(CROCODILE_ALLOW_SANCTIONED_MARKETS opens it)"
-                        ),
-                    )
-                )
-        window_from = EARLIEST_NS if start is None else _midnight_ns(start)
-        window_to = _midnight_ns(end)
-        semaphore = asyncio.Semaphore(self._max_concurrency)
-        try:
-            async with asyncio.TaskGroup() as group:
-                for symbol in sorted(listings):
-                    group.create_task(
-                        self._backfill_unit(
-                            run, semaphore, listings[symbol], wanted, names, window_from, window_to
+        async with self._reporting_interruption(run):
+            self._refused_outcomes(
+                run,
+                [entry for entry in resolved.refused if entry[2] != "sanctioned"],
+                wanted,
+            )
+            for listing in refused_listings:
+                for channel in wanted:
+                    run.add(
+                        Outcome(
+                            subject=listing.symbol,
+                            mic=listing.mic,
+                            source=None,
+                            channel=channel,
+                            status=OutcomeStatus.SANCTIONED,
+                            reason=(
+                                "sanctioned: default-closed market "
+                                "(CROCODILE_ALLOW_SANCTIONED_MARKETS opens it)"
+                            ),
                         )
                     )
-        finally:
-            await self._checkpoint_quietly()
+            window_from = EARLIEST_NS if start is None else _midnight_ns(start)
+            window_to = _midnight_ns(end)
+            semaphore = asyncio.Semaphore(self._max_concurrency)
+            try:
+                async with asyncio.TaskGroup() as group:
+                    for symbol in sorted(listings):
+                        group.create_task(
+                            self._backfill_unit(
+                                run,
+                                semaphore,
+                                listings[symbol],
+                                wanted,
+                                names,
+                                window_from,
+                                window_to,
+                            )
+                        )
+            finally:
+                await self._checkpoint_quietly()
         return await self._finish(run)
 
     async def _backfill_unit(
@@ -1576,82 +1605,50 @@ class UniversalOrchestrator:
         names = _validate_sources(sources)
         resolved = self.resolve_scope(scope)
         run = _Run(kind="collect_eod", scope=scope, started_ns=self.now_ns())
-        self._refused_outcomes(run, resolved.refused, ("ohlcv",))
-        explicit: dict[str, Listing] | None = None
-        if resolved.explicit_listings:
-            explicit = {listing.symbol: listing for listing in resolved.listings}
-        sessions: dict[str, datetime.date] = {}
-        for mic in resolved.mics:
-            try:
-                session = calendar_for(mic).latest_completed_session(now, self._eod_delay)
-            except CalendarRangeError:
-                run.add(
-                    Outcome(
-                        subject=mic,
-                        mic=mic,
-                        source=None,
-                        channel="ohlcv",
-                        status=OutcomeStatus.FAILED,
-                        reason="calendar_range",
+        async with self._reporting_interruption(run):
+            self._refused_outcomes(run, resolved.refused, ("ohlcv",))
+            explicit: dict[str, Listing] | None = None
+            if resolved.explicit_listings:
+                explicit = {listing.symbol: listing for listing in resolved.listings}
+            sessions: dict[str, datetime.date] = {}
+            for mic in resolved.mics:
+                try:
+                    session = calendar_for(mic).latest_completed_session(now, self._eod_delay)
+                except CalendarRangeError:
+                    run.add(
+                        Outcome(
+                            subject=mic,
+                            mic=mic,
+                            source=None,
+                            channel="ohlcv",
+                            status=OutcomeStatus.FAILED,
+                            reason="calendar_range",
+                        )
                     )
-                )
-                continue
-            if session is None:
-                run.add(
-                    Outcome(
-                        subject=mic,
-                        mic=mic,
-                        source=None,
-                        channel="ohlcv",
-                        status=OutcomeStatus.NO_SESSION,
-                        reason="no completed session",
+                    continue
+                if session is None:
+                    run.add(
+                        Outcome(
+                            subject=mic,
+                            mic=mic,
+                            source=None,
+                            channel="ohlcv",
+                            status=OutcomeStatus.NO_SESSION,
+                            reason="no completed session",
+                        )
                     )
-                )
-                continue
-            sessions[mic] = session
-        snap_chains = {
-            mic: self._chain(mic, "ohlcv", names, self._bindings.snapshot) for mic in sessions
-        }
-        hist_chains = {
-            mic: self._chain(mic, "ohlcv", names, self._bindings.history) for mic in sessions
-        }
-        pending: set[str] = set()
-        for mic in sorted(sessions):
-            serving_names = snap_chains[mic] or hist_chains[mic]
-            if not serving_names:
-                run.add(
-                    Outcome(
-                        subject=mic,
-                        mic=mic,
-                        source=None,
-                        channel="ohlcv",
-                        status=OutcomeStatus.NO_SOURCE,
-                        reason="no source serves this market and channel",
-                    )
-                )
-                continue
-            marker = self._state.eod_marker(serving_names[0], mic)
-            if marker is not None and marker.session == sessions[mic]:
-                run.add(
-                    Outcome(
-                        subject=mic,
-                        mic=mic,
-                        source=serving_names[0],
-                        channel="ohlcv",
-                        status=OutcomeStatus.ALREADY_COVERED,
-                        reason=marker.status,
-                    )
-                )
-                continue
-            pending.add(mic)
-        self._snapshot_failures = {}
-        await self._snapshot_pass(run, sessions, pending, snap_chains, explicit)
-        for mic in sorted(pending):
-            if not hist_chains[mic]:
-                failure = self._snapshot_failures.get(mic)
-                if failure is not None:
-                    run.add(failure)
-                else:
+                    continue
+                sessions[mic] = session
+            snap_chains = {
+                mic: self._chain(mic, "ohlcv", names, self._bindings.snapshot) for mic in sessions
+            }
+            hist_chains = {
+                mic: self._chain(mic, "ohlcv", names, self._bindings.history) for mic in sessions
+            }
+            pending: set[str] = set()
+            for mic in sorted(sessions):
+                serving_names = snap_chains[mic] or hist_chains[mic]
+                if not serving_names:
                     run.add(
                         Outcome(
                             subject=mic,
@@ -1659,13 +1656,46 @@ class UniversalOrchestrator:
                             source=None,
                             channel="ohlcv",
                             status=OutcomeStatus.NO_SOURCE,
-                            reason="no history source serves this market and channel",
+                            reason="no source serves this market and channel",
                         )
                     )
-                continue
-            hist = self._bindings.history[hist_chains[mic][0]]
-            await self._fallback_market(run, hist, mic, sessions[mic], explicit)
-        self._snapshot_failures = {}
+                    continue
+                marker = self._state.eod_marker(serving_names[0], mic)
+                if marker is not None and marker.session == sessions[mic]:
+                    run.add(
+                        Outcome(
+                            subject=mic,
+                            mic=mic,
+                            source=serving_names[0],
+                            channel="ohlcv",
+                            status=OutcomeStatus.ALREADY_COVERED,
+                            reason=marker.status,
+                        )
+                    )
+                    continue
+                pending.add(mic)
+            self._snapshot_failures = {}
+            await self._snapshot_pass(run, sessions, pending, snap_chains, explicit)
+            for mic in sorted(pending):
+                if not hist_chains[mic]:
+                    failure = self._snapshot_failures.get(mic)
+                    if failure is not None:
+                        run.add(failure)
+                    else:
+                        run.add(
+                            Outcome(
+                                subject=mic,
+                                mic=mic,
+                                source=None,
+                                channel="ohlcv",
+                                status=OutcomeStatus.NO_SOURCE,
+                                reason="no history source serves this market and channel",
+                            )
+                        )
+                    continue
+                hist = self._bindings.history[hist_chains[mic][0]]
+                await self._fallback_market(run, hist, mic, sessions[mic], explicit)
+            self._snapshot_failures = {}
         return await self._finish(run)
 
     async def _intraday_one(
@@ -1865,31 +1895,32 @@ class UniversalOrchestrator:
             scope=Scope(symbols=tuple(item.symbol for item in resolved)),
             started_ns=self.now_ns(),
         )
-        run.outcomes.extend(unknown)
-        semaphore = asyncio.Semaphore(self._max_concurrency)
-        async with asyncio.TaskGroup() as group:
-            for listing in resolved:
-                serving = [
-                    name
-                    for name in self._chain(listing.mic, "ohlcv", names, self._bindings.history)
-                    if self._bindings.history[name].serves(listing.mic, "ohlcv")
-                ]
-                if not serving:
-                    run.add(
-                        Outcome(
-                            subject=listing.symbol,
-                            mic=listing.mic,
-                            source=None,
-                            channel="ohlcv",
-                            status=OutcomeStatus.NO_SOURCE,
-                            reason="no history source serves this market and channel",
+        async with self._reporting_interruption(run):
+            run.outcomes.extend(unknown)
+            semaphore = asyncio.Semaphore(self._max_concurrency)
+            async with asyncio.TaskGroup() as group:
+                for listing in resolved:
+                    serving = [
+                        name
+                        for name in self._chain(listing.mic, "ohlcv", names, self._bindings.history)
+                        if self._bindings.history[name].serves(listing.mic, "ohlcv")
+                    ]
+                    if not serving:
+                        run.add(
+                            Outcome(
+                                subject=listing.symbol,
+                                mic=listing.mic,
+                                source=None,
+                                channel="ohlcv",
+                                status=OutcomeStatus.NO_SOURCE,
+                                reason="no history source serves this market and channel",
+                            )
                         )
+                        continue
+                    source = self._bindings.history[serving[0]]
+                    group.create_task(
+                        self._intraday_one(run, semaphore, source, listing, interval, now_ns)
                     )
-                    continue
-                source = self._bindings.history[serving[0]]
-                group.create_task(
-                    self._intraday_one(run, semaphore, source, listing, interval, now_ns)
-                )
         return await self._finish(run)
 
 

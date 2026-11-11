@@ -8,6 +8,7 @@ socket is built. The master is seeded through ``ListingMaster.for_data_dir``.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 import inspect
 from pathlib import Path
@@ -421,6 +422,36 @@ def test_a_universal_collect_is_scoped_to_the_resolved_mics(lake: Path) -> None:
     assert all(ExchangeRegistry().get(mic).country == "TR" for mic in sub_country.mics)
 
 
+async def _run_until_first_round_finishes(
+    sub: ops.Subscription, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Run an unbounded subscription until its first round has finished, then stop it.
+
+    The stop signal is the orchestrator's own finish (which persists the run report), not a
+    wall-clock bound, so a slow host cannot cut the first round short. The timeout only guards
+    against a round that never ends.
+    """
+    from crocodile.equity.universal.orchestrator import UniversalOrchestrator
+
+    finished = asyncio.Event()
+    original_finish = UniversalOrchestrator._finish
+
+    async def finish_then_signal(self: UniversalOrchestrator, run: Any, **kwargs: Any) -> Any:
+        report = await original_finish(self, run, **kwargs)
+        finished.set()
+        return report
+
+    monkeypatch.setattr(UniversalOrchestrator, "_finish", finish_then_signal)
+    task = asyncio.ensure_future(sub.run())
+    try:
+        async with asyncio.timeout(60):
+            await finished.wait()
+    finally:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+
 def test_universal_collect_for_named_listings_polls_intraday(
     lake: Path, monkeypatch: pytest.MonkeyPatch, _no_tick_wait: None
 ) -> None:
@@ -433,10 +464,9 @@ def test_universal_collect_for_named_listings_polls_intraday(
             sources=("universal",),
             channels=("ohlcv",),
             symbols=("THYAO@XIST",),
-            duration_seconds=0.2,
         ),
     )
-    asyncio.run(sub.run())
+    asyncio.run(_run_until_first_round_finishes(sub, monkeypatch))
     assert history.intraday_calls
     assert all(symbol == "THYAO@XIST" for symbol, _interval in history.intraday_calls)
     assert list((lake / "state" / "runs").glob("collect_intraday-*.json"))

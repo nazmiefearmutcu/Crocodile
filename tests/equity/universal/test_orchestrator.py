@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from crocodile.core.markets.errors import (
     UnknownMarketError,
 )
 from crocodile.core.markets.exchanges import ExchangeRegistry
-from crocodile.core.markets.master import ListingMaster, ListingStatus
+from crocodile.core.markets.master import Listing, ListingMaster, ListingStatus
 from crocodile.core.markets.symbols import listing_symbol
 from crocodile.core.schema.records import OHLCV, CorporateAction, Record
 from crocodile.equity.providers.base import TransientProviderError, UnsupportedMarketError
@@ -1223,3 +1224,38 @@ async def test_an_incremental_fetch_with_nothing_new_is_ok_with_no_new_sessions(
         "no new sessions",
         0,
     )
+
+
+class _HangingHistory(FakeHistorySource):
+    """A history source whose intraday call starts and never answers (a round in progress)."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.started = asyncio.Event()
+
+    async def _intraday(self, listing: Listing, interval: str) -> AsyncIterator[Record]:
+        self.intraday_calls.append((listing.symbol, interval))
+        self.started.set()
+        await asyncio.Event().wait()
+        yield  # unreachable: keeps this method an async generator
+
+
+async def test_a_run_cut_off_mid_round_still_persists_its_partial_report(tmp_path: Path) -> None:
+    history = _HangingHistory()
+    orch = make_orchestrator(
+        tmp_path, SourceBindings(history={"yahoo_chart": history}), master=_thyao_master(tmp_path)
+    )
+    task = asyncio.ensure_future(orch.collect_intraday(["THYAO@XIST"], "1m"))
+    try:
+        await asyncio.wait_for(history.started.wait(), timeout=30)
+    finally:
+        task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    await orch.aclose()
+    paths = list((tmp_path / "state" / "runs").glob("collect_intraday-*.json"))
+    assert len(paths) == 1
+    report = msgspec.json.decode(paths[0].read_bytes(), type=RunReport)
+    assert report.kind == "collect_intraday"
+    assert report.interrupted
+    assert report.report_path == str(paths[0])
