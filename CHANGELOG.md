@@ -4,17 +4,16 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 
 ---
 
-## [Unreleased]
+## [0.3.4] - 2026-11-12
 
 ### Added
 
-- **Market reference layer (`crocodile.core.markets`).** The ISO 10383 MIC snapshot and the ISO 4217 list are stored unmodified, with a `MANIFEST.json` of sources, retrieval dates and SHA-256 sums. A curated `exchanges.csv` lists 172 exchanges in 129 countries and is built by `scripts/build_markets_reference.py`. The layer provides `MicRegistry`, `ExchangeRegistry`, `require_currency`, `parse_quote_unit` and `to_major`, canonical `{local}@{MIC}` listing symbols (`listing_symbol`, `parse_listing_symbol`), and per-source symbol grammars (`SuffixGrammar`, `PrefixGrammar`).
-- **Exchange calendars.** `calendar_for(mic)` returns an `ExchangeCalendar`. The 68 of the 172 exchanges that name an `exchange_calendars` code use that library, a new Apache-2.0 dependency; the others use a weekday fallback. A new `calendar` capability returns sessions with UTC open and close and the calendar quality per MIC, and its crypto half is always open.
+- **Source symbol grammars.** Per-source grammars (`SuffixGrammar`, `PrefixGrammar`) translate a source's symbols to and from canonical `{local}@{MIC}` listing symbols. The 0.3.3 market reference layer is otherwise unchanged.
+- **Calendar capability.** A new `calendar` capability returns the sessions of an exchange from `calendar_for(mic)` with UTC open and close and the calendar quality per date. Its crypto half is always open.
 - **Listing master.** `ListingMaster` keeps issuers, instruments and listings in SQLite at `<data_dir>/reference/listings.sqlite`. Listings are unique on `(mic, local_symbol)`. `ListingMaster.upsert` merges each `ListingObservation`, records symbol aliases with validity windows, and records listing events for currency, status and alias changes.
 - **Universal sources (`crocodile.equity.universal`).** `yahoo_chart` (daily history, dividends, splits, and intraday bars within Yahoo's windows for selected listings), `tradingview` (universe and end-of-day snapshot), and the official directories `nasdaqtrader`, `nse_india`, `asx` and `twse`. Reads choose one daily bar per session from a per-(MIC, channel) source order through `resolve_daily_bars`. An orchestrator drives them: the operator commands `universe-sync` and `schedule` run it, and `collect` and `backfill` route to it with `--sources universal`.
 - **Market dimensions on the surfaces.** `--mic` and `--country` on `markets`, `universe`, `collect` and `backfill`, and `--mic` on `calendar`. `markets --asset-class equity` reports every exchange with its calendar quality, sources, usage classes, sanctions flag and known listings.
 - **Provenance bases.** `session_snapshot` (DERIVED, TradingView end-of-day bars whose session comes from the calendar) and `listing_directory` (NATIVE) are registered. Yahoo chart daily bars reuse the `native` basis.
-- **Usage classes and sanctions.** `UsageClass` (`redistribution`, `display`, `internal`) and `most_restrictive` give a derived value the most restrictive class of its inputs. The default sanctions list closes `RU`, `BY`, `IR`, `SY` and `KP`, and `CROCODILE_ALLOW_SANCTIONED_MARKETS` opens named countries.
 - **Rate budget and dead letters.** `crocodile.core.ratelimit.budget` gives one token bucket per source and host per event loop. Equity dead letters persist in `<data_dir>/dlq/<source>.sqlite`, and a universal run drains them into `state/runs/<run_id>-dlq.json` under the lake root.
 - **Live measurement script.** `scripts/measure_global_equity.py` runs a budgeted live measurement and writes JSON and Markdown. The test suite never runs it.
 
@@ -60,7 +59,8 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 - Eight Yahoo exchange names are not in the evidence table (LSE, SAO, VSE, STU, NGM, NCM, NYQ and PCX). Their bars are still written; the names are logged and not mapped.
 - Most library calendars have no fixed end date. For those, `calendar_for` answers with the weekday fallback for dates more than about one year after the process imports the library, and `quality_for(date)` reports the degradation per date. A process that runs longer loses holiday knowledge for those MICs.
 - Daily reads may mix split-adjusted (Yahoo) and unadjusted (TradingView) rows for one listing when Yahoo lacks a session that TradingView has. A split inside such a series can then show as a level break of ten times or more. This release does not refuse such a read.
-- MSN Money stays US-only, and Stooq is not part of the universal layer. The package version is still 0.3.3, and nothing in this section is released yet.
+- MSN Money stays US-only, and Stooq is not part of the universal layer.
+- Verified on Windows with UTF-8 mode: 6,144 tests in 319 files, with no new failure against the pre-branch baseline. Three conformance checks need `.venv/bin/python`, and the every-capability surface sweep cannot run on Windows.
 
 ## [0.3.3] - 2026-11-09
 

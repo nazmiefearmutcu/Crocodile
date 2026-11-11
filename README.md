@@ -232,7 +232,7 @@ uv sync --all-extras
 uv run --all-extras pytest tests/
 ```
 
-Tests cover adapters, schemas, provenance, query boundaries, sequence handling, raw capture, and replay, including cross-process byte-identity checks. Static-analysis coverage and legacy exceptions are defined in [`pyproject.toml`](pyproject.toml); see [CHANGELOG.md](CHANGELOG.md) for changes and [release notes](docs/release-notes-0.3.3.md) for the current data model. [Global market coverage](docs/global-markets.md) lists the 172 exchanges in 129 countries and territories that the market reference layer knows.
+Tests cover adapters, schemas, provenance, query boundaries, sequence handling, raw capture, and replay, including cross-process byte-identity checks. Static-analysis coverage and legacy exceptions are defined in [`pyproject.toml`](pyproject.toml); see [CHANGELOG.md](CHANGELOG.md) for changes and [release notes](docs/release-notes-0.3.4.md) for the current data model. [Global market coverage](docs/global-markets.md) lists the 172 exchanges in 129 countries and territories that the market reference layer knows.
 
 [Apache License 2.0](LICENSE).
 

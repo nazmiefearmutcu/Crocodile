@@ -497,7 +497,13 @@ def _global_equities() -> str:
 
 
 def _unreleased() -> str:
-    return _markdown_section(_CHANGELOG, "## [Unreleased]")
+    """The newest changelog section: ``[Unreleased]`` before a release, the release after it."""
+    first = next(
+        line
+        for line in _CHANGELOG.read_text(encoding="utf-8").splitlines()
+        if line.startswith("## [")
+    )
+    return _markdown_section(_CHANGELOG, first)
 
 
 def _code_lines(section: str) -> list[str]:
@@ -839,7 +845,7 @@ def test_the_markets_columns_the_readme_lists_are_the_equity_report_columns(
 
 
 def test_the_changelog_opens_with_unreleased_notes_in_the_house_sections() -> None:
-    """The first release heading in the changelog is ``[Unreleased]``, with the house sections.
+    """The first release heading is ``[Unreleased]`` or the package version, in house sections.
 
     The changelog is read top-down by people deciding what goes into the next release, so the
     unreleased notes come first and their headings are the four the project uses. A heading
@@ -850,7 +856,14 @@ def test_the_changelog_opens_with_unreleased_notes_in_the_house_sections() -> No
         for line in _CHANGELOG.read_text(encoding="utf-8").splitlines()
         if line.startswith("## [")
     ]
-    assert headings and headings[0] == "## [Unreleased]", f"first release heading: {headings[:1]}"
+    version = tomllib.loads((_REPO / "pyproject.toml").read_text(encoding="utf-8"))["project"][
+        "version"
+    ]
+    assert headings, "the changelog has no release heading"
+    first = headings[0]
+    assert first == "## [Unreleased]" or re.fullmatch(
+        rf"## \[{re.escape(version)}\] - \d{{4}}-\d{{2}}-\d{{2}}", first
+    ), f"first release heading {first!r} is neither [Unreleased] nor the package version {version}"
     sections = [line[4:] for line in _unreleased().splitlines() if line.startswith("### ")]
     assert sections == ["Added", "Changed", "Fixed", "Compatibility and limits"]
 

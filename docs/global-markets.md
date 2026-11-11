@@ -1,10 +1,10 @@
-# Global market coverage (Crocodile 0.3.3)
+# Global market coverage (Crocodile 0.3.4)
 
 Generated from `src/crocodile/core/markets/data/exchanges.csv`. That file is produced by `scripts/build_markets_reference.py`; regenerate this page when it changes.
 
-Crocodile 0.3.3 knows **172 operating exchanges in 129 countries and territories**. For each one it knows the ISO 10383 operating MIC, country, time zone, trading currency, quote scale, weekend and trading calendar. Market sanctions are also recorded.
+Crocodile 0.3.4 knows **172 operating exchanges in 129 countries and territories**. For each one it knows the ISO 10383 operating MIC, country, time zone, trading currency, quote scale, weekend and trading calendar. Market sanctions are also recorded.
 
-**Prices:** this page describes 0.3.3, which ships the market reference layer (`crocodile.core.markets`) and no price collection from these exchanges. The universal collectors of the unreleased layer (Yahoo chart history, TradingView EOD snapshots, official listing directories; see README, "Global equities") collect end-of-day prices from them. Through the reference layer, listing symbols such as `THYAO@XIST`, calendars and currency handling are the same everywhere. Existing US equity and crypto collection is unchanged.
+**Prices:** since 0.3.4 the universal collectors (Yahoo chart history, TradingView end-of-day snapshots and official listing directories; see the README, "Global equities") collect end-of-day prices from these exchanges. Through the reference layer, listing symbols such as `THYAO@XIST`, calendars and currency handling are the same everywhere. Existing US equity and crypto collection is unchanged. The measured limits are in the [0.3.4 release notes](release-notes-0.3.4.md).
 
 ## Summary
 
