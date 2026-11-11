@@ -119,7 +119,12 @@ YAHOO_INTERVAL: Final[Mapping[str, str]] = MappingProxyType(
 )
 FULL_HISTORY: Final = timedelta(days=99 * 365)
 DEFAULT_BACKOFF_S: Final = 5.0
-YAHOO_CHART_ADJUSTMENT: Final[PriceAdjustment | None] = None
+# Measured 2026-11-11 (task 10b, live: one NVDA chart request, HTTP 200, exchangeName NMS, USD).
+# Raw close 2024-06-07 = 120.888 (New York session) is below the 200 threshold of the decision
+# rule (< 200 SPLIT, > 1000 NONE, else None), and events.splits carries the 10:1 split of
+# 2024-06-10, so the published daily closes are split-adjusted. Pinned by
+# tests/equity/universal/test_yahoo_chart.py::test_the_adjustment_constant_is_the_measured_value.
+YAHOO_CHART_ADJUSTMENT: Final[PriceAdjustment | None] = PriceAdjustment.SPLIT
 
 _NS_PER_SECOND: Final = 1_000_000_000
 _NS_PER_MICROSECOND: Final = 1_000

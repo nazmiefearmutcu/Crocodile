@@ -27,7 +27,7 @@ from crocodile.core.markets.exchanges import ExchangeRegistry
 from crocodile.core.markets.master import ListingMaster, ListingObservation
 from crocodile.core.markets.usage import UsageClass
 from crocodile.core.ratelimit.token_bucket import TokenBucket
-from crocodile.core.schema.enums import AssetClass, CorpActionType, SecurityType
+from crocodile.core.schema.enums import AssetClass, CorpActionType, PriceAdjustment, SecurityType
 from crocodile.core.schema.provenance import Provenance
 from crocodile.core.schema.records import OHLCV, CorporateAction
 from crocodile.core.sink.memory import MemorySink
@@ -372,6 +372,19 @@ def test_daily_bars_carry_the_module_adjustment() -> None:
     assert bars
     for bar in bars:
         assert bar.adjustment is yc.YAHOO_CHART_ADJUSTMENT
+
+
+def test_the_adjustment_constant_is_the_measured_value() -> None:
+    """Pinned by the live measurement of 2026-11-11 (task 10b; throwaway script, not committed).
+
+    NVDA, ``query2`` chart endpoint, interval 1d, period 2024-06-03 to 2024-06-15: HTTP 200,
+    ``meta.exchangeName`` NMS, ``meta.currency`` USD, ``dataGranularity`` 1d. Raw closes in the
+    New York session dates: 2024-06-07 = 120.888, 2024-06-10 = 121.79. ``events.splits`` carries
+    the 2024-06-10 entry with numerator 10 and denominator 1, so ``EVENTS_PARAM`` stays
+    ``div,split``. Decision rule: close(2024-06-07) < 200 means SPLIT, > 1000 means NONE, anything
+    else (or a non-200 or HTML answer) means not measurable (None). 120.888 < 200 gives SPLIT.
+    """
+    assert yc.YAHOO_CHART_ADJUSTMENT is PriceAdjustment.SPLIT
 
 
 def test_records_are_native_and_named_for_the_source() -> None:
