@@ -2,9 +2,15 @@
 
 Everything in :mod:`crocodile.surfaces.cli` is generated from a capability declaration and
 nothing here is. That is the whole distinction: a capability has an asset class, a parameter
-schema and a provenance, and answers a question about a market. These five answer questions
-about the *installation* — start a server, upgrade the package, rename a directory — so
-there is nothing for the registry to hold and no honest ``prov`` to publish.
+schema and a provenance, and answers a question about a market. These seven answer questions
+about the *installation and its local state* — start a server, upgrade the package, rename a
+directory, fill the listing master, collect on a schedule — so there is nothing for the registry
+to hold and no honest ``prov`` to publish.
+
+``universe-sync`` and ``schedule`` are operator commands for the reason ``migrate-lake`` is one
+(spec 3.11, the ruling of task 15): they change local state (the listing master and the scheduler
+state) or run for days, and neither is a question about a market. The cost is that REST and MCP
+do not see them; either can be promoted later to a two-half capability.
 :func:`crocodile.capabilities.ops._why_migrate_lake_is_infrastructure` and
 :func:`~crocodile.capabilities.ops._why_gas_tracker_is_not_a_capability` are the long form of
 that argument for the two names where it was contested.
@@ -34,16 +40,30 @@ lake at all.
 
 from __future__ import annotations
 
+import datetime
 import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 
 import typer
 
 from crocodile.core.config import Settings
+from crocodile.core.errors import CrocodileError
+from crocodile.core.schema.enums import AssetClass
 from crocodile.surfaces import dispatch
+
+if TYPE_CHECKING:
+    from crocodile.core.scheduler.state import SchedulerStateStore
+    from crocodile.core.sink.base import Sink
+    from crocodile.core.store.parquet_sink import ParquetSink
+    from crocodile.equity.universal.orchestrator import (
+        EodSchedule,
+        RunReport,
+        Scope,
+        UniversalOrchestrator,
+    )
 
 __all__ = ["build_app", "is_interactive_stdin"]
 
@@ -68,6 +88,14 @@ def _lake(data_dir: Path | None) -> Path:
     return dispatch.data_dir_for(Settings.from_env(), data_dir)
 
 
+_OPERATOR_ERRORS: tuple[type[Exception], ...] = (ValueError, PermissionError, CrocodileError)
+"""What an operator can fix, printed as ``Error: ...`` with exit 1 rather than as a traceback.
+
+``MarketError`` (the base of ``SanctionedMarketError`` and ``UnknownMarketError``) derives from
+``CrocodileError``, so it is covered; a bug still raises its traceback.
+"""
+
+
 def build_app() -> typer.Typer:
     """Return a Typer app holding only the hand-written operator commands."""
     app = typer.Typer(add_completion=False)
@@ -77,6 +105,8 @@ def build_app() -> typer.Typer:
     app.command(name="update")(update)
     app.command(name="shell")(shell)
     app.command(name="migrate-lake")(migrate_lake_cmd)
+    app.command(name="universe-sync")(universe_sync_cmd)
+    app.command(name="schedule")(schedule_cmd)
     return app
 
 
@@ -155,6 +185,245 @@ def migrate_lake_cmd(data_dir: _DataDirOpt = None) -> None:
         typer.echo(f"Renamed {renamed} partition director{'y' if renamed == 1 else 'ies'}.")
     else:
         typer.echo("Already migrated.")
+
+
+# ---------------------------------------------------------------------------
+# Universal equity collection: the listing master and the end-of-day schedule
+# ---------------------------------------------------------------------------
+
+_MicOpt = Annotated[str | None, typer.Option("--mic", help="Operating or segment MIC, e.g. XIST.")]
+_CountryOpt = Annotated[
+    str | None, typer.Option("--country", help="ISO 3166-1 alpha-2 code, e.g. TR.")
+]
+_AllOpt = Annotated[
+    bool,
+    typer.Option(
+        "--all",
+        help="Every exchange in exchanges.csv; sanctioned ones are skipped and reported.",
+    ),
+]
+
+
+def universe_sync_cmd(
+    mic: _MicOpt = None,
+    country: _CountryOpt = None,
+    all_markets: _AllOpt = False,
+    data_dir: _DataDirOpt = None,
+) -> None:
+    """Sync the listing master from the official directories and TradingView for one scope."""
+    import asyncio
+
+    try:
+        scope = _scope_from_flags(mic, country, all_markets)
+        settings = _settings_for(data_dir)
+        rows, report = asyncio.run(_sync_universe(settings, scope))
+    except _OPERATOR_ERRORS as exc:
+        _exit_with(exc)
+    typer.echo(str(_universe_table(rows)))
+    typer.echo(f"Run report: {report.report_path}")
+    if not any(row["status"] == "ok" for row in rows):
+        raise typer.Exit(code=1)
+
+
+def schedule_cmd(
+    asset_class: Annotated[
+        AssetClass, typer.Option("--asset-class", help="Only equity has a scheduled pull.")
+    ],
+    mic: _MicOpt = None,
+    country: _CountryOpt = None,
+    all_markets: _AllOpt = False,
+    once: Annotated[
+        bool, typer.Option("--once", help="Run one scheduler tick, report each market, exit.")
+    ] = False,
+    tick_seconds: Annotated[
+        float, typer.Option("--tick-seconds", help="Seconds between ticks.")
+    ] = 60.0,
+    data_dir: _DataDirOpt = None,
+) -> None:
+    """Collect each market's end-of-day session after its calendar close."""
+    import asyncio
+
+    try:
+        if asset_class is not AssetClass.EQUITY:
+            raise ValueError(
+                "only equity has a scheduled pull; crypto collection is continuous (use collect)"
+            )
+        scope = _scope_from_flags(mic, country, all_markets)
+        settings = _settings_for(data_dir)
+        code = asyncio.run(_run_schedule(settings, scope, once=once, tick_seconds=tick_seconds))
+    except KeyboardInterrupt:
+        typer.echo("Scheduler stopped.")
+        return
+    except _OPERATOR_ERRORS as exc:
+        _exit_with(exc)
+    if code:
+        raise typer.Exit(code=code)
+
+
+def _now() -> datetime.datetime:
+    """The operator clock. Tests replace it; the orchestrator and the scheduler both read it."""
+    return datetime.datetime.now(datetime.UTC)
+
+
+def _scope_from_flags(mic: str | None, country: str | None, all_markets: bool) -> Scope:
+    from crocodile.equity.universal.orchestrator import Scope
+
+    given = [
+        flag
+        for flag, present in (
+            ("--mic", mic is not None),
+            ("--country", country is not None),
+            ("--all", all_markets),
+        )
+        if present
+    ]
+    if len(given) != 1:
+        raise ValueError("name exactly one of --mic, --country or --all")
+    return Scope(mic=mic, country=country, all_markets=all_markets)
+
+
+def _settings_for(data_dir: Path | None) -> Settings:
+    import msgspec
+
+    return msgspec.structs.replace(Settings.from_env(), data_dir=_lake(data_dir))
+
+
+def _open_sink(lake: Path) -> ParquetSink:
+    from crocodile.core.store.parquet_sink import ParquetSink
+
+    return ParquetSink(data_dir=lake, max_buffer_rows=10_000, flush_interval_seconds=5.0)
+
+
+def _make_orchestrator(settings: Settings, sink: Sink) -> UniversalOrchestrator:
+    from crocodile.equity.universal.orchestrator import open_orchestrator
+
+    # The lambda looks _now up at call time, so a test that replaces it moves the orchestrator's
+    # clock and the scheduler's tick together: the closure dates the session the tick dated.
+    return open_orchestrator(settings, sink, clock=lambda: _now())
+
+
+def _schedule_state_store(lake: Path) -> SchedulerStateStore:
+    from crocodile.core.scheduler import JSONFileStateStore
+
+    return JSONFileStateStore(str(lake / "state" / "schedule-equity.json"))
+
+
+def _exit_with(exc: BaseException) -> NoReturn:
+    typer.echo(f"Error: {exc}", err=True)
+    raise typer.Exit(code=1) from exc
+
+
+def _universe_table(rows: list[dict[str, Any]]) -> Any:
+    import polars as pl
+
+    return pl.DataFrame(
+        rows,
+        schema={
+            "mic": pl.String,
+            "source": pl.String,
+            "status": pl.String,
+            "listings": pl.Int64,
+            "reason": pl.String,
+        },
+    )
+
+
+def _schedule_table(rows: list[dict[str, Any]]) -> Any:
+    import polars as pl
+
+    return pl.DataFrame(
+        rows,
+        schema={
+            "mic": pl.String,
+            "task": pl.String,
+            "outcome": pl.String,
+            "records": pl.Int64,
+            "reason": pl.String,
+        },
+    )
+
+
+async def _sync_universe(
+    settings: Settings, scope: Scope
+) -> tuple[list[dict[str, Any]], RunReport]:
+    sink = _open_sink(settings.data_dir)
+    orch: UniversalOrchestrator | None = None
+    try:
+        orch = _make_orchestrator(settings, sink)
+        report = await orch.sync_universe(scope)
+        return _market_rows(report), report
+    finally:
+        await sink.close()
+        if orch is not None:
+            await orch.aclose()
+
+
+def _market_rows(report: RunReport) -> list[dict[str, Any]]:
+    """One row per market-level outcome: such an outcome's subject is its MIC."""
+    return [
+        {
+            "mic": outcome.mic,
+            "source": outcome.source or "",
+            "status": str(outcome.status),
+            "listings": outcome.records,
+            "reason": outcome.reason or "",
+        }
+        for outcome in report.outcomes
+        if outcome.mic is not None and outcome.subject == outcome.mic
+    ]
+
+
+async def _run_schedule(
+    settings: Settings, scope: Scope, *, once: bool, tick_seconds: float
+) -> int:
+    from crocodile.equity.universal.orchestrator import build_eod_schedule
+
+    lake = settings.data_dir
+    sink = _open_sink(lake)
+    orch: UniversalOrchestrator | None = None
+    try:
+        orch = _make_orchestrator(settings, sink)
+        schedule = build_eod_schedule(orch, scope, state_store=_schedule_state_store(lake))
+        if not once:
+            await schedule.coordinator.start(interval_seconds=tick_seconds)
+            return 0
+        await schedule.coordinator.check_and_run_once(current_time=_now())
+        typer.echo(str(_schedule_table(_schedule_rows(schedule))))
+        return 1 if schedule.failures else 0
+    finally:
+        await sink.close()
+        if orch is not None:
+            await orch.aclose()
+
+
+def _schedule_rows(schedule: EodSchedule) -> list[dict[str, Any]]:
+    """One row per market in scope: its task, what this tick did, and why it was skipped."""
+    from crocodile.equity.universal.orchestrator import OutcomeStatus, eod_task_name
+
+    rows: list[dict[str, Any]] = []
+    for mic in sorted({*schedule.mics, *schedule.skipped}):
+        if mic in schedule.skipped:
+            rows.append(_schedule_row(mic, "", schedule.skipped[mic], 0, ""))
+            continue
+        task = eod_task_name(mic)
+        report = schedule.reports.get(mic)
+        if report is None:
+            outcome = "failed" if mic in schedule.failures else "not_due"
+            rows.append(_schedule_row(mic, task, outcome, 0, schedule.failures.get(mic, "")))
+            continue
+        outcomes = report.market_outcomes(mic)
+        if any(item.status is OutcomeStatus.OK for item in outcomes):
+            outcome = "ok"
+        else:
+            outcome = str(outcomes[0].status) if outcomes else "no_outcome"
+        reason = next((item.reason for item in outcomes if item.reason), None) or ""
+        records = sum(item.records for item in outcomes)
+        rows.append(_schedule_row(mic, task, outcome, records, reason))
+    return rows
+
+
+def _schedule_row(mic: str, task: str, outcome: str, records: int, reason: str) -> dict[str, Any]:
+    return {"mic": mic, "task": task, "outcome": outcome, "records": records, "reason": reason}
 
 
 _REPOSITORY = "git+https://github.com/nazmiefearmutcu/Crypcodile.git"
