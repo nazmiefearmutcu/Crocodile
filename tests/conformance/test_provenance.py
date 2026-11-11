@@ -32,6 +32,7 @@ _EXPECTED_BASES = frozenset(
         "ohlcv_from_trades",
         "reference_merge",
         "scraped_last_price",
+        "session_snapshot",
         "sec_13f_hr",
         "sec_form4",
         "treasury_carry",
@@ -923,3 +924,32 @@ def test_reference_merge_denominator_is_the_method_rather_than_the_run():
     run fetched them.
     """
     assert confidence_for("reference_merge", {"n_sources": 2}) < 1.0
+
+
+# session_snapshot - a scanner's undated daily bar, attributed to a session (spec 3.13)
+
+
+def test_session_snapshot_counts_the_witnesses_to_the_session():
+    """``n_session_witnesses / 2``: the calendar and the row's own stamp are the two witnesses.
+
+    Two agreeing witnesses score 1.0, the calendar alone 0.5, and a bar nothing dates scores 0.0.
+    """
+    assert confidence_for("session_snapshot", {"n_session_witnesses": 2}) == 1.0
+    assert confidence_for("session_snapshot", {"n_session_witnesses": 1}) == 0.5
+    assert confidence_for("session_snapshot", {"n_session_witnesses": 0}) == 0.0
+
+
+def test_session_snapshot_is_derived_from_an_undated_bar():
+    """DERIVED, because the numbers were published and the session is this engine's attribution."""
+    assert level_for("session_snapshot") is Provenance.DERIVED
+    fields = provenance_fields("session_snapshot", {"n_session_witnesses": 1})
+    assert fields.prov_inputs == ["ohlcv"]
+
+
+def test_session_snapshot_refuses_a_count_the_method_cannot_produce():
+    """Three witnesses, a negative count, a bool, a float or no count at all is a caller bug."""
+    for bad in (3, -1, True, 1.0):
+        with pytest.raises(ConfidenceInputError):
+            confidence_for("session_snapshot", {"n_session_witnesses": bad})
+    with pytest.raises(ConfidenceInputError):
+        confidence_for("session_snapshot", {})

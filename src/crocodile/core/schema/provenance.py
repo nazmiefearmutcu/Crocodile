@@ -660,6 +660,44 @@ def _reference_merge(inputs: Mapping[str, Any]) -> float:
     return n / _REFERENCE_SOURCES
 
 
+_SESSION_SNAPSHOT_WITNESSES: Final[int] = 2
+"""Independent witnesses the session-snapshot method can have for which session an undated
+scanner row describes: the exchange calendar, and the row's own update stamp. The denominator
+of one basis, scoped like ``_REFERENCE_SOURCES``."""
+
+
+@register_basis("session_snapshot", level=Provenance.DERIVED, inputs=["ohlcv"])
+def _session_snapshot(inputs: Mapping[str, Any]) -> float:
+    """A scanner's undated daily bar, attributed to a session: how many witnesses agree on which.
+
+    ``n_session_witnesses / 2``. TradingView's scanner answers with the current state of a
+    listing's latest session - open, high, low, last, volume - and no date. This method dates
+    it. The calendar names the latest session whose close plus the settle delay has passed, and
+    a row without a stamp captured before the next session opens can only describe that
+    session: that is the calendar witness, and a bar is never built without a completed session
+    from it. Where the source stamps the row and the stamp falls inside that session, that is
+    the second witness, and the stamp then replaces the next-open guard (spec 3.10b). The
+    denominator is the two witnesses the method declares, which exist whether or not a given
+    source publishes a stamp - the ``reference_merge`` argument for a fixed three. A bar
+    attributed by the calendar alone scores 0.5 because the calendar's own failure - a holiday or
+    half-day it does not know - is invisible to it, which is exactly what the stamp would catch.
+
+    DERIVED, not NATIVE: every number was published by the source, but the session the bar
+    belongs to is this engine's attribution, the step NATIVE would claim the source made. Not
+    SYNTHETIC: nothing is modelled. Rows the method cannot attribute - zero volume, identical to
+    the previous snapshot with no stamp, a stamp on another day, an unstamped row captured once
+    the next session has opened - are not built at all rather than scored low; the score grades
+    the bars that exist.
+    """
+    n = _require_int(inputs, "n_session_witnesses")
+    if not 0 <= n <= _SESSION_SNAPSHOT_WITNESSES:
+        raise ConfidenceInputError(
+            f"input 'n_session_witnesses' must be between 0 and "
+            f"{_SESSION_SNAPSHOT_WITNESSES}, got {n}"
+        )
+    return n / _SESSION_SNAPSHOT_WITNESSES
+
+
 @register_basis("farcaster_cast_search", level=Provenance.SYNTHETIC, inputs=[])
 def _farcaster_cast_search(_: Mapping[str, Any]) -> float:
     """Social metrics modelled from a page of casts: 0.0, by definition.
