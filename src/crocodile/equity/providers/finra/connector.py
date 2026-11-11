@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final
 
 from crocodile.core.schema.enums import Channel
 from crocodile.core.schema.records import Record
-from crocodile.equity.providers.base import PullProvider
+from crocodile.equity.providers.base import US_EQUITY_MICS, PullProvider
 from crocodile.equity.providers.finra.client import (
     FinraClient,
     _ns_to_date,
@@ -48,6 +48,9 @@ class FinraProvider(PullProvider):
             Channel.SHORT_INTEREST.value,
         }
     )
+
+    supported_mics: ClassVar[frozenset[str]] = US_EQUITY_MICS
+    """US regulator data."""
 
     def __init__(
         self,

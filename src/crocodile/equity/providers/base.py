@@ -8,7 +8,7 @@ import traceback
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable, Mapping
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Final
 
 from crocodile.core.ingest.deadletter import DeadLetterQueue
 from crocodile.core.ingest.transport import Transport
@@ -20,6 +20,12 @@ if TYPE_CHECKING:
     from crocodile.equity.reference.registry import InstrumentRegistry
 
 log = logging.getLogger(__name__)
+
+US_EQUITY_MICS: Final[frozenset[str]] = frozenset({"IEXG", "XCBO", "XNAS", "XNYS"})
+"""Operating MICs exchanges.csv lists for country US. A literal because base.py is imported by
+every connector at CLI start; tests/conformance/test_provider_mics.py asserts it equals the
+table's US rows, so data and literal cannot drift (if they differ, fix the literal, never the
+CSV)."""
 
 
 class ProviderError(Exception):
@@ -36,6 +42,10 @@ class TransientProviderError(ProviderError):
 
 class SinkError(ProviderError):
     """Failure writing to the output sink (not a bad market-data frame)."""
+
+
+class UnsupportedMarketError(ValueError):
+    """A provider was asked for a market outside the scope it declares (spec §3.12)."""
 
 
 def backoff_delays(
@@ -72,6 +82,17 @@ class Provider(ABC):
     A channel that is configured, never errors and never produces a row is
     indistinguishable from a market with nothing to report.
     """
+
+    supported_mics: ClassVar[frozenset[str] | None] = None
+    """Operating MICs (ISO 10383) this provider can answer for, or ``None`` for "not declared".
+
+    ``None`` is never "every market", exactly as for ``supported_channels``. A declared set is a
+    contract: :func:`require_supported_mic` refuses a MIC outside it, and the constructor drops
+    (with a warning) every requested ``LOCAL@MIC`` symbol on a market outside it, refusing the
+    run when nothing servable remains. A bare symbol is a US listing (spec §3.4), so it is
+    servable exactly when the declared set contains a US MIC. The US-only sources declare
+    :data:`US_EQUITY_MICS`; yahoo, google_finance and stooq are multi-market and stay
+    undeclared (reasons in tests/conformance/test_provider_mics.py)."""
 
     unservable_channels: ClassVar[Mapping[str, str]] = MappingProxyType({})
     """Channels this provider is *asked* for and deliberately does not serve, and why.
@@ -113,6 +134,7 @@ class Provider(ABC):
         self.transport: Transport | None = None
         self._dlq: DeadLetterQueue = DeadLetterQueue()
         self._reject_unservable_channels()
+        self._reject_unservable_mics()
 
     def _reject_unservable_channels(self) -> None:
         """Warn for each requested channel this provider cannot serve; refuse if none can.
@@ -156,6 +178,55 @@ class Provider(ABC):
                 f"{self.name} has no supported channels among {self.channels!r} "
                 f"(supported: {sorted(self.supported_channels)})"
             )
+
+    def _reject_unservable_mics(self) -> None:
+        """Drop each requested symbol this provider's market scope does not serve; refuse if none.
+
+        A no-op for a connector that has not declared :attr:`supported_mics`. A ``LOCAL@MIC``
+        symbol is servable exactly when its operating MIC is declared. A bare symbol is a US
+        listing (spec §3.4), so it is servable exactly when the declared set holds a US MIC; it
+        is not parsed, because bare symbols include forms such as ``BINANCE:BTCUSDT`` that the
+        listing parser refuses.
+
+        Raises:
+            UnsupportedMarketError: if symbols were requested and none is servable.
+        """
+        scope = self.supported_mics
+        if scope is None:
+            return
+        from crocodile.core.markets.errors import MarketError
+        from crocodile.core.markets.symbols import parse_listing_symbol
+
+        servable: list[str] = []
+        for symbol in self.symbols:
+            if "@" in symbol:
+                try:
+                    _, mic = parse_listing_symbol(symbol)
+                except MarketError as exc:
+                    log.warning("%s will not request %r: %s", self.name, symbol, exc)
+                    continue
+                if mic is not None and mic in scope:
+                    servable.append(symbol)
+                    continue
+                market = mic or "an unknown market"
+            elif scope & US_EQUITY_MICS:
+                servable.append(symbol)
+                continue
+            else:
+                market = "US"
+            log.warning(
+                "%s serves %s and not %s; %s will not be requested",
+                self.name,
+                sorted(scope),
+                market,
+                symbol,
+            )
+        if self.symbols and not servable:
+            raise UnsupportedMarketError(
+                f"{self.name} serves {sorted(scope)} and none of the requested symbols "
+                f"{self.symbols!r} is on those markets"
+            )
+        self.symbols = servable
 
     @abstractmethod
     def normalize(self, msg: object, local_ts: int) -> Iterable[Record]: ...
@@ -361,3 +432,17 @@ class PullProvider(Provider):
             f"subscribe to. Use `backfill` with this source, which pages its history into "
             f"the same lake."
         )
+
+
+def require_supported_mic(provider: type[Provider] | Provider, mic: str) -> None:
+    """Refuse ``provider`` for ``mic`` when it declares a market scope that excludes it.
+
+    ``mic`` is an operating MIC (what ``Listing.mic`` holds); segment MICs are not normalised.
+    Raises UnsupportedMarketError naming the provider, the MIC and the declared set.
+    """
+    scope = provider.supported_mics
+    if scope is None or mic in scope:
+        return
+    raise UnsupportedMarketError(
+        f"{provider.name} does not serve {mic}; it declares {sorted(scope)}"
+    )

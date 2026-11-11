@@ -12,7 +12,7 @@ from crocodile.core.schema.enums import AssetClass, SecurityType, Side
 from crocodile.core.schema.records import Record, Trade
 from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import ms_to_ns
-from crocodile.equity.providers.base import FatalProviderError, Provider
+from crocodile.equity.providers.base import US_EQUITY_MICS, FatalProviderError, Provider
 from crocodile.equity.reference.identity import InstrumentIdentity
 from crocodile.equity.reference.registry import InstrumentRegistry
 
@@ -96,6 +96,9 @@ class FinnhubProvider(Provider):
     that stayed up and wrote nothing, which is the dead channel this declaration exists to
     make visible before the socket opens.
     """
+
+    supported_mics: ClassVar[frozenset[str]] = US_EQUITY_MICS
+    """The trade stream as configured here, US symbols."""
 
     unservable_channels: ClassVar[Mapping[str, str]] = MappingProxyType(
         {

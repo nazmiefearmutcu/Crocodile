@@ -12,7 +12,7 @@ from crocodile.core.schema.enums import AssetClass, SecurityType, Side, Tape
 from crocodile.core.schema.records import OHLCV, Quote, Record, Trade
 from crocodile.core.sink.base import Sink
 from crocodile.core.util.time import rfc3339_to_ns
-from crocodile.equity.providers.base import FatalProviderError, Provider
+from crocodile.equity.providers.base import US_EQUITY_MICS, FatalProviderError, Provider
 from crocodile.equity.reference.identity import InstrumentIdentity
 from crocodile.equity.reference.registry import InstrumentRegistry
 
@@ -44,6 +44,9 @@ class AlpacaProvider(Provider):
     :func:`~crocodile.equity.providers.factory.channels_for_provider` widens for it. Listing
     both would put two names for one channel into the declaration that decides the menu.
     """
+
+    supported_mics: ClassVar[frozenset[str]] = US_EQUITY_MICS
+    """The IEX/SIP US consolidated feed."""
 
     def __init__(
         self,

@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from crocodile.core.schema.enums import Channel
 from crocodile.core.schema.records import MacroSeries, Record
-from crocodile.equity.providers.base import PullProvider
+from crocodile.equity.providers.base import US_EQUITY_MICS, PullProvider
 from crocodile.equity.providers.treasury.client import (
     SOURCE,
     TreasuryYieldClient,
@@ -72,6 +72,9 @@ class TreasuryProvider(PullProvider):
     rest_url = "https://home.treasury.gov"
 
     supported_channels: ClassVar[frozenset[str]] = frozenset({Channel.MACRO_SERIES.value})
+
+    supported_mics: ClassVar[frozenset[str]] = US_EQUITY_MICS
+    """The US Treasury par yield curve."""
 
     def __init__(
         self,

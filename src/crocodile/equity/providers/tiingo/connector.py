@@ -33,7 +33,7 @@ from crocodile.core.config import Settings
 from crocodile.core.errors import ConfigError
 from crocodile.core.schema.enums import Channel
 from crocodile.core.schema.records import Record
-from crocodile.equity.providers.base import PullProvider
+from crocodile.equity.providers.base import US_EQUITY_MICS, PullProvider
 from crocodile.equity.providers.tiingo.client import TiingoClient
 
 if TYPE_CHECKING:
@@ -65,6 +65,11 @@ class TiingoProvider(PullProvider):
     supported_channels: ClassVar[frozenset[str]] = frozenset(
         {Channel.OHLCV.value, Channel.CORP_ACTION.value}
     )
+
+    supported_mics: ClassVar[frozenset[str]] = US_EQUITY_MICS
+    """US daily and intraday series in this package. Non-US exchange rows are skipped
+    per spec §3.6.
+    """
 
     unservable_channels: ClassVar[dict[str, str]] = {
         Channel.OPTIONS_CHAIN.value: (

@@ -41,7 +41,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final
 from crocodile.core.config import Settings
 from crocodile.core.schema.enums import Channel
 from crocodile.core.schema.records import Record
-from crocodile.equity.providers.base import PullProvider
+from crocodile.equity.providers.base import US_EQUITY_MICS, PullProvider
 from crocodile.equity.providers.sec_edgar.client import SecEdgarClient
 
 if TYPE_CHECKING:
@@ -108,6 +108,9 @@ class SecEdgarProvider(PullProvider):
             Channel.FUNDAMENTAL.value,
         }
     )
+
+    supported_mics: ClassVar[frozenset[str]] = US_EQUITY_MICS
+    """US filings."""
 
     def __init__(
         self,

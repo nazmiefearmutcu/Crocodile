@@ -166,6 +166,13 @@ def supported_channels(provider: str) -> frozenset[str] | None:
     return None if cls is None else cls.supported_channels
 
 
+def supported_mics(provider: str) -> frozenset[str] | None:
+    """The markets ``provider`` declares, or ``None`` if it declares none or is not registered —
+    the same two-way ``None`` :func:`supported_channels` documents."""
+    cls = _REGISTRY.get(provider)
+    return None if cls is None else cls.supported_mics
+
+
 def make_provider(
     provider: str,
     symbols: list[str],

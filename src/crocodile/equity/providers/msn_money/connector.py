@@ -14,7 +14,7 @@ import aiohttp
 from crocodile.core.schema.enums import AssetClass, CorpActionType, SecurityType
 from crocodile.core.schema.records import OHLCV, CorporateAction, Record
 from crocodile.core.sink.base import Sink
-from crocodile.equity.providers.base import Provider
+from crocodile.equity.providers.base import US_EQUITY_MICS, Provider
 from crocodile.equity.reference.identity import InstrumentIdentity
 from crocodile.equity.reference.registry import InstrumentRegistry
 
@@ -127,6 +127,9 @@ class MsnMoneyProvider(Provider):
     ``bar`` is absent and still accepted; see
     :meth:`~crocodile.equity.providers.base.Provider._reject_unservable_channels`.
     """
+
+    supported_mics: ClassVar[frozenset[str]] = US_EQUITY_MICS
+    """US-only in this package (spec §3.12 ruling); multi-market support is Package 5."""
 
     def __init__(
         self,
