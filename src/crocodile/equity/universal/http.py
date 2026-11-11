@@ -134,7 +134,12 @@ class AiohttpFetcher:
             old, self._session = self._session, None
             with contextlib.suppress(Exception):
                 await old.close()
-        self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self._timeout_s))
+        # A dummy cookie jar: no Set-Cookie answer is stored or replayed (spec 3.10, brief "no
+        # cookies"), so a consent or bot cookie from one response cannot carry past the wall.
+        self._session = aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=self._timeout_s),
+            cookie_jar=aiohttp.DummyCookieJar(),
+        )
         self._loop = loop
         return self._session
 

@@ -13,6 +13,7 @@ from typing import Any
 
 import aiohttp
 import pytest
+from yarl import URL
 
 from crocodile.equity.universal.base import SourceUnservableError, UnservableReason
 from crocodile.equity.universal.http import (
@@ -187,6 +188,32 @@ def test_a_new_event_loop_gets_a_new_session(
     assert len(created[1].calls) == 1
     misuse = [r for r in caplog.records if r.levelno == logging.WARNING]
     assert len(misuse) == 1
+
+
+def test_a_cookie_set_by_one_response_is_not_replayed_on_the_next_request() -> None:
+    """Regression (fix round 1): the default aiohttp CookieJar stores Set-Cookie answers and
+    replays them. The fetcher must use a dummy jar so no consent or bot cookie carries over."""
+    url = URL("https://query2.finance.yahoo.com/v8/finance/chart/AAPL")
+    cookie = {"consent": "yes"}
+
+    async def scenario() -> tuple[object, int, int]:
+        control = aiohttp.CookieJar()
+        control.update_cookies(cookie, url)
+        stored_by_default = len(control.filter_cookies(url))  # the probe really stores cookies
+
+        fetcher = AiohttpFetcher()
+        session = await fetcher._session_for_running_loop("yahoo_chart")
+        try:
+            jar = session.cookie_jar
+            jar.update_cookies(cookie, url)
+            return jar, stored_by_default, len(jar.filter_cookies(url))
+        finally:
+            await fetcher.close()
+
+    jar, stored_by_default, replayed = asyncio.run(scenario())
+    assert stored_by_default == 1
+    assert isinstance(jar, aiohttp.DummyCookieJar)
+    assert replayed == 0
 
 
 def test_two_calls_inside_one_event_loop_share_one_session(
