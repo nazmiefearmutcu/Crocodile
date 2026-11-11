@@ -421,3 +421,25 @@ async def test_the_yahoo_chart_binding_yields_the_closed_intraday_bars(tmp_path:
     ]
     assert {bar.symbol for bar in bars} == {"THYAO@XIST"}
     assert {bar.interval for bar in bars} == {"5m"}
+
+
+@pytest.mark.usefixtures("network_forbidden")
+def test_every_yahoo_provider_mirrors_its_dead_letters_under_the_data_dir(tmp_path: Path) -> None:
+    master = _master(tmp_path)
+    bindings = bindings_module.default_bindings(
+        _settings(tmp_path),
+        RecordingSink(),
+        master=master,
+        clock_ns=lambda: FIXED_NS,
+        yahoo_client=yc.YahooChartClient(fetch=_yahoo_fetch),
+        tradingview_client=tv.TradingViewClient(fetch=_ScannerFake({})),
+        directory_fetch=_no_directory,
+    )
+    history = bindings.history["yahoo_chart"]
+    providers = [history._daily, *history._intraday.values()]
+    try:
+        for provider in providers:
+            assert provider._dlq.db_path is not None, provider.name
+            assert provider._dlq.db_path.startswith(str(tmp_path)), provider.name
+    finally:
+        master.close()

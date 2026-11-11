@@ -241,6 +241,7 @@ def default_bindings(
             out=sink,
             registry=InstrumentRegistry(),
             settings=settings,
+            data_dir=settings.data_dir,
             master=master,
             client=yahoo,
             clock=clock,
