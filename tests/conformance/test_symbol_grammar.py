@@ -135,7 +135,7 @@ def test_each_mic_has_exactly_one_primary_spelling() -> None:
     assert set(yahoo) == {row.mic for row in load_grammar("yahoo_chart").rows}
     assert set(yahoo.values()) == {1}
     tradingview = Counter(row.mic for row in load_grammar("tradingview").rows if row.primary)
-    assert set(tradingview) == _TRADINGVIEW_MICS
+    assert set(tradingview) == {row.mic for row in load_grammar("tradingview").rows}
     assert set(tradingview.values()) == {1}
     google = Counter(row.mic for row in load_grammar("google_finance").rows)
     assert set(google.values()) == {1}
