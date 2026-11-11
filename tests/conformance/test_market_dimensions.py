@@ -15,6 +15,7 @@ probe, which is the point.
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Final, Literal
@@ -23,7 +24,7 @@ import msgspec
 import polars as pl
 import pytest
 
-from crocodile.capabilities import load_all, market
+from crocodile.capabilities import load_all, market, ops
 from crocodile.core.capability import REGISTRY, AssetClass, CapabilityContext
 from crocodile.core.config import Settings
 from crocodile.core.errors import CapabilityUnavailable
@@ -85,12 +86,47 @@ class _Probe:
     return a Subscription or a coroutine). Exactly one of ``observe`` and ``check`` is set."""
 
 
+def _scoped_mics(mics: tuple[str, ...], dimension: str, value: str) -> None:
+    assert mics, f"{dimension}={value!r} resolved to no market"
+    if dimension == "mic":
+        assert mics == (value,), mics
+    else:
+        assert all(_country_of(m) == value for m in mics), mics
+
+
+def _subscription_scoped(result: object, dimension: str, value: str) -> None:
+    assert isinstance(result, ops.Subscription), type(result).__name__
+    _scoped_mics(result.mics, dimension, value)
+
+
+def _coroutine_scoped(result: object, dimension: str, value: str) -> None:
+    assert inspect.iscoroutine(result)
+    try:
+        _scoped_mics(inspect.getcoroutinelocals(result)["resolved"].mics, dimension, value)
+    finally:
+        result.close()
+
+
 _PROBES: dict[str, _Probe] = {
     "markets": _Probe(build=lambda dims: market.MarketsParams(**dims), observe=_markets_rows),
     "universe": _Probe(build=lambda dims: market.UniverseParams(**dims), observe=_universe_rows),
     "calendar": _Probe(
         build=lambda dims: market.CalendarParams(start="2026-01-05", end="2026-01-09", **dims),
         observe=_calendar_rows,
+    ),
+    "collect": _Probe(
+        build=lambda dims: ops.CollectParams(sources=("universal",), channels=("ohlcv",), **dims),
+        check=_subscription_scoped,
+    ),
+    "backfill": _Probe(
+        build=lambda dims: ops.BackfillParams(
+            channel="ohlcv",
+            start_ns=0,
+            end_ns=1_704_067_200_000_000_000,
+            sources=("universal",),
+            **dims,
+        ),
+        check=_coroutine_scoped,
     ),
 }
 """A later task that adds ``mic`` or ``country`` to another struct adds its probe here."""

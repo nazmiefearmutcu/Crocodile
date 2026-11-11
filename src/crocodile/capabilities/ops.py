@@ -87,12 +87,14 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import datetime
 import itertools
+import logging
 import uuid
-from collections.abc import Callable, Coroutine, Iterator
+from collections.abc import Callable, Coroutine, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Final
 
 import msgspec
 import polars as pl
@@ -107,7 +109,7 @@ from crocodile.core.capability import (
 )
 from crocodile.core.config import Settings
 from crocodile.core.connector import Connector
-from crocodile.core.errors import ConfigError
+from crocodile.core.errors import CapabilityUnavailable, ConfigError
 from crocodile.core.replay.merge import replay as merge_replay
 from crocodile.core.resample.ohlcv import resample_ohlcv
 from crocodile.core.schema.provenance import Provenance
@@ -127,6 +129,11 @@ from crocodile.crypto.client.backfill import run_historical_backfill
 from crocodile.crypto.client.collect import collect as collect_crypto
 from crocodile.crypto.client.export import export as export_rows
 from crocodile.equity.client.collect import collect as collect_equity
+
+if TYPE_CHECKING:
+    from crocodile.equity.universal.orchestrator import ResolvedScope, Scope
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "BACKFILL",
@@ -220,6 +227,13 @@ class Subscription:
 
     begin: Callable[[], Coroutine[Any, Any, None]]
     """The unstarted run. Call :meth:`run` instead unless the surface owns the timer."""
+
+    mics: tuple[str, ...] = ()
+    """The operating MICs a universal run is scoped to; empty for every other run.
+
+    Part of what a surface can say before it commits to the subscription, as :attr:`sources`
+    is: a universal run resolves its markets from the listing master before it starts.
+    """
 
     async def run(self) -> None:
         """Collect until the declared bound expires, or until cancelled if there is none.
@@ -670,14 +684,21 @@ class CollectParams(msgspec.Struct, frozen=True):
     it now: equity providers mirror their dead letters into ``<data_dir>/dlq/`` (spec 3.9), and
     an equity run drains them into this report, or into ``dlq_report.json`` under the lake root
     when no path is given.
+
+    ``mic`` and ``country`` slice an equity run through the universal sources (spec 3.11):
+    ``sources=("universal",)`` resolves the listings from the listing master, so ``symbols``
+    may then be empty. Named symbols poll delayed intraday bars; a market slice collects the
+    end-of-day session of every market in it. A crypto run refuses both dimensions.
     """
 
     sources: tuple[str, ...]
-    symbols: tuple[str, ...]
     channels: tuple[str, ...]
+    symbols: tuple[str, ...] = ()
     max_reconnects: int = -1
     duration_seconds: float | None = None
     dlq_report_path: str | None = None
+    mic: str | None = None
+    country: str | None = None
 
 
 def _require_collect_inputs(params: CollectParams) -> None:
@@ -700,6 +721,126 @@ def _require_collect_inputs(params: CollectParams) -> None:
         raise ValueError(f"collect needs a non-empty {', '.join(missing)}")
 
 
+_UNIVERSAL_TICK_SECONDS: Final = 60.0
+"""Pause between two polls of a universal ``collect``: one request round per market or listing."""
+
+
+def _refuse_market_slice(capability: str, mic: str | None, country: str | None) -> None:
+    """Crypto halves: refuse ``mic`` or ``country``, naming every dimension that was set.
+
+    No crypto venue has an ISO 10383 MIC or an ISO 3166 country, so a crypto answer to either
+    could only ignore the filter. The reason names each dimension set, as the market
+    capabilities' refusals do.
+    """
+    named = [name for name, value in (("mic", mic), ("country", country)) if value is not None]
+    if named:
+        raise CapabilityUnavailable(
+            capability,
+            AssetClass.CRYPTO.value,
+            reason=(
+                f"{' and '.join(named)} slice equity exchanges (ISO 10383 MIC, ISO 3166 "
+                "country); no crypto venue has either, so a crypto answer could only ignore "
+                "the filter. Ask with --asset-class equity"
+            ),
+        )
+
+
+def _refuse_native_slice(capability: str, params: CollectParams | BackfillParams) -> None:
+    """A native equity provider takes a symbol list; only the universal sources slice a market."""
+    if params.mic is not None or params.country is not None:
+        raise ValueError(
+            f"slicing by market is served by the universal sources; {capability} with a native "
+            "source cannot take mic or country, so name sources=('universal',)"
+        )
+
+
+def _universal_request(sources: Sequence[str]) -> tuple[str, ...] | None:
+    """The request when every name is the universal alias or a universal source.
+
+    ``None`` when every name is native (or the list is empty), so the caller keeps its native
+    path. A mix of the two is refused: one request runs one orchestrator.
+    """
+    from crocodile.equity.universal.order import UNIVERSAL_ALIAS, is_universal_source
+
+    if not sources:
+        return None
+    universal = [name == UNIVERSAL_ALIAS or is_universal_source(name) for name in sources]
+    if all(universal):
+        return tuple(sources)
+    if not any(universal):
+        return None
+    native = [name for name, flag in zip(sources, universal, strict=True) if not flag]
+    raise ValueError(
+        "universal and native sources cannot be mixed in one request; native: " + ", ".join(native)
+    )
+
+
+def _collect_universal(
+    ctx: CapabilityContext, params: CollectParams, request: tuple[str, ...]
+) -> Subscription:
+    """A universal collect: named listings poll intraday bars, a market slice collects EOD.
+
+    Everything that can be judged from the request is judged here, synchronously and without
+    opening a file: the channels, the listing cap and the scope (registry-only, through
+    :func:`~crocodile.equity.universal.orchestrator.preflight_scope`). The sink and the
+    orchestrator are built inside :attr:`Subscription.begin`, so an unstarted run holds nothing.
+    """
+    from crocodile.equity.universal.orchestrator import (
+        DEFAULT_INTRADAY_INTERVAL,
+        MAX_INTRADAY_LISTINGS,
+        Scope,
+        preflight_scope,
+    )
+
+    if not params.channels or any(channel != "ohlcv" for channel in params.channels):
+        raise ValueError(
+            "a universal collect polls ohlcv bars: channels must be ['ohlcv']; daily history "
+            "comes from backfill and instrument records from universe-sync"
+        )
+    if len(params.symbols) > MAX_INTRADAY_LISTINGS:
+        raise ValueError(
+            f"at most {MAX_INTRADAY_LISTINGS} named listings per intraday collect; "
+            f"got {len(params.symbols)}"
+        )
+    scope = Scope(mic=params.mic, country=params.country, symbols=params.symbols)
+    if scope.mic is None and scope.country is None and not scope.symbols:
+        raise ValueError("a universal collect needs symbols or mic/country")
+    resolved = preflight_scope(ctx.settings, scope)
+    named = bool(params.symbols)
+    listings = list(params.symbols)
+    dlq_report = Path(params.dlq_report_path) if params.dlq_report_path else None
+
+    async def begin() -> None:
+        from crocodile.equity.universal.orchestrator import open_orchestrator
+
+        sink = _lake_sink(ctx)
+        try:
+            orchestrator = open_orchestrator(ctx.settings, sink, dlq_report_path=dlq_report)
+        except BaseException:
+            await sink.close()
+            raise
+        try:
+            while True:
+                if named:
+                    await orchestrator.collect_intraday(
+                        listings, DEFAULT_INTRADAY_INTERVAL, sources=request
+                    )
+                else:
+                    await orchestrator.collect_eod(scope, orchestrator.now(), sources=request)
+                await asyncio.sleep(_UNIVERSAL_TICK_SECONDS)
+        finally:
+            await sink.close()
+            await orchestrator.aclose()
+
+    return Subscription(
+        sources=params.sources,
+        channels=params.channels,
+        duration_seconds=params.duration_seconds,
+        begin=begin,
+        mics=resolved.mics,
+    )
+
+
 def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
     """Subscribe to live crypto venues and write every record into the lake.
 
@@ -712,6 +853,7 @@ def collect(ctx: CapabilityContext, params: CollectParams) -> Subscription:
     ``normalize_user_symbol`` into ``crypto.instruments`` where both can reach it.
     """
     _refuse_readonly(ctx, "collect")
+    _refuse_market_slice("collect", params.mic, params.country)
     _require_collect_inputs(params)
     capture_budget = _capture_budget(ctx)
     from crocodile.core.capture.native import SUPPORTED_RAW_SOURCES, stream_context
@@ -810,6 +952,10 @@ def collect_equities(ctx: CapabilityContext, params: CollectParams) -> Subscript
     once the sink is closed (spec 3.9).
     """
     _refuse_readonly(ctx, "collect")
+    request = _universal_request(params.sources)
+    if request is not None:
+        return _collect_universal(ctx, params, request)
+    _refuse_native_slice("collect", params)
     _require_collect_inputs(params)
 
     from crocodile.core.ingest.transport import AiohttpWsTransport
@@ -1123,13 +1269,19 @@ class BackfillParams(msgspec.Struct, frozen=True):
     are equity-ignored, on the argument ``SlippageParams`` makes for ``size_unit``: dropping
     them deletes the only way to reach a Binance USD-M market or an OKX swap, and an equity
     caller that omits them pays nothing.
+
+    ``sources`` and ``mic``/``country`` are the equity universal side (spec 3.11): the alias
+    ``universal`` (or a universal source) runs the orchestrator over the listing master, which
+    writes daily history and corporate actions only, so ``interval`` stays a crypto parameter
+    and ``symbols`` may be empty when a market is named. ``source`` and ``sources`` are
+    alternatives; a crypto backfill refuses ``sources``.
     """
 
-    source: str
     channel: str
-    symbols: tuple[str, ...]
     start_ns: int
     end_ns: int
+    source: str = ""
+    symbols: tuple[str, ...] = ()
     market: str = "spot"
     category: str = "linear"
     inst_type: str = "SWAP"
@@ -1144,6 +1296,9 @@ class BackfillParams(msgspec.Struct, frozen=True):
     bucket width, which is an error nowhere along the path. ``period`` means the indicator
     lookback everywhere now; this one says which series it buckets.
     """
+    sources: tuple[str, ...] = ()
+    mic: str | None = None
+    country: str | None = None
 
 
 def _check_backfill_range(params: BackfillParams) -> None:
@@ -1160,6 +1315,80 @@ def _check_backfill_range(params: BackfillParams) -> None:
         raise ValueError("backfill needs a non-empty symbols")
 
 
+def _utc_date(ns: int) -> datetime.date:
+    """The UTC calendar day of an epoch-nanosecond instant (a non-positive value is before 1970)."""
+    moment = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC) + datetime.timedelta(
+        microseconds=ns // 1_000
+    )
+    return moment.date()
+
+
+def _backfill_universal(
+    ctx: CapabilityContext, params: BackfillParams, request: tuple[str, ...]
+) -> Coroutine[Any, Any, int]:
+    """The universal backfill: every check that needs no I/O runs here, the run is unstarted.
+
+    ``start_ns`` at or below zero means all history the sources give. The scope is judged
+    through :func:`~crocodile.equity.universal.orchestrator.preflight_scope`, so an explicitly
+    named sanctioned market raises before any coroutine exists.
+    """
+    from crocodile.equity.universal.orchestrator import BACKFILL_CHANNELS, Scope, preflight_scope
+
+    if params.start_ns > params.end_ns:
+        raise ValueError(f"backfill start_ns ({params.start_ns}) is after end_ns ({params.end_ns})")
+    if params.channel not in BACKFILL_CHANNELS:
+        raise ValueError(
+            "universal backfill writes "
+            + ", ".join(sorted(BACKFILL_CHANNELS))
+            + f", not {params.channel!r}; instrument records come from crocodile universe-sync"
+        )
+    scope = Scope(mic=params.mic, country=params.country, symbols=params.symbols)
+    if scope.mic is None and scope.country is None and not scope.symbols:
+        raise ValueError("a universal backfill needs symbols or mic/country")
+    resolved = preflight_scope(ctx.settings, scope)
+    start = None if params.start_ns <= 0 else _utc_date(params.start_ns)
+    end = _utc_date(params.end_ns)
+    return _run_universal_backfill(ctx, resolved, scope, request, params.channel, start, end)
+
+
+async def _run_universal_backfill(
+    ctx: CapabilityContext,
+    resolved: ResolvedScope,
+    scope: Scope,
+    request: tuple[str, ...],
+    channel: str,
+    start: datetime.date | None,
+    end: datetime.date,
+) -> int:
+    """Run the universal backfill, building the sink and the orchestrator only now.
+
+    Both are closed in a ``finally``, so a run that raises (no listings known, a sink that
+    fails) still flushes what it wrote and releases the master.
+    """
+    from crocodile.equity.universal.orchestrator import open_orchestrator
+
+    sink = _lake_sink(ctx)
+    try:
+        orchestrator = open_orchestrator(ctx.settings, sink)
+    except BaseException:
+        await sink.close()
+        raise
+    try:
+        report = await orchestrator.backfill(
+            scope, (channel,), start=start, end=end, sources=request
+        )
+    finally:
+        await sink.close()
+        await orchestrator.aclose()
+    logger.info(
+        "universal backfill over %s wrote %d records (report %s)",
+        ",".join(resolved.mics),
+        report.records_written,
+        report.report_path,
+    )
+    return report.records_written
+
+
 def backfill(ctx: CapabilityContext, params: BackfillParams) -> Coroutine[Any, Any, int]:
     """Fetch a historical range from a crypto venue's REST API into the lake.
 
@@ -1168,6 +1397,13 @@ def backfill(ctx: CapabilityContext, params: BackfillParams) -> Coroutine[Any, A
     inside a FastAPI route raises. Awaiting it yields the number of records written.
     """
     _refuse_readonly(ctx, "backfill")
+    _refuse_market_slice("backfill", params.mic, params.country)
+    if params.sources:
+        raise ValueError(
+            "a crypto backfill names one venue with source; sources is the equity universal chain"
+        )
+    if not params.source:
+        raise ValueError("backfill needs a source")
     _check_backfill_range(params)
 
     return run_historical_backfill(
@@ -1251,10 +1487,24 @@ async def _drain_provider_backfill(
 
 
 def backfill_equities(ctx: CapabilityContext, params: BackfillParams) -> Coroutine[Any, Any, int]:
-    """Fetch a historical range from an equity provider into the lake, unstarted."""
-    _refuse_readonly(ctx, "backfill")
-    _check_backfill_range(params)
+    """Fetch a historical range from an equity provider or the universal sources, unstarted.
 
+    ``sources`` (or ``source``) naming the universal alias or a universal source runs the
+    orchestrator; a native name runs the provider's own history path, as it always did.
+    """
+    _refuse_readonly(ctx, "backfill")
+    if params.sources and params.source:
+        raise ValueError("name either source or sources, not both")
+    if params.sources:
+        request = _universal_request(params.sources)
+        if request is None:
+            raise ValueError("native providers backfill one at a time with source=<name>")
+    else:
+        request = _universal_request((params.source,))
+    if request is not None:
+        return _backfill_universal(ctx, params, request)
+    _refuse_native_slice("backfill", params)
+    _check_backfill_range(params)
     return _drain_provider_backfill(params.source, params, _lake_sink(ctx), ctx.settings)
 
 
