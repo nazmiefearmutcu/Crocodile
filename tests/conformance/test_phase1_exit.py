@@ -507,6 +507,7 @@ _CLEAN_PACKAGES = (
     "src/crocodile/contrib",
     "src/crocodile/capabilities",
     "src/crocodile/surfaces",
+    "src/crocodile/equity/universal",
     "src/crocodile/__init__.py",
     "src/crocodile/_deprecated_cli.py",
     "src/crypcodile",
