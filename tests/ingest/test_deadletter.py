@@ -141,7 +141,7 @@ def test_dlq_db_path_is_under_the_lake_dlq_directory(tmp_path: Path) -> None:
     assert dlq_db_path(str(tmp_path), "yahoo_chart") == tmp_path / "dlq" / "yahoo_chart.sqlite"
 
 
-@pytest.mark.parametrize("source", ["", "../x", "a/b", "a\b", "Yahoo"])
+@pytest.mark.parametrize("source", ["", "../x", "a/b", "a\\b", "a\b", "Yahoo"])
 def test_dlq_db_path_refuses_a_name_that_could_leave_the_directory(
     tmp_path: Path, source: str
 ) -> None:
