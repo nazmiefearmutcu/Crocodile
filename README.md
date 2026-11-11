@@ -130,7 +130,7 @@ Sources whose terms are unclear or restrictive, called grey sources, are **on by
 
 Storing data locally grants no redistribution rights. There is no switch that turns grey sources off in this release.
 
-When several sources hold the same day, reads choose by MIC and channel from `src/crocodile/equity/universal/data/source_order.csv`. For a US listing the native sources come first. For other markets, prices list `yahoo_chart` before `tradingview`, and instruments list the official directories, then `tradingview`, then `yahoo_chart`.
+When several sources hold the same day, reads choose by MIC and channel from `src/crocodile/equity/universal/data/source_order.csv`. For a US listing the native sources come first. For other markets, prices list `yahoo_chart` before `tradingview`, and instruments list the official directory where one exists (Nasdaq Trader, ASX, NSE India, TWSE), then `tradingview`.
 
 ### Run it
 
