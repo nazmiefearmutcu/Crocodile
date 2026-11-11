@@ -250,3 +250,27 @@ def test_raise_if_unservable_passes_a_clean_response() -> None:
         source="yahoo_chart",
         expect="json",
     )
+
+
+@pytest.mark.parametrize(
+    "module",
+    [
+        "crocodile.equity.universal.http",
+        "crocodile.equity.universal.base",
+        "crocodile.equity.universal.yahoo_chart",
+    ],
+)
+def test_each_universal_module_imports_cold_in_a_fresh_interpreter(module: str) -> None:
+    """Regression: importing base or http first used to fail on the providers/factory cycle."""
+    import subprocess
+    import sys
+
+    completed = subprocess.run(
+        [sys.executable, "-c", f"import {module}"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=300,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr[-2000:]
