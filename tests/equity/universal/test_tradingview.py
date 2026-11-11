@@ -1276,3 +1276,66 @@ def test_backfill_refuses_and_names_the_snapshot_verbs():
 
     with pytest.raises(ValueError, match="collect --sources tradingview"):
         asyncio.run(drain())
+
+
+def test_the_previous_snapshot_read_closes_the_catalog_it_opens(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from crocodile.core.store import catalog as catalog_module
+
+    closed: list[Catalog] = []
+
+    class RecordingCatalog(catalog_module.Catalog):
+        def close(self) -> None:
+            closed.append(self)
+            super().close()
+
+    monkeypatch.setattr(catalog_module, "Catalog", RecordingCatalog)
+    provider = tv.TradingViewProvider(
+        [],
+        ["ohlcv"],
+        MemorySink(),
+        InstrumentRegistry(),
+        settings=Settings(data_dir=tmp_path),
+    )
+    provider._previous_for(["A1YEN@XIST"])
+    assert len(closed) == 1
+
+
+def test_a_skipped_row_whose_grammar_resolved_still_counts_as_seen():
+    # BIST:BAD resolves to (XIST, BAD) but has no currency, so it is skipped. Its listing exists
+    # in the master, so a complete sweep must not mark it UNSEEN.
+    columns = tv.PROBE_COLUMNS
+    rows = [
+        _row("BIST:OK", columns, ["OK", 1.0, "TRY", "BIST"]),
+        _row("BIST:BAD", columns, ["BAD", 1.0, None, "BIST"]),
+    ]
+    snapshot = tv.universe_from_scan(
+        _one_row_scan("turkey", columns, rows, complete=True),
+        captured_at_ns=_ns("2026-11-05T16:00:00Z"),
+    )
+    assert snapshot.skipped == {"missing_currency": 1}
+    assert [record.symbol for record in snapshot.records] == ["OK@XIST"]
+    assert snapshot.seen == {"XIST": frozenset({"OK", "BAD"})}
+
+
+def test_a_bounded_scan_is_incomplete_when_it_delivers_fewer_rows_than_its_total():
+    payload = {
+        "totalCount": 5,
+        "data": [{"s": f"BIST:T{i}", "d": [f"T{i}", 1.0, "TRY", "BIST"]} for i in range(3)],
+    }
+    fetch = FakeScanner({"turkey": payload})
+    result = asyncio.run(_client(fetch).scan("turkey", tv.PROBE_COLUMNS, max_rows=5))
+    assert result.total_count == 5
+    assert len(result.rows) == 3
+    assert result.complete is False
+
+
+def test_a_bounded_scan_that_delivers_its_total_is_complete():
+    payload = {
+        "totalCount": 3,
+        "data": [{"s": f"BIST:T{i}", "d": [f"T{i}", 1.0, "TRY", "BIST"]} for i in range(3)],
+    }
+    fetch = FakeScanner({"turkey": payload})
+    result = asyncio.run(_client(fetch).scan("turkey", tv.PROBE_COLUMNS, max_rows=5))
+    assert result.complete is True

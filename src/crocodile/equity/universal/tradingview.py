@@ -827,13 +827,14 @@ class TradingViewClient:
                 return ScanResult(market, cols, 404, 0, (), complete=False)
             seen: dict[str, ScanRow] = {}
             _absorb(seen, page.rows)
+            delivered = tuple(seen.values())
             return ScanResult(
                 market,
                 cols,
                 200,
                 page.total_count,
-                tuple(seen.values()),
-                complete=page.total_count <= max_rows,
+                delivered,
+                complete=page.total_count <= max_rows and len(delivered) == page.total_count,
             )
         first = await self._post_page(market, cols, 0, page_size)
         if first.status == 404:
@@ -908,8 +909,13 @@ def _resolve(
     row: ScanRow,
     allow: Collection[str],
     skipped: Counter[str],
+    grammar_seen: dict[str, set[str]] | None = None,
 ) -> _Resolved | None:
-    """A scanner row to a canonical listing, or None with the reason counted in ``skipped``."""
+    """A scanner row to a canonical listing, or None with the reason counted in ``skipped``.
+
+    ``grammar_seen`` collects every (mic, local) the grammar resolves, before the later checks, so
+    a row that is skipped later still counts as seen by a complete sweep.
+    """
     grammar = _grammar()
     catalogue = _catalogue()
     code = row.ticker.split(":", 1)[0]
@@ -921,6 +927,8 @@ def _resolve(
     except GrammarError:
         _count(skipped, "malformed_ticker")
         return None
+    if grammar_seen is not None:
+        grammar_seen.setdefault(mic, set()).add(local)
     if mic not in catalogue:
         _count(skipped, f"market_not_listed:{mic}")
         return None
@@ -998,11 +1006,11 @@ def universe_from_scan(
     seen: dict[str, set[str]] = {}
     tail = provenance_fields("native")
     for row in scan.rows:
-        resolved = _resolve(row, allow, skipped)
+        resolved = _resolve(row, allow, skipped, seen)
         if resolved is None:
             continue
         values = row.values
-        security_type = security_type_for(_text(values.get("type")), _text(values.get("subtype")))
+        security_type =security_type_for(_text(values.get("type")), _text(values.get("subtype")))
         name = _text(values.get("description"))
         isin_value = values.get("isin")
         isin = isin_value if isinstance(isin_value, str) and is_valid_isin(isin_value) else None
@@ -1044,7 +1052,6 @@ def universe_from_scan(
                 price_scale=resolved.price_scale,
             )
         )
-        seen.setdefault(resolved.mic, set()).add(resolved.local)
     observations.sort(key=lambda item: (item.mic, item.local_symbol))
     records.sort(key=lambda item: item.symbol)
     return UniverseSnapshot(
@@ -1343,7 +1350,8 @@ class TradingViewProvider(PullProvider):
             raise ValueError("tradingview EOD snapshots need a previous snapshot in the lake")
         from crocodile.core.store.catalog import Catalog
 
-        return previous_snapshot_values(Catalog(self._settings.data_dir), symbols)
+        with Catalog(self._settings.data_dir) as catalog:
+            return previous_snapshot_values(catalog, symbols)
 
     async def _run_instrument(self, scope: Sequence[TradingViewMarket]) -> None:
         master = self._master
