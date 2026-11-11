@@ -4,6 +4,58 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Market reference layer (`crocodile.core.markets`).** The ISO 10383 MIC snapshot and the ISO 4217 list are stored unmodified, with a `MANIFEST.json` of sources, retrieval dates and SHA-256 sums. A curated `exchanges.csv` lists 172 exchanges in 129 countries and is built by `scripts/build_markets_reference.py`. The layer provides `MicRegistry`, `ExchangeRegistry`, `require_currency`, `parse_quote_unit` and `to_major`, canonical `{local}@{MIC}` listing symbols (`listing_symbol`, `parse_listing_symbol`), and per-source symbol grammars (`SuffixGrammar`, `PrefixGrammar`).
+- **Exchange calendars.** `calendar_for(mic)` returns an `ExchangeCalendar`. The 68 of the 172 exchanges that name an `exchange_calendars` code use that library, a new Apache-2.0 dependency; the others use a weekday fallback. A new `calendar` capability returns sessions with UTC open and close and the calendar quality per MIC, and its crypto half is always open.
+- **Listing master.** `ListingMaster` keeps issuers, instruments and listings in SQLite at `<data_dir>/reference/listings.sqlite`. Listings are unique on `(mic, local_symbol)`. `ListingMaster.upsert` merges each `ListingObservation`, records symbol aliases with validity windows, and records listing events for currency, status and alias changes.
+- **Universal sources (`crocodile.equity.universal`).** `yahoo_chart` (daily history, dividends, splits, and intraday bars within Yahoo's windows for selected listings), `tradingview` (universe and end-of-day snapshot), and the official directories `nasdaqtrader`, `nse_india`, `asx` and `twse`. Reads choose one daily bar per session from a per-(MIC, channel) source order through `resolve_daily_bars`. An orchestrator drives them: the operator commands `universe-sync` and `schedule` run it, and `collect` and `backfill` route to it with `--sources universal`.
+- **Market dimensions on the surfaces.** `--mic` and `--country` on `markets`, `universe`, `collect` and `backfill`, and `--mic` on `calendar`. `markets --asset-class equity` reports every exchange with its calendar quality, sources, usage classes, sanctions flag and known listings.
+- **Provenance bases.** `session_snapshot` (DERIVED, TradingView end-of-day bars whose session comes from the calendar) and `listing_directory` (NATIVE) are registered. Yahoo chart daily bars reuse the `native` basis.
+- **Usage classes and sanctions.** `UsageClass` (`redistribution`, `display`, `internal`) and `most_restrictive` give a derived value the most restrictive class of its inputs. The default sanctions list closes `RU`, `BY`, `IR`, `SY` and `KP`, and `CROCODILE_ALLOW_SANCTIONED_MARKETS` opens named countries.
+- **Rate budget and dead letters.** `crocodile.core.ratelimit.budget` gives one token bucket per source and host per event loop. Equity dead letters persist in `<data_dir>/dlq/<source>.sqlite`, and a universal run drains them and reports them in `dlq_report.json`.
+- **Live measurement script.** `scripts/measure_global_equity.py` runs a budgeted live measurement and writes JSON and Markdown. The test suite never runs it.
+
+### Changed
+
+- **Record schema, additive.** Fifteen new nullable fields: `OHLCV.currency`, `OHLCV.price_scale`, `OHLCV.adjustment`, `Trade.currency`, `Trade.price_scale`, `Quote.currency`, `Quote.price_scale`, `CorporateAction.currency`, `CorporateAction.price_scale`, `Instrument.mic`, `Instrument.segment_mic`, `Instrument.isin`, `Instrument.country`, `Instrument.currency` and `Instrument.price_scale`. The Parquet family schemas widen in step. A record whose currency disagrees with its listing's (`check_currency_consistent`) goes to the dead-letter queue, not the lake.
+- **Enum additions.** `PriceAdjustment` is new, with `NONE`, `SPLIT` and `SPLIT_DIVIDEND`. `SecurityType` gains `ETN`, `GDR`, `FUND`, `BOND`, `CERTIFICATE`, `STRUCTURED` and `INDEX`, and `FundPeriod` gains `H1` and `H2`.
+- **`SecurityMaster` holds US listings only.** Tiingo rows labelled with a non-US exchange are skipped and counted in the log. An upsert that would move a ticker to another exchange raises `ListingConflictError` instead of overwriting.
+- **Providers declare their markets.** `Provider.supported_mics` is `None` for a provider that declares no markets. US-only sources declare the US MICs, as `msn_money` does.
+- **Scheduler.** `PullTask.calendar` gives each task its exchange calendar, and `None` keeps the US Eastern clock. The logical date is the exchange-local session date, and a task is due 45 minutes after its session closes. Failure counts persist across restarts. After three failures a date is recorded as a gap and the watermark advances. Catch-up takes up to five dates per tick.
+- **`markets --asset-class equity` lists the exchange table.** It replaces the venue labels that were merged from SEC, Tiingo and OpenFIGI, and it needs neither the network nor a SEC user agent.
+
+### Fixed
+
+- **Yahoo daily bars landed one day early east of UTC.** The legacy `yahoo` provider took the UTC date of exchange-local midnight for `OHLCV.source_ts` and `CorporateAction.ex_date`. Both now use the exchange-local session date, anchored at UTC midnight. Fixtures pin THYAO.IS, 7203.T, 2330.TW and BHP.AX; the US case is pinned by a synthetic New York frame.
+- **Yahoo fundamentals claimed USD.** `Fundamental.unit` was hard-coded to `"USD"`. It now comes from Yahoo's `financialCurrency`, and a statement without one is refused.
+- **Google Finance resolved symbols against the wrong market.** Candidates resolve by the listing's MIC, `$` prices resolve by the listing's currency, and times without a zone are placed in the listing's exchange time zone instead of the host's.
+- **A failing scheduled date could hold its task.** Failure counts now persist across restarts, and a date that reaches `max_failures` is recorded as a gap so the watermark advances.
+
+### Compatibility and limits
+
+- Lakes written by 0.3.x read the new columns as `NULL` through the record API. Through SQL they read `NULL` only when the queried range also holds a part written after this change. SQL that names a new column over a range holding only 0.3.x parts fails with a binder error naming the column, rather than inventing a value. `NULL` means unknown and never means USD.
+- Surface changes: `universe` takes its source as `--source` (write `crocodile universe --source binance`). `backfill` gains `--sources` beside `--source`, and still requires `--channel`, `--start-ns` and `--end-ns`. Every `--mic` and `--country` option either filters its result or is refused; none is ignored.
+- `SchedulerStateStore` gains five abstract methods (`get_failure`, `record_failure`, `clear_failure`, `record_gap` and `gaps`); a store written outside this repository must implement them.
+- `collect`, `backfill`, `universe-sync`, `schedule` and the listing master write under `CROCODILE_DATA_DIR` (default `data`), even when `--data-dir` is given. `--data-dir` changes only where the read commands look.
+- `require_currency` accepts only codes on the current ISO 4217 list, so a withdrawn code such as `BGN` is refused, and the listing master cannot record a listing's pre-switch currency. A US listing that moves exchange, or a listing whose ISIN changes, raises `ListingConflictError` until an explicit move operation exists.
+- The in-house US calendar treats 2027-12-31 as a holiday and the `exchange_calendars` XNYS calendar does not; the cross-check lists that difference instead of fixing it.
+- The library schedules for XSHG, XBOM and XSES end at 2026-12-31. After that date `calendar_for` answers with the weekday fallback for those MICs, and `quality_for(date)` reports the degradation per date. Their holidays after that date are unknown until the library is upgraded.
+- **Existing Yahoo daily rows are not rewritten.** A fresh backfill writes each `yahoo` daily row again at its corrected `source_ts`. US rows keep their date, but move from 04:00 or 05:00 UTC to 00:00 UTC; rows from exchanges east of UTC move one day later, and so do their ex-dates. Queries across the change see both versions of a session, so rebuild the affected `source=yahoo` partitions before you query across it.
+- The legacy `yahoo` provider still takes and writes Yahoo's suffixed symbols (`THYAO.IS`), while `yahoo_chart` writes `THYAO@XIST`. These are separate series in the lake, and a query must name the one it means.
+- Prices keep the source's unit. Rows with `price_scale = 2` (pence, ZAc, ILA) hold 100 times the major unit; divide by `10 ** price_scale`. This release has no converted view.
+- The declared source order is applied at read time only to `{local}@{MIC}` listing symbols: `resolve_daily_bars` and the listing branch of the `price_leg` ohlcv arm serve them, while US bare tickers keep the capture-time read path unchanged.
+- `yahoo_chart` maps Yahoo's `instrumentType` to a `SecurityType` but stores it nowhere. It declares no `instrument` channel, so listing types come from the official directories and TradingView.
+- Grey sources are on by default. Yahoo's terms, as the research reviewed them, prohibit automated access, and TradingView's terms have not been reviewed. Records keep their source, access controls are never bypassed, and redistribution is the user's responsibility.
+- Exchanges in `RU`, `BY`, `IR`, `SY` and `KP` stay closed unless `CROCODILE_ALLOW_SANCTIONED_MARKETS` names their country. The list is data, not legal advice.
+- 68 of the 172 exchanges have a library calendar. The rest use a weekday fallback without holidays, where a missing day is `no_data`, not a gap. TradingView end-of-day bars carry the `session_snapshot` basis, which is DERIVED.
+- Yahoo needs one request per listing, so whole-universe backfills run for a long time at the shared budget. They resume per listing. Yahoo intraday is limited to Yahoo's windows and to listings you select.
+- Code that read Tiingo's non-US rows from `SecurityMaster` must now read the listing master.
+- Measured on 2026-11-11 with `scripts/measure_global_equity.py`: listings and Yahoo bars were both found in 8 of 12 sampled countries, which does not meet the strict reading of the acceptance criterion, and the NG and KE samples had no history source in that run.
+- MSN Money stays US-only, and Stooq is not part of the universal layer. The package version is still 0.3.3, and nothing in this section is released yet.
+
 ## [0.3.3] - 2026-11-09
 
 ### Added

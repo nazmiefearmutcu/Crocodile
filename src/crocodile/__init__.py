@@ -1,4 +1,4 @@
-"""Crocodile — deterministic market-data engine for crypto and US equities."""
+"""Crocodile — deterministic market-data engine for crypto and equities, US and international."""
 
 from crocodile.core.capability import AssetClass, Capability, ReturnKind
 from crocodile.core.config import Settings

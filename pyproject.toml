@@ -1,7 +1,7 @@
 [project]
 name = "crocodile"
 version = "0.3.3"
-description = "Deterministic market-data engine for crypto and US equities: ingest, normalize, store, replay."
+description = "Deterministic market-data engine for crypto and equities (US and international exchanges by ISO 10383 MIC): ingest, normalize, store, replay."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
@@ -28,6 +28,10 @@ keywords = [
     "quantitative-finance",
     "time-series",
     "data-engineering",
+    "iso-10383",
+    "exchange-calendars",
+    "yahoo-finance",
+    "tradingview",
 ]
 dependencies = [
     "msgspec>=0.18",

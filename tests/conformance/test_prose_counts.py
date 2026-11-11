@@ -23,15 +23,29 @@ Two rules kept here deliberately:
   anchor is gone, so rewording the paragraph out from under the gate is a red test rather
   than a silently vacuous one — the failure mode
   ``tests/conformance/test_gates.py`` documents for gates whose subject can empty.
+
+The section named Global equities asserts the README's ``## Global equities`` section and
+the CHANGELOG's ``## [Unreleased]`` notes against the objects they describe. Every exchange,
+calendar, source, usage class, command, column, path, member and count that those texts
+state is read off the live code, so a sentence that names one that does not exist fails here.
 """
 
 from __future__ import annotations
 
 import ast
+import csv
+import dataclasses
+import enum
+import importlib
 import itertools
 import re
+import shlex
+import tomllib
 from pathlib import Path
 from typing import Final
+
+import msgspec
+import pytest
 
 from crocodile.capabilities import load_all
 from crocodile.core.capability import IRREDUCIBLE, PENDING_SYMMETRY, REGISTRY
@@ -49,6 +63,8 @@ _NUMBER_WORDS: Final[dict[int, str]] = {
     8: "eight",
     9: "nine",
     10: "ten",
+    11: "eleven",
+    12: "twelve",
 }
 
 
@@ -203,8 +219,7 @@ def test_the_ledger_docstring_states_no_count_of_its_own_contents() -> None:
         )
     if PENDING_SYMMETRY:
         assert "Empty today" not in doc, (
-            f"the docstring calls the ledger empty while it holds "
-            f"{sorted(PENDING_SYMMETRY)}"
+            f"the docstring calls the ledger empty while it holds {sorted(PENDING_SYMMETRY)}"
         )
 
 
@@ -224,8 +239,7 @@ def test_the_ops_batch_counts_the_exemption_list_correctly() -> None:
     )
     doc = _module_docstring(_SRC / "capabilities" / "ops.py")
     expected = (
-        f"{_NUMBER_WORDS[len(declared_here)]} of the "
-        f"{_NUMBER_WORDS[len(IRREDUCIBLE)]} entries of"
+        f"{_NUMBER_WORDS[len(declared_here)]} of the {_NUMBER_WORDS[len(IRREDUCIBLE)]} entries of"
     )
     assert expected in doc, (
         f"this batch declares {len(declared_here)} of IRREDUCIBLE's {len(IRREDUCIBLE)} "
@@ -318,8 +332,7 @@ def test_the_provider_factory_docstring_lists_every_registered_provider() -> Non
     assert tail, "the 'Valid values:' enumeration is gone from make_provider's docs"
     listed = set(_backticked(tail.split("—")[0]))
     assert listed == set(factory._REGISTRY), (
-        f"make_provider's docs list {sorted(listed)}, _REGISTRY holds "
-        f"{sorted(factory._REGISTRY)}"
+        f"make_provider's docs list {sorted(listed)}, _REGISTRY holds {sorted(factory._REGISTRY)}"
     )
 
 
@@ -437,3 +450,555 @@ def test_the_mcp_projection_counts_the_same_wire_names() -> None:
         f"the MCP projection requires asset_class on {explicit} wire names; _definition's "
         "docstring says otherwise"
     )
+
+
+# ---------------------------------------------------------------------------
+# Global equities: README, CHANGELOG and package metadata
+# ---------------------------------------------------------------------------
+
+_REPO: Final = _SRC.parents[1]
+_README: Final = _REPO / "README.md"
+_CHANGELOG: Final = _REPO / "CHANGELOG.md"
+_FENCE: Final = "```"
+_FORBIDDEN_CLAIMS: Final = (
+    "global coverage",
+    "all exchanges",
+    "worldwide coverage",
+    "real-time",
+    "institutional",
+    "complete",
+)
+
+
+def _markdown_section(path: Path, heading: str) -> str:
+    """The text from *heading* to the next heading of the same or a higher level.
+
+    Lines inside a fenced block are never headings, so a comment line inside a bash example
+    does not end the section early.
+    """
+    lines = path.read_text(encoding="utf-8").splitlines()
+    assert heading in lines, f"{path.name} has no line {heading!r}; the anchor is gone"
+    start = lines.index(heading)
+    level = len(heading) - len(heading.lstrip("#"))
+    in_fence = False
+    for index in range(start + 1, len(lines)):
+        line = lines[index]
+        if line.startswith(_FENCE):
+            in_fence = not in_fence
+            continue
+        hashes = len(line) - len(line.lstrip("#"))
+        if not in_fence and 0 < hashes <= level and line[hashes : hashes + 1] == " ":
+            return "\n".join(lines[start:index])
+    return "\n".join(lines[start:])
+
+
+def _global_equities() -> str:
+    return _markdown_section(_README, "## Global equities")
+
+
+def _unreleased() -> str:
+    return _markdown_section(_CHANGELOG, "## [Unreleased]")
+
+
+def _code_lines(section: str) -> list[str]:
+    """Command lines in fenced blocks, backslash continuations joined and comments dropped."""
+    commands: list[str] = []
+    in_fence = False
+    pending = ""
+    for raw in section.splitlines():
+        if raw.startswith(_FENCE):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            continue
+        line = raw.strip()
+        if line.endswith("\\"):
+            pending += line[:-1] + " "
+            continue
+        line = pending + line
+        pending = ""
+        if line and not line.startswith("#"):
+            commands.append(line)
+    return commands
+
+
+def _table_after(section: str, heading: str) -> list[list[str]]:
+    """The body rows of the first Markdown table after *heading*, header and rule dropped."""
+    lines = section.splitlines()
+    assert heading in lines, f"no line {heading!r} in the section"
+    rows: list[list[str]] = []
+    seen_header = False
+    for line in lines[lines.index(heading) + 1 :]:
+        if not line.startswith("|"):
+            if seen_header:
+                break
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if not seen_header:
+            seen_header = True
+            continue
+        if set("".join(cells)) <= set("-: "):
+            continue
+        rows.append(cells)
+    return rows
+
+
+def _has_member(owner: type, name: str) -> bool:
+    if isinstance(owner, enum.EnumMeta):
+        return name in owner.__members__
+    if issubclass(owner, msgspec.Struct):
+        return name in {f.name for f in msgspec.structs.fields(owner)} or hasattr(owner, name)
+    if dataclasses.is_dataclass(owner):
+        return name in {f.name for f in dataclasses.fields(owner)} or hasattr(owner, name)
+    return hasattr(owner, name) or name in getattr(owner, "__annotations__", {})
+
+
+def _resolve_dotted(path: str) -> object:
+    """Import the longest importable prefix of *path*, then read the rest as attributes.
+
+    A last name that is a field of a class rather than a class attribute (a msgspec field,
+    say) resolves to that name, because what is checked is that the member exists.
+    """
+    parts = path.removesuffix("()").split(".")
+    for cut in range(len(parts), 0, -1):
+        try:
+            found: object = importlib.import_module(".".join(parts[:cut]))
+        except ModuleNotFoundError:
+            continue
+        for position in range(cut, len(parts)):
+            attribute = parts[position]
+            if (
+                isinstance(found, type)
+                and position == len(parts) - 1
+                and not hasattr(found, attribute)
+                and _has_member(found, attribute)
+            ):
+                return attribute
+            found = getattr(found, attribute)
+        return found
+    raise AssertionError(f"`{path}` does not resolve")
+
+
+def _documented_classes() -> dict[str, type]:
+    """The namespace C3 resolves ``Class.member`` tokens in.
+
+    Public classes of the record and enum modules and of ``crocodile.core.markets`` and its
+    submodules, plus the runtime classes the notes describe by name.
+    """
+    from crocodile.core.ingest.deadletter import DeadLetterQueue
+    from crocodile.core.scheduler.coordinator import PullTask, ScheduledPullCoordinator
+    from crocodile.core.schema import enums, records
+    from crocodile.equity.providers.base import Provider
+    from crocodile.equity.reference.master import SecurityMaster
+
+    modules: list[object] = [records, enums]
+    for name in (
+        "",
+        "mic",
+        "currency",
+        "exchanges",
+        "calendar",
+        "symbols",
+        "grammar",
+        "master",
+        "sanctions",
+        "usage",
+    ):
+        module_name = f"crocodile.core.markets.{name}" if name else "crocodile.core.markets"
+        try:
+            modules.append(importlib.import_module(module_name))
+        except ModuleNotFoundError:
+            continue
+    classes: dict[str, type] = {}
+    for module in modules:
+        for name, value in vars(module).items():
+            if (
+                isinstance(value, type)
+                and not name.startswith("_")
+                and value.__module__.startswith("crocodile")
+            ):
+                classes.setdefault(name, value)
+    for extra in (PullTask, ScheduledPullCoordinator, Provider, SecurityMaster, DeadLetterQueue):
+        classes.setdefault(extra.__name__, extra)
+    return classes
+
+
+def _live_exchange_rows() -> list[object]:
+    from crocodile.core.markets.exchanges import ExchangeRegistry
+
+    return list(ExchangeRegistry().all())
+
+
+def test_the_global_equities_section_counts_the_exchange_table() -> None:
+    """The README's exchange and country counts are the exchange table's own counts.
+
+    The README is where a reader learns how far the reference data reaches. A count typed
+    once and never read again goes stale the day a row is added, and the sentence then
+    understates or overstates coverage with nothing failing. Reading both numbers off
+    ``ExchangeRegistry`` makes adding a row a change that must also touch the sentence.
+    """
+    rows = _live_exchange_rows()
+    countries = len({row.country for row in rows})  # type: ignore[attr-defined]
+    anchor = (
+        f"`src/crocodile/core/markets/data/exchanges.csv` lists {len(rows)} exchanges "
+        f"in {countries} countries"
+    )
+    assert anchor in _global_equities(), f"the Global equities section lacks {anchor!r}"
+
+
+def test_the_global_equities_section_counts_library_calendars() -> None:
+    """The README's library-calendar count is taken from the table and tied to ``calendar_for``.
+
+    The section says how many exchanges get a holiday-aware calendar from the
+    ``exchange_calendars`` library and how many fall back to weekdays. The count is taken from
+    the ``xcal_code`` column, which is what ``calendar_for`` consults. Two spot checks then
+    confirm that a row with a code answers ``LIBRARY`` and a row without one answers
+    ``WEEKDAY_FALLBACK``, so the count is tied to behaviour and not only to data. Building every
+    calendar here would pay the library import many times over.
+    """
+    from crocodile.core.markets.calendar import CalendarQuality, calendar_for
+
+    rows = _live_exchange_rows()
+    with_code = [row for row in rows if row.xcal_code]  # type: ignore[attr-defined]
+    without_code = [row for row in rows if not row.xcal_code]  # type: ignore[attr-defined]
+    assert with_code and without_code, "the exchange table has no mix of library rows"
+    first_with = with_code[0].mic  # type: ignore[attr-defined]
+    first_without = without_code[0].mic  # type: ignore[attr-defined]
+    assert calendar_for(first_with).quality is CalendarQuality.LIBRARY
+    assert calendar_for(first_without).quality is CalendarQuality.WEEKDAY_FALLBACK
+    anchor = f"{len(with_code)} of them have a library calendar"
+    assert anchor in _global_equities(), f"the Global equities section lacks {anchor!r}"
+
+
+def test_the_global_equities_section_names_exactly_the_default_sanctioned_countries() -> None:
+    """The sanctions line in the README names exactly the countries the data file closes.
+
+    Sanctioned-by-default is a legal boundary, so a reader must be able to see it, and a
+    README that lists three countries while the data closes five is the worst error this
+    section could make. The set is compared in both directions against the ``country``
+    column of ``sanctions.csv``.
+    """
+    data = _SRC / "core" / "markets" / "data" / "sanctions.csv"
+    with data.open(encoding="utf-8", newline="") as handle:
+        listed = {row["country"] for row in csv.DictReader(handle)}
+    lines = [
+        line
+        for line in _global_equities().splitlines()
+        if line.startswith("Sanctioned by default:")
+    ]
+    assert len(lines) == 1, "the section needs exactly one 'Sanctioned by default:' line"
+    named = set(re.findall(r"`([A-Z]{2})`", lines[0]))
+    assert named == listed, f"README names {sorted(named)}; sanctions.csv closes {sorted(listed)}"
+
+
+def test_the_sources_table_matches_the_registered_universal_sources() -> None:
+    """The sources table lists every universal source the registry holds, with its usage class.
+
+    A source a reader cannot find in the table is a source whose terms nobody reviewed in
+    print, and a row for a source that is not registered documents a feature that does not
+    run. Both directions are compared, name to usage class, against the ``usage_class`` each
+    registered universal class declares.
+    """
+    from crocodile.equity.providers import factory
+
+    registered = {
+        name: getattr(cls.usage_class, "value", cls.usage_class)
+        for name, cls in factory._REGISTRY.items()
+        if getattr(cls, "__module__", "").startswith("crocodile.equity.universal")
+    }
+    assert registered, "no universal source is registered; the table would be vacuous"
+    documented: dict[str, str] = {}
+    for cells in _table_after(_global_equities(), "### Sources and usage classes"):
+        assert len(cells) == 3, f"a sources row does not have three cells: {cells}"
+        documented[cells[0].strip("`")] = cells[-1].strip("`")
+    assert documented == registered
+
+
+def test_the_global_equities_section_explains_every_usage_class() -> None:
+    """Every usage class the code defines is named, in backticks, in the global equities section.
+
+    A reader who meets ``internal`` in the sources table must find what it means in the same
+    section. Each member's value is searched for as a backticked token, so a class added to
+    ``UsageClass`` without an explanation fails here.
+    """
+    from crocodile.core.markets.usage import UsageClass
+
+    members = list(UsageClass)
+    assert members, "UsageClass has no members"
+    section = _global_equities()
+    missing = [member.value for member in members if f"`{member.value}`" not in section]
+    assert not missing, f"usage classes the section never names: {missing}"
+
+
+def test_every_command_in_the_global_equities_section_exists_with_those_options() -> None:
+    """Every command in the Run it block exists, and every option it uses exists on that command.
+
+    The block is the reader's copy-paste path, so a flag renamed in the operator surface must
+    fail here rather than in a shell. Each command must also carry every option it marks as
+    required (``backfill`` needs its channel and its two bounds). ``checked`` must be at least
+    five, so an emptied block fails rather than passing vacuously.
+    """
+    import click
+    import typer
+
+    from crocodile.surfaces.entrypoint import build_app
+
+    group = typer.main.get_command(build_app())
+    checked = 0
+    for line in _code_lines(_markdown_section(_README, "### Run it")):
+        tokens = shlex.split(line)
+        assert "crocodile" in tokens, f"a Run it line does not invoke crocodile: {line!r}"
+        tokens = tokens[tokens.index("crocodile") + 1 :]
+        name = tokens[0]
+        assert name in group.commands, f"`crocodile {name}` is not a command"
+        command = group.commands[name]
+        known = {"--help"}
+        required: set[str] = set()
+        for param in command.params:
+            if isinstance(param, click.Argument):
+                continue
+            known |= set(param.opts) | set(getattr(param, "secondary_opts", ()))
+            if param.required:
+                required |= set(param.opts)
+        used = {token.split("=", 1)[0] for token in tokens[1:] if token.startswith("--")}
+        assert used <= known, f"`crocodile {name}` has no option {sorted(used - known)}"
+        assert required <= used, f"`crocodile {name}` lacks required {sorted(required - used)}"
+        checked += 1
+    assert checked >= 5, f"only {checked} commands checked; the block is empty"
+
+
+@pytest.mark.parametrize("which", ["readme", "changelog"])
+def test_every_path_module_and_variable_the_global_notes_name_exists(which: str) -> None:
+    """Every module, path and environment variable the global notes name exists in the tree.
+
+    The notes point readers at code (``crocodile.core.markets.currency.to_major``), at files
+    (``src/crocodile/core/markets/data/sanctions.csv``) and at settings
+    (``CROCODILE_ALLOW_SANCTIONED_MARKETS``). Each name is resolved against the live package,
+    the filesystem or the settings reader, so a rename leaves a red test instead of a dead
+    pointer. Placeholders such as ``<data_dir>/...`` are not names and are skipped.
+    """
+    from crocodile.core.config import Settings
+
+    section = _global_equities() if which == "readme" else _unreleased()
+    source_text = "\n".join(path.read_text(encoding="utf-8") for path in _SRC.rglob("*.py"))
+    settings_names = set(Settings.known_names())
+    checked = 0
+    for token in re.findall(r"`([^`\n]+)`", section):
+        if token.startswith("<") or " " in token:
+            continue
+        if token.startswith(("src/", "scripts/", "docs/", "tests/")):
+            assert (_REPO / token).exists(), f"`{token}` does not exist"
+            checked += 1
+        elif token.startswith("crocodile."):
+            _resolve_dotted(token)
+            checked += 1
+        elif token.startswith("CROCODILE_"):
+            name = token.split("=", 1)[0]
+            assert name in settings_names or name in source_text, f"`{name}` is not read anywhere"
+            checked += 1
+    assert checked > 0, f"the {which} section names no path, module or variable"
+
+
+def test_the_markets_columns_the_readme_lists_are_the_equity_report_columns(
+    network_forbidden: None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The ``Columns:`` line of the README is the column list the equity markets report returns.
+
+    A reader who selects a column named in the README must find it in the output, in the order
+    the README gives. The report is produced offline against an empty lake, which is the path
+    the README's ``markets`` example takes on a fresh checkout.
+    """
+    from crocodile.core.config import Settings
+    from crocodile.core.schema.enums import AssetClass
+    from crocodile.core.store.catalog import Catalog
+    from crocodile.surfaces import dispatch
+
+    load_all()
+    monkeypatch.setenv("CROCODILE_DATA_DIR", str(tmp_path))
+    cap = REGISTRY["markets"]
+    params = dispatch.build_params(cap, {"mic": "XIST"})
+    with Catalog(tmp_path) as catalog:
+        ctx = dispatch.build_context(
+            catalog,
+            AssetClass.EQUITY,
+            settings=Settings.from_env(),
+            readonly=True,
+            row_limit=None,
+        )
+        result = dispatch.drive(dispatch.invoke(cap, ctx, params), row_limit=None)
+    if hasattr(result, "columns"):
+        columns = list(result.columns)
+    else:
+        columns = list(dispatch.payload(cap, result)["rows"][0])
+    columns_line = next(
+        (line for line in _global_equities().splitlines() if line.startswith("Columns:")),
+        None,
+    )
+    assert columns_line is not None, "the Global equities section has no 'Columns:' line"
+    assert re.findall(r"`([^`]+)`", columns_line) == columns
+
+
+def test_the_changelog_opens_with_unreleased_notes_in_the_house_sections() -> None:
+    """The first release heading in the changelog is ``[Unreleased]``, with the house sections.
+
+    The changelog is read top-down by people deciding what goes into the next release, so the
+    unreleased notes come first and their headings are the four the project uses. A heading
+    added or reordered without a decision fails here.
+    """
+    headings = [
+        line
+        for line in _CHANGELOG.read_text(encoding="utf-8").splitlines()
+        if line.startswith("## [")
+    ]
+    assert headings and headings[0] == "## [Unreleased]", f"first release heading: {headings[:1]}"
+    sections = [line[4:] for line in _unreleased().splitlines() if line.startswith("### ")]
+    assert sections == ["Added", "Changed", "Fixed", "Compatibility and limits"]
+
+
+def test_every_class_member_the_unreleased_notes_name_exists() -> None:
+    """Every ``Class.member`` token in the unreleased notes names a real field or member.
+
+    The notes name new record fields, enum members and methods in backticks. A field that was
+    renamed or never written would leave a changelog describing a schema the code does not
+    have. Owners outside the documented namespace are skipped, and ``checked`` must be positive
+    so the test cannot pass on notes that name nothing.
+    """
+    classes = _documented_classes()
+    checked = 0
+    for owner, member in re.findall(
+        r"`([A-Z][A-Za-z0-9]+)\.([A-Za-z_][A-Za-z0-9_]*)`", _unreleased()
+    ):
+        target = classes.get(owner)
+        if target is None:
+            continue
+        assert _has_member(target, member), f"`{owner}.{member}` does not exist"
+        checked += 1
+    assert checked > 0, "the unreleased notes name no Class.member token"
+
+
+def test_the_unreleased_notes_count_exchanges_and_name_only_registered_bases() -> None:
+    """The unreleased notes state the live exchange counts and name only registered bases.
+
+    The changelog repeats the exchange count and the library-calendar count, so a change to the
+    table moves the changelog too. The provenance line names the bases a lake row can carry; a
+    name that is not registered would describe a provenance value no writer emits.
+    """
+    from crocodile.core.schema import provenance
+
+    rows = _live_exchange_rows()
+    total = len(rows)
+    with_code = sum(1 for row in rows if row.xcal_code)  # type: ignore[attr-defined]
+    text = _unreleased()
+    counts = {int(match) for match in re.findall(r"\b(\d+) exchanges\b", text)}
+    assert counts, "the unreleased notes state no exchange count"
+    assert counts == {total}, f"the notes say {sorted(counts)} exchanges; the table holds {total}"
+    pairs = {
+        (int(a), int(b))
+        for a, b in re.findall(r"\b(\d+) of the (\d+) exchanges have a library calendar", text)
+    }
+    assert pairs, "the unreleased notes state no library-calendar count"
+    expected = {(with_code, total)}
+    assert pairs == expected, f"the notes say {pairs}; the table says {expected}"
+    provenance.load_all_bases()
+    registered = provenance.registered_bases()
+    line = next(line for line in text.splitlines() if "Provenance bases" in line)
+    named = re.findall(r"`([a-z_]+)`", line)
+    assert named, "the provenance line names no basis"
+    assert set(named) <= registered, f"unregistered bases named: {sorted(set(named) - registered)}"
+
+
+def test_the_one_line_descriptions_do_not_confine_equities_to_the_us() -> None:
+    """The package description, package docstring and landing page drop "US equities".
+
+    Those three lines are what a reader meets first (``help(crocodile)``, the package index,
+    the server's root page), and they are the lines this release changed. Each must avoid the
+    phrase, and the description and keywords must avoid the over-claims in ``_FORBIDDEN_CLAIMS``.
+    The exchange table must also hold at least one non-US exchange, because a description that
+    widens its claim has to be true of the data it describes.
+    """
+    import crocodile
+    from crocodile.core.markets.exchanges import ExchangeRegistry
+
+    project = tomllib.loads((_REPO / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    server = (_SRC / "surfaces" / "server.py").read_text(encoding="utf-8")
+    lines = {
+        "project.description": project["description"],
+        "crocodile.__doc__ line 1": (crocodile.__doc__ or "").splitlines()[0],
+        "src/crocodile/surfaces/server.py": server,
+    }
+    for where, text in lines.items():
+        assert "US equities" not in text, f"{where} still says 'US equities'"
+    description = project["description"].lower()
+    keywords = " ".join(project["keywords"]).lower()
+    for claim in _FORBIDDEN_CLAIMS:
+        assert claim not in description, f"description claims {claim!r}"
+        assert claim not in keywords, f"keywords claim {claim!r}"
+    assert any(row.country != "US" for row in ExchangeRegistry().all())  # type: ignore[attr-defined]
+
+
+def test_the_keywords_this_release_adds_each_name_something_in_the_tree() -> None:
+    """Each keyword this release adds has evidence in the tree: data, a dependency or a source.
+
+    ``pyproject.toml`` says its keywords name things that exist today, so a keyword added without
+    evidence is the aspirational term the comment forbids. ISO 10383 data sits beside the code,
+    ``exchange-calendars`` is a declared dependency, and Yahoo and TradingView are both
+    registered sources.
+    """
+    from crocodile.equity.providers import factory
+
+    project = tomllib.loads((_REPO / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    keywords = project["keywords"]
+    for keyword in ("iso-10383", "exchange-calendars", "yahoo-finance", "tradingview"):
+        assert keyword in keywords, f"keyword {keyword!r} is missing"
+    data = _SRC / "core" / "markets" / "data"
+    assert any(path.name.startswith("iso10383") for path in data.iterdir())
+    assert any(
+        dep.lower().startswith(("exchange_calendars", "exchange-calendars"))
+        for dep in project["dependencies"]
+    )
+    assert "yahoo" in factory._REGISTRY and "yahoo_chart" in factory._REGISTRY
+    assert "tradingview" in factory._REGISTRY
+
+
+def test_the_registry_census_docstring_counts_its_own_set() -> None:
+    """The Phase 2 census docstring states the size of the set it documents.
+
+    ``_REGISTRY_AS_SHIPPED`` is the frozen Phase 2 census, and its docstring's count is
+    history that later capabilities do not move. This pins the sentence to the set's own
+    size, so an edit to the set that the sentence does not follow fails here. The set stays
+    at 49 in this release, so this test passes at once; it is kept as a pin.
+    """
+    gates = _TESTS / "conformance" / "test_gates.py"
+    tree = ast.parse(gates.read_text(encoding="utf-8"))
+    size: int | None = None
+    for node in tree.body:
+        if (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "_REGISTRY_AS_SHIPPED"
+        ):
+            assert isinstance(node.value, ast.Call), "_REGISTRY_AS_SHIPPED is not a frozenset call"
+            size = len(node.value.args[0].elts)  # type: ignore[attr-defined]
+    assert size is not None, "test_gates.py has no _REGISTRY_AS_SHIPPED"
+    doc = _assignment_docstring(gates, "_REGISTRY_AS_SHIPPED")
+    assert f"The {size} capabilities" in doc, f"the census docstring does not say {size}"
+
+
+def test_the_measurement_paragraph_states_the_scripts_own_bounds() -> None:
+    """The measurement paragraph states the country count and per-endpoint cap the script uses.
+
+    The README must not describe the live measurement with a looser bound than the script
+    enforces. The count and the cap are imported from the script and written as words, so a
+    change to either constant fails here until the paragraph follows it. The script is Task
+    17's deliverable; if it is absent the test skips and says so.
+    """
+    script = _REPO / "scripts" / "measure_global_equity.py"
+    if not script.exists():
+        pytest.skip("scripts/measure_global_equity.py is absent; it is Task 17's deliverable")
+    from scripts.measure_global_equity import DEFAULT_COUNTRIES, PER_ENDPOINT_CAP
+
+    section = _markdown_section(_README, "### What is measured and what is not")
+    countries = f"for {_NUMBER_WORDS[len(DEFAULT_COUNTRIES)]} countries"
+    cap = f"at most {_NUMBER_WORDS[PER_ENDPOINT_CAP]} requests per endpoint"
+    assert countries in section, f"the measurement paragraph lacks {countries!r}"
+    assert cap in section, f"the measurement paragraph lacks {cap!r}"

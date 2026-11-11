@@ -318,7 +318,7 @@ async def root_dashboard() -> Any:
     return HTMLResponse(
         "<!doctype html><meta charset=utf-8><title>Crocodile</title>"
         "<h1>Crocodile</h1>"
-        "<p>Deterministic market data for crypto and US equities.</p>"
+        "<p>Deterministic market data for crypto and equities, US and international.</p>"
         "<ul>"
         '<li><a href="/docs">/docs</a> &mdash; the generated API reference</li>'
         '<li><a href="/api/v1/capabilities">/api/v1/capabilities</a> &mdash; '
