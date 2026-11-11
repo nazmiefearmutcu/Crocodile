@@ -51,6 +51,8 @@ from crocodile.core.markets.sanctions import (
     require_not_sanctioned,
 )
 from crocodile.core.markets.symbols import is_listing_symbol, parse_listing_symbol
+from crocodile.core.scheduler.coordinator import ScheduledPullCoordinator
+from crocodile.core.scheduler.state import SchedulerStateStore
 from crocodile.core.schema.records import OHLCV, CorporateAction, Record
 from crocodile.core.sink.base import Sink
 from crocodile.equity.providers.base import (
@@ -1981,3 +1983,131 @@ def open_orchestrator(
         state.close()
         master.close()
         raise
+
+
+# ---------------------------------------------------------------------------
+# Scheduled end-of-day collection (task 15): one coordinator task per market
+# ---------------------------------------------------------------------------
+
+
+class EodCollectionError(RuntimeError):
+    """A market's end-of-day collection failed, or held no bars for its session.
+
+    Raised into the coordinator on purpose: its persistent failure counter turns a repeated
+    failure into a gap entry after ``max_failures`` and moves the watermark past it (spec 3.9).
+    """
+
+    def __init__(self, mic: str, reason: str) -> None:
+        super().__init__(f"EOD collection for {mic} failed: {reason}")
+        self.mic = mic
+        self.reason = reason
+
+
+def eod_task_name(mic: str) -> str:
+    return f"equity-eod:{mic}"
+
+
+@dataclass(slots=True)
+class EodSchedule:
+    coordinator: ScheduledPullCoordinator
+    mics: tuple[str, ...]
+    """The MICs with a registered task."""
+    skipped: dict[str, str]
+    """MIC to ``"sanctioned"`` or ``"no_source"``: a market in scope that gets no task."""
+    reports: dict[str, RunReport]
+    """The last report per MIC run in this process."""
+    failures: dict[str, str]
+    """MIC to the reason of its last failed run; cleared by a successful run."""
+
+
+_EOD_FAILED: Final = frozenset(
+    {OutcomeStatus.FAILED, OutcomeStatus.TRANSIENT_ERROR, OutcomeStatus.UNSERVABLE}
+)
+
+
+def build_eod_schedule(
+    orchestrator: UniversalOrchestrator,
+    scope: Scope,
+    *,
+    state_store: SchedulerStateStore,
+    **coordinator_options: Any,
+) -> EodSchedule:
+    """Register one coordinator task per market of ``scope`` that has a daily source.
+
+    ``coordinator_options`` (``max_failures``, ``max_dates_per_tick``, ``retry_cooldown``) go to
+    :class:`ScheduledPullCoordinator`. A named sanctioned or unknown market raises here; the
+    sanctioned members of a wider scope are skipped and reported. A market whose daily chain
+    has no bound source is skipped with ``"no_source"``. Every other market is due after its
+    session closes plus the coordinator's default delay, the same delay ``collect_eod`` uses.
+    """
+    resolved = orchestrator.resolve_scope(scope)
+    schedule = EodSchedule(
+        coordinator=ScheduledPullCoordinator(state_store, **coordinator_options),
+        mics=(),
+        skipped={},
+        reports={},
+        failures={},
+    )
+    for subject, _mic, reason in resolved.refused:
+        schedule.skipped[subject] = "sanctioned" if reason == "sanctioned" else reason
+    bound = frozenset(orchestrator.bindings.snapshot) | frozenset(orchestrator.bindings.history)
+    registered: list[str] = []
+    for mic in resolved.mics:
+        chain = orchestrator.order.order_for(mic, "ohlcv")
+        if not any(name in bound for name in chain):
+            schedule.skipped[mic] = "no_source"
+            continue
+        schedule.coordinator.register_task(
+            eod_task_name(mic),
+            _eod_task(orchestrator, schedule, mic),
+            interval="daily",
+            policy="after_hours",
+            calendar=calendar_for(mic),
+        )
+        registered.append(mic)
+    schedule.mics = tuple(registered)
+    return schedule
+
+
+def _eod_task(
+    orchestrator: UniversalOrchestrator, schedule: EodSchedule, mic: str
+) -> Callable[[datetime.date], Awaitable[None]]:
+    """The coordinator's task for one market: collect the latest completed session, or raise.
+
+    ``run_date`` is the coordinator's logical session date. ``collect_eod`` always collects the
+    latest completed session (the TradingView scan only shows the current state), so a catch-up
+    call for an older date finds the EOD marker and does nothing. The closure never calls
+    ``asyncio.run``: the coordinator awaits it on the running loop.
+    """
+
+    async def run(run_date: datetime.date) -> None:
+        logger.debug("equity-eod %s: coordinator logical date %s", mic, run_date)
+        try:
+            report = await orchestrator.collect_eod(Scope(mic=mic), orchestrator.now())
+        except Exception as exc:
+            schedule.failures[mic] = f"{type(exc).__name__}: {exc}"
+            raise
+        schedule.reports[mic] = report
+        outcomes = report.market_outcomes(mic)
+        bars = any(
+            outcome.status is OutcomeStatus.OK
+            or (outcome.status is OutcomeStatus.ALREADY_COVERED and outcome.reason == "ok")
+            for outcome in outcomes
+        )
+        failed = [outcome for outcome in outcomes if outcome.status in _EOD_FAILED]
+        no_bars = any(
+            outcome.status is OutcomeStatus.NO_DATA
+            or (outcome.status is OutcomeStatus.ALREADY_COVERED and outcome.reason == "no_data")
+            for outcome in outcomes
+        )
+        if failed and not bars:
+            reason = str(failed[0].reason or failed[0].status)
+            schedule.failures[mic] = reason
+            raise EodCollectionError(mic, reason)
+        if no_bars and not bars:
+            schedule.failures[mic] = "no bars for the session"
+            raise EodCollectionError(mic, "no bars for the session")
+        # OK, ALREADY_COVERED("ok") and NO_SESSION (the fallback's own outcome decides) succeed.
+        schedule.failures.pop(mic, None)
+
+    return run
