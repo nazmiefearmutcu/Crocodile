@@ -27,6 +27,7 @@ checked rather than assumed.
 from __future__ import annotations
 
 import pathlib
+from collections.abc import Iterator
 from types import UnionType
 from typing import Any, Literal, Union, get_args, get_origin
 
@@ -35,9 +36,20 @@ import pytest
 from typer.testing import CliRunner
 
 from crocodile.capabilities import load_all
-from crocodile.core.capability import IRREDUCIBLE, REGISTRY, AssetClass, Capability
+from crocodile.core import capability
+from crocodile.core.capability import (
+    IRREDUCIBLE,
+    REGISTRY,
+    AssetClass,
+    Capability,
+    CapabilityContext,
+    Impl,
+    ReturnKind,
+    declare,
+)
 from crocodile.core.config import Settings
 from crocodile.core.errors import CapabilityUnavailable
+from crocodile.core.schema.provenance import Provenance
 from crocodile.surfaces import cli, dispatch, mcp, rest
 from tests.surfaces.conftest import END_NS, START_NS, SYMBOL
 
@@ -527,3 +539,135 @@ def test_a_capability_that_does_serve_one_market_still_reports_which(
     )
     assert body["provenance"]["asset_class"] == "crypto"
     assert dispatch.resolve("slippage").cross_market is False
+
+
+# ---------------------------------------------------------------------------
+# LOCAL@MIC: a listing symbol names the equity market (spec 3.11, Dispatch)
+# ---------------------------------------------------------------------------
+
+
+def test_a_listing_symbol_naming_a_registered_mic_settles_equity() -> None:
+    """``THYAO@XIST`` is a canonical listing symbol; its MIC is in the ISO 10383 registry."""
+    cap = dispatch.resolve("replay")
+    assert dispatch.resolve_asset_class(cap, symbols=("THYAO@XIST",)) is AssetClass.EQUITY
+
+    params = dispatch.build_params(
+        cap, {**_ARGUMENTS["replay"], "symbols": "THYAO@XIST,7203@XJPX"}
+    )
+    assert dispatch.resolve_asset_class(cap, symbols=dispatch.symbol_hints(params)) is (
+        AssetClass.EQUITY
+    )
+
+
+def test_a_segment_mic_is_still_registry_evidence() -> None:
+    """``7203@XTKS`` names a segment of XJPX; membership counts segments on purpose."""
+    cap = dispatch.resolve("replay")
+    assert dispatch.resolve_asset_class(cap, symbols=("7203@XTKS",)) is AssetClass.EQUITY
+
+
+def test_an_expired_mic_still_names_the_equity_market() -> None:
+    """XTUR is expired (use XIST). The equity half then refuses with the registry's redirect;
+    a dispatcher that answered "cannot tell which market" here would hide that message."""
+    cap = dispatch.resolve("replay")
+    assert dispatch.resolve_asset_class(cap, symbols=("THYAO@XTUR",)) is AssetClass.EQUITY
+
+
+@pytest.mark.parametrize("symbol", ["FOO@ZZZZ", "THYAO@xist"])
+def test_an_at_sign_naming_no_registered_mic_settles_nothing(symbol: str) -> None:
+    """MICs are exact: an unregistered code and a lower-case one are not evidence."""
+    cap = dispatch.resolve("replay")
+    with pytest.raises(ValueError, match="cannot tell which market"):
+        dispatch.resolve_asset_class(cap, symbols=(symbol,))
+
+
+def test_a_bare_us_ticker_is_still_not_evidence() -> None:
+    cap = dispatch.resolve("replay")
+    with pytest.raises(ValueError, match="cannot tell which market"):
+        dispatch.resolve_asset_class(cap, symbols=("AAPL",))
+
+
+def test_a_listing_symbol_and_a_crypto_symbol_together_refuse() -> None:
+    cap = dispatch.resolve("replay")
+    with pytest.raises(ValueError, match="two markets"):
+        dispatch.resolve_asset_class(cap, symbols=("THYAO@XIST", SYMBOL))
+
+
+def test_a_listing_symbol_does_not_choose_a_market_a_capability_lacks() -> None:
+    """A crypto-only capability has no equity claim to make, so the single implementation
+    answers, exactly as before this rule existed."""
+    load_all()
+    crypto_only = sorted(
+        name
+        for name in IRREDUCIBLE
+        if (cap := REGISTRY.get(name)) is not None and set(cap.impls) == {AssetClass.CRYPTO}
+    )
+    assert crypto_only, "no crypto-only capability, so this test would pass over nothing"
+    for name in crypto_only:
+        cap = dispatch.resolve(name)
+        assert dispatch.resolve_asset_class(cap, symbols=("THYAO@XIST",)) is AssetClass.CRYPTO
+
+
+class _MarketOfParams(msgspec.Struct, frozen=True):
+    symbol: str
+
+
+def _served_by_crypto(ctx: CapabilityContext, params: _MarketOfParams) -> dict[str, str]:
+    return {"served": ctx.asset_class.value}
+
+
+def _served_by_equity(ctx: CapabilityContext, params: _MarketOfParams) -> dict[str, str]:
+    return {"served": ctx.asset_class.value}
+
+
+@pytest.fixture
+def _isolate() -> Iterator[None]:
+    """The registry is module state and all three surfaces read it live."""
+    registry = dict(REGISTRY)
+    declared = set(capability._DECLARED_NAMES)
+    try:
+        yield
+    finally:
+        REGISTRY.clear()
+        REGISTRY.update(registry)
+        capability._DECLARED_NAMES.clear()
+        capability._DECLARED_NAMES.update(declared)
+
+
+def test_three_surfaces_resolve_a_listing_symbol_without_being_told_the_market(
+    lake: pathlib.Path, _isolate: None
+) -> None:
+    """REST, MCP and the CLI each hand the built struct to the same resolver, so a listing
+    symbol alone settles the equity half on all three."""
+    declare(
+        Capability(
+            name="fixture-market-of",
+            summary="Registered by a test, answers with the market it was served in.",
+            params=_MarketOfParams,
+            returns=ReturnKind.SCALAR,
+            impls={
+                AssetClass.CRYPTO: Impl(
+                    fn=_served_by_crypto, prov=Provenance.NATIVE, basis="native"
+                ),
+                AssetClass.EQUITY: Impl(
+                    fn=_served_by_equity, prov=Provenance.NATIVE, basis="native"
+                ),
+            },
+        )
+    )
+
+    response = _client(lake).get("/api/v1/fixture-market-of", params={"symbol": "THYAO@XIST"})
+    assert response.status_code == 200, response.text
+    assert response.json()["result"]["served"] == "equity"
+    assert response.json()["provenance"]["asset_class"] == "equity"
+
+    body = mcp.call_tool(
+        "fixture-market-of", {"symbol": "THYAO@XIST"}, settings=_settings(lake)
+    )
+    assert body["result"]["served"] == "equity"
+
+    result = CliRunner().invoke(
+        cli.build_app(),
+        ["fixture-market-of", "--symbol", "THYAO@XIST", "--data-dir", str(lake)],
+    )
+    assert result.exit_code == 0, result.output
+    assert "equity" in result.output

@@ -284,6 +284,23 @@ def symbol_hints(params: Any) -> tuple[str, ...]:
     return tuple(found)
 
 
+def _equity_listing_mic(symbol: str) -> str | None:
+    """The MIC a canonical ``LOCAL@MIC`` listing symbol names, when the MIC registry knows it.
+
+    The rule is deliberately plain. Membership counts any status and segments, because spec
+    3.11 asks only that the MIC be in the registry: an expired code still names the equity
+    market, and the equity half then explains the redirect. The symbol is never upper-cased
+    and :func:`parse_listing_symbol` is not called, since that strict parser would turn
+    ``THYAO@XTUR`` into "cannot tell which market" and hide the better message.
+    """
+    from crocodile.core.markets.mic import MicRegistry
+
+    local, sep, mic = symbol.rpartition("@")
+    if sep and local and "@" not in local and mic in MicRegistry():
+        return mic
+    return None
+
+
 def resolve_asset_class(
     cap: Capability,
     *,
@@ -303,7 +320,10 @@ def resolve_asset_class(
        implementation and comes back with plausible numbers. Symbols that name *different*
        markets refuse for the same reason and more sharply: one request has one
        implementation, so resolving by position would send the equity symbols into the
-       crypto one, which answers plausibly and empty.
+       crypto one, which answers plausibly and empty. A canonical listing symbol ``LOCAL@MIC``
+       (spec 3.4) whose MIC the ISO 10383 registry knows is equity evidence of the same
+       strength: canonical listing symbols never contain ``:``, so the two rules cannot both
+       fire on one symbol.
     3. Whether there is a choice at all. A capability with one implementation has nothing
        to decide. This step reads ``cap.impls`` and neither ledger, which is what keeps it
        correct as the ledgers move: today the single-implementation set is exactly the
@@ -332,16 +352,23 @@ def resolve_asset_class(
     by_asset_class = _sources_by_asset_class()
     claimed: set[AssetClass] = set()
     for symbol in symbols:
-        if not symbol or ":" not in symbol:
+        if not symbol:
             continue
-        source = symbol.rsplit(":", 1)[0].strip().lower()
-        matched = [
-            asset_class
-            for asset_class, sources in by_asset_class.items()
-            if source in sources and asset_class in cap.impls
-        ]
-        if len(matched) == 1:
-            claimed.add(matched[0])
+        if ":" in symbol:
+            source = symbol.rsplit(":", 1)[0].strip().lower()
+            matched = [
+                asset_class
+                for asset_class, sources in by_asset_class.items()
+                if source in sources and asset_class in cap.impls
+            ]
+            if len(matched) == 1:
+                claimed.add(matched[0])
+        elif (
+            "@" in symbol
+            and AssetClass.EQUITY in cap.impls
+            and _equity_listing_mic(symbol) is not None
+        ):
+            claimed.add(AssetClass.EQUITY)
     if len(claimed) == 1:
         return next(iter(claimed))
     if len(claimed) > 1:
@@ -378,7 +405,8 @@ def requires_explicit_asset_class(cap: Capability) -> bool:
 
     :func:`resolve_asset_class` resolves in three steps and only the first two can succeed
     without the caller saying anything: an explicit choice, or a canonical ``source:RAW``
-    symbol the source registries can place. A capability with two implementations and no
+    symbol the source registries can place, or a ``LOCAL@MIC`` listing symbol whose MIC the
+    registry knows. A capability with two implementations and no
     symbol field has neither, so omitting the class is a hard refusal — and 31 of the 58 wire
     names are in exactly that position.
 
