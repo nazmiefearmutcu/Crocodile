@@ -134,7 +134,8 @@ def listing_context(symbol: str) -> ListingContext:
         code = symbol.rsplit(":", 1)[1]
         if code.upper() in _US_GOOGLE_CODES:
             return _US_CONTEXT
-        _, mic = _google_grammar().from_source(symbol)
+        # Upper-cased like get_possible_google_symbols: the grammar matches case-sensitively.
+        _, mic = _google_grammar().from_source(symbol.upper())
         return _context_for_mic(mic)
     return _US_CONTEXT
 

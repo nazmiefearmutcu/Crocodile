@@ -75,6 +75,31 @@ def test_bare_us_tickers_and_raw_symbols_keep_their_old_candidates():
     assert get_possible_google_symbols("THYAO:IST") == ["THYAO:IST"]
 
 
+def test_a_lower_case_raw_google_symbol_resolves_to_its_market():
+    # The pre-change candidate builder upper-cased a raw ':' symbol, so 'thyao:ist' scraped
+    # /quote/THYAO:IST. The market lookup must see the same code, not the raw spelling.
+    assert get_possible_google_symbols("thyao:ist") == ["THYAO:IST"]
+    istanbul = listing_context("thyao:ist")
+    assert (istanbul.mic, istanbul.currency, str(istanbul.tz)) == (
+        "XIST",
+        "TRY",
+        "Europe/Istanbul",
+    )
+
+
+async def test_scraping_a_lower_case_raw_google_symbol_requests_its_google_code():
+    html = (
+        "<html><body><div class='N6SYTe'>299.25</div>"
+        "<div>As of Jul 3, 2026, 5:10 PM</div></body></html>"
+    )
+    provider = _provider("thyao:ist", ["trade"])
+    session = _session(html)
+    provider.session = session
+    await provider._scrape_symbol("thyao:ist")
+    assert session.get.call_count == 1
+    assert session.get.call_args.args[0].endswith("/quote/THYAO:IST")
+
+
 def test_listing_context_comes_from_the_listing_market():
     istanbul = listing_context("THYAO@XIST")
     assert isinstance(istanbul, ListingContext)
