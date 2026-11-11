@@ -156,12 +156,16 @@ UNIVERSE_COLUMNS: Final[tuple[str, ...]] = (
     "subtype",
 )
 """Universe scan columns: the probe shape first, then the listing's description and type."""
-ROW_TIMESTAMP_FIELD: Final[str | None] = None
-"""The per-row update-time column the EOD scan requests, or ``None`` for no row stamp.
+ROW_TIMESTAMP_FIELD: Final[str | None] = "last-price-update-time"
+"""The per-row stamp the EOD scan requests: the epoch-seconds time of the row's last price change.
 
-Pending: part 11b decides this from the live metainfo and the recorded EOD answers, and the
-measured value replaces ``None`` there. Until then the stamp branch is built and tested with an
-explicit ``row_timestamp_field="stamp"`` argument, and the default means "no stamp".
+Measured on 2026-11-11 (part 11b, ``reports/task-11b-report.md``): every turkey row and the
+current-session vietnam rows carry the session date, and four stale vietnam rows carry an earlier
+date that the stamp rule skips. ``update_time`` was not chosen: it is row metadata that moves
+independently of the price (on the stale rows it lands on other dates than the price: HNX:ADC has
+price 2026-11-05 and update 2026-11-09), so a row updated today with an old price would be
+attributed to today. ``last_bar_update_time`` is a bar-update clock and ``time`` is the daily
+bar's start (09:00 local on the session date); neither is the price's own change time.
 """
 _BASE_EOD_COLUMNS: Final[tuple[str, ...]] = (
     "name",
@@ -173,11 +177,9 @@ _BASE_EOD_COLUMNS: Final[tuple[str, ...]] = (
     "close",
     "volume",
 )
-EOD_COLUMNS: Final[tuple[str, ...]] = (
-    (*_BASE_EOD_COLUMNS, ROW_TIMESTAMP_FIELD)
-    if ROW_TIMESTAMP_FIELD is not None
-    else _BASE_EOD_COLUMNS
-)
+_stamp: str | None = ROW_TIMESTAMP_FIELD
+_STAMP_COLUMNS: Final[tuple[str, ...]] = () if _stamp is None else (_stamp,)
+EOD_COLUMNS: Final[tuple[str, ...]] = (*_BASE_EOD_COLUMNS, *_STAMP_COLUMNS)
 
 SWEEP_CANDIDATES: Final[Mapping[str, str]] = MappingProxyType(
     {

@@ -1,0 +1,305 @@
+{
+ "data": [
+  {
+   "d": [
+    "AALUS",
+    14.03,
+    "USD",
+    "BVL",
+    "American Airlines Group Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AALUS"
+  },
+  {
+   "d": [
+    "AAPLUS",
+    349.48,
+    "USD",
+    "BVL",
+    "Apple Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AAPLUS"
+  },
+  {
+   "d": [
+    "AAPUUS",
+    47.47,
+    "USD",
+    "BVL",
+    "Direxion Daily AAPL Bull 2X ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "BVL:AAPUUS"
+  },
+  {
+   "d": [
+    "ABXUS",
+    40.5,
+    "USD",
+    "BVL",
+    "Barrick Mining Corporation",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:ABXUS"
+  },
+  {
+   "d": [
+    "ACNUS",
+    265,
+    "USD",
+    "BVL",
+    "Accenture Plc Class A",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:ACNUS"
+  },
+  {
+   "d": [
+    "ACWIUS",
+    153.47,
+    "USD",
+    "BVL",
+    "iShares MSCI ACWI ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "BVL:ACWIUS"
+  },
+  {
+   "d": [
+    "ADBEUS",
+    232.06,
+    "USD",
+    "BVL",
+    "Adobe Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:ADBEUS"
+  },
+  {
+   "d": [
+    "AENZAC1",
+    0.351,
+    "PEN",
+    "BVL",
+    "Aenza SAA",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AENZAC1"
+  },
+  {
+   "d": [
+    "AGGUUS",
+    5.8,
+    "USD",
+    "BVL",
+    "iShares Core Global Aggregate Bond UCITS ETF Accum Hedged USD",
+    "fund",
+    "etf"
+   ],
+   "s": "BVL:AGGUUS"
+  },
+  {
+   "d": [
+    "AGMR",
+    2.266,
+    "USD",
+    "BVL",
+    "Silver Mountain Resources, Inc. Class A",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AGMR"
+  },
+  {
+   "d": [
+    "AIHC1",
+    1.21,
+    "PEN",
+    "BVL",
+    "Andino Investment Holding SAC",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AIHC1"
+  },
+  {
+   "d": [
+    "AIQUS",
+    56.9,
+    "USD",
+    "BVL",
+    "Global X Artificial Intelligence & Technology ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "BVL:AIQUS"
+  },
+  {
+   "d": [
+    "ALICORC1",
+    13.22,
+    "PEN",
+    "BVL",
+    "Alicorp SAA",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:ALICORC1"
+  },
+  {
+   "d": [
+    "AMATUS",
+    372.27,
+    "USD",
+    "BVL",
+    "Applied Materials, Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AMATUS"
+  },
+  {
+   "d": [
+    "AMDUS",
+    550,
+    "USD",
+    "BVL",
+    "Advanced Micro Devices, Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AMDUS"
+  },
+  {
+   "d": [
+    "AMUUUS",
+    200,
+    "USD",
+    "BVL",
+    "Direxion Daily AMD Bull 2X ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "BVL:AMUUUS"
+  },
+  {
+   "d": [
+    "AMZNUS",
+    266.2,
+    "USD",
+    "BVL",
+    "Amazon.com, Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AMZNUS"
+  },
+  {
+   "d": [
+    "AMZUUS",
+    39.4,
+    "USD",
+    "BVL",
+    "Direxion Daily AMZN Bull 2X ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "BVL:AMZUUS"
+  },
+  {
+   "d": [
+    "APPUS",
+    408,
+    "USD",
+    "BVL",
+    "AppLovin Corp. Class A",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:APPUS"
+  },
+  {
+   "d": [
+    "ARKKUS",
+    86,
+    "USD",
+    "BVL",
+    "ARK Innovation ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "BVL:ARKKUS"
+  },
+  {
+   "d": [
+    "ASMLUS",
+    1513,
+    "USD",
+    "BVL",
+    "ASML Holding NV Sponsored ADR",
+    "dr",
+    ""
+   ],
+   "s": "BVL:ASMLUS"
+  },
+  {
+   "d": [
+    "ATACOBC1",
+    0.3,
+    "PEN",
+    "BVL",
+    "Nexa Resources Atacocha SAA Class B",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:ATACOBC1"
+  },
+  {
+   "d": [
+    "AUNA",
+    4.635,
+    "USD",
+    "BVL",
+    "Auna S.A. Class A",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AUNA"
+  },
+  {
+   "d": [
+    "AVGOUS",
+    352,
+    "USD",
+    "BVL",
+    "Broadcom Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "BVL:AVGOUS"
+  },
+  {
+   "d": [
+    "AVLUS",
+    31.29,
+    "USD",
+    "BVL",
+    "Direxion Daily AVGO Bull 2X ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "BVL:AVLUS"
+  }
+ ],
+ "totalCount": 298
+}

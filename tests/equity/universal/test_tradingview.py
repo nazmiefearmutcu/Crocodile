@@ -1,9 +1,11 @@
 """The ``tradingview`` universal source: market table, client, sweep, universe, EOD, provider.
 
-Offline throughout. Live recordings are not used here: every scanner answer comes from task 05's
-R&D probes (``tests/core/markets/fixtures/tradingview_probe``), the staged 404 body, or a labelled
-synthetic fixture under ``fixtures/tradingview`` (``_synthetic`` marks them). The network is
-forbidden by the ``network_forbidden`` fixture where a test could reach it.
+Offline throughout. Every scanner answer comes from task 05's R&D probes
+(``tests/core/markets/fixtures/tradingview_probe``), the staged 404 body, the trimmed live
+answers of 2026-11-11 under ``fixtures/tradingview`` (``universe_*``, ``eod_*``,
+``metainfo_turkey.json``, each with its ``.request.json``), or a labelled synthetic file
+(``_synthetic`` marks them). The network is forbidden by the ``network_forbidden`` fixture where
+a test could reach it.
 """
 
 from __future__ import annotations
@@ -126,10 +128,12 @@ class FakeCalendar:
         *,
         mic: str = "XIST",
         quality: CalendarQuality = CalendarQuality.LIBRARY,
+        tz: ZoneInfo = ISTANBUL,
     ) -> None:
         self._days = dict(days)
         self._mic = mic
         self._quality = quality
+        self._tz = tz
 
     @property
     def mic(self) -> str:
@@ -137,7 +141,7 @@ class FakeCalendar:
 
     @property
     def tz(self) -> ZoneInfo:
-        return ISTANBUL
+        return self._tz
 
     @property
     def quality(self) -> CalendarQuality:
@@ -496,11 +500,19 @@ def test_measure_markets_records_codes_currencies_and_examples():
             evidence_date=EVIDENCE,
         )
     )
-    assert dict(measurement.exchange_codes) == {"HOSE": 1, "UPCOM": 1}
+    probe = _json(PROBES / "vietnam.json")
+    counts: dict[str, int] = {}
+    for item in probe["data"]:
+        counts[item["d"][3]] = counts.get(item["d"][3], 0) + 1
+    assert dict(measurement.exchange_codes) == dict(sorted(counts.items()))
+    assert set(measurement.exchange_codes) == {"HNX", "HOSE", "UPCOM"}
     assert measurement.currencies == ("VND",)
-    assert measurement.total_count == 1265
+    assert measurement.total_count == probe["totalCount"] == 1252
     assert measurement.http_status == 200
-    assert dict(measurement.examples) == {"HOSE": "HOSE:HT1", "UPCOM": "UPCOM:LKW"}
+    first: dict[str, str] = {}
+    for item in probe["data"]:
+        first.setdefault(item["d"][3], item["s"])
+    assert dict(measurement.examples) == dict(sorted(first.items()))
 
 
 def test_measure_markets_records_a_404():
@@ -553,7 +565,7 @@ def test_market_table_rows_round_trip_through_the_loader(tmp_path):
     loaded = {m.market: m for m in tv.parse_markets_csv(path.read_text(encoding="utf-8"))}
     assert loaded["turkey"].http_status == 200
     assert loaded["turkey"].exchange_codes == ("BIST",)
-    assert loaded["vietnam"].exchange_codes == ("HOSE", "UPCOM")
+    assert loaded["vietnam"].exchange_codes == ("HNX", "HOSE", "UPCOM")
     assert loaded["vietnam"].currencies == ("VND",)
     assert loaded["russia"].http_status is None
     assert loaded["russia"].notes == "not probed: sanctioned (RU)"
@@ -575,15 +587,16 @@ def test_measurements_are_sorted_by_market():
 
 
 def test_a_bist_row_becomes_a_listing_observation_and_an_instrument_record():
-    scan = _fixture_scan("universe_turkey_synthetic.json", tv.UNIVERSE_COLUMNS)
-    captured = _ns("2026-11-05T16:00:00Z")
+    """Recorded (universe_turkey.json, sweep of 2026-11-11): BIST:A1YEN becomes A1YEN@XIST."""
+    scan = _fixture_scan("universe_turkey.json", tv.UNIVERSE_COLUMNS)
+    captured = _captured_ns("universe_turkey")
     snapshot = tv.universe_from_scan(scan, captured_at_ns=captured)
-    (obs,) = [o for o in snapshot.observations if o.local_symbol == "THYAO"]
-    assert obs.symbol_raw == "BIST:THYAO"
+    (obs,) = [o for o in snapshot.observations if o.local_symbol == "A1YEN"]
+    assert obs.symbol_raw == "BIST:A1YEN"
     assert (obs.currency, obs.price_scale) == ("TRY", 0)
     assert obs.security_type is SecurityType.CS
-    assert obs.name == "Turk Hava Yollari"
-    (record,) = [r for r in snapshot.records if r.symbol == "THYAO@XIST"]
+    assert obs.name == _description("BIST:A1YEN")
+    (record,) = [r for r in snapshot.records if r.symbol == "A1YEN@XIST"]
     assert isinstance(record, Instrument)
     assert record.exchange == "XIST"
     assert record.mic == "XIST"
@@ -620,8 +633,12 @@ def test_one_market_can_hold_two_mics():
         _probe_scan("vietnam"), captured_at_ns=_ns("2026-11-05T16:00:00Z")
     )
     assert set(snapshot.seen) == {"XSTC", "HSTC"}
-    assert snapshot.seen["XSTC"] == frozenset({"HT1"})
-    assert snapshot.seen["HSTC"] == frozenset({"LKW"})
+    rows = _json(PROBES / "vietnam.json")["data"]
+    hose = frozenset(item["d"][0] for item in rows if item["d"][3] == "HOSE")
+    hanoi = frozenset(item["d"][0] for item in rows if item["d"][3] in ("HNX", "UPCOM"))
+    assert "HT1" in hose and "LKW" in hanoi
+    assert snapshot.seen["XSTC"] == hose
+    assert snapshot.seen["HSTC"] == hanoi
 
 
 def test_a_market_can_mix_quote_currencies():
@@ -687,8 +704,8 @@ def test_a_complete_scan_says_so_and_an_incomplete_one_does_not():
 
 
 def test_universe_records_are_deterministic_and_sorted():
-    scan = _fixture_scan("universe_turkey_synthetic.json", tv.UNIVERSE_COLUMNS)
-    captured = _ns("2026-11-05T16:00:00Z")
+    scan = _fixture_scan("universe_turkey.json", tv.UNIVERSE_COLUMNS)
+    captured = _captured_ns("universe_turkey")
     first = tv.universe_from_scan(scan, captured_at_ns=captured)
     second = tv.universe_from_scan(scan, captured_at_ns=captured)
     assert first == second
@@ -697,16 +714,16 @@ def test_universe_records_are_deterministic_and_sorted():
 
 
 def test_apply_universe_writes_the_scan_into_the_master():
-    scan = _fixture_scan("universe_turkey_synthetic.json", tv.UNIVERSE_COLUMNS)
-    snapshot = tv.universe_from_scan(scan, captured_at_ns=_ns("2026-11-05T16:00:00Z"))
+    scan = _fixture_scan("universe_turkey.json", tv.UNIVERSE_COLUMNS)
+    snapshot = tv.universe_from_scan(scan, captured_at_ns=_captured_ns("universe_turkey"))
     master = ListingMaster(":memory:")
     try:
         report = apply_universe(master, snapshot)
         assert report.upserted == len(snapshot.observations)
-        listing = master.find("XIST", "THYAO")
+        listing = master.find("XIST", "A1YEN")
         assert listing is not None
         assert listing.currency == "TRY"
-        assert master.resolve_alias("tradingview", "BIST:THYAO") is not None
+        assert master.resolve_alias("tradingview", "BIST:A1YEN") is not None
     finally:
         master.close()
 
@@ -714,8 +731,44 @@ def test_apply_universe_writes_the_scan_into_the_master():
 # --------------------------------------------------------------- Step 7: EOD
 
 
-def _eod_turkey_scan(name: str = "eod_turkey_synthetic.json") -> tv.ScanResult:
+def _eod_turkey_scan(name: str = "eod_turkey.json") -> tv.ScanResult:
     return _fixture_scan(name, tv.EOD_COLUMNS)
+
+
+def _captured_ns(name: str) -> int:
+    """The capture instant of a recorded fixture: ``_captured_at`` in its ``.request.json``."""
+    return _ns(_json(FIXTURES / f"{name}.request.json")["_captured_at"])
+
+
+def _description(ticker: str) -> str:
+    """The recorded description (UNIVERSE_COLUMNS[4]) of one ticker in universe_turkey.json."""
+    for item in _json(FIXTURES / "universe_turkey.json")["data"]:
+        if item["s"] == ticker:
+            return str(item["d"][4])
+    raise AssertionError(f"{ticker} is not in the recorded universe page")
+
+
+_EOD_BASE = (
+    "name",
+    "exchange",
+    "currency",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+)
+_STAMPED_COLUMNS = (
+    "name",
+    "exchange",
+    "currency",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "stamp",
+)
 
 
 def _values_by_symbol(payload: Mapping[str, Any]) -> dict[str, tv.SnapshotValues]:
@@ -734,17 +787,21 @@ def _values_by_symbol(payload: Mapping[str, Any]) -> dict[str, tv.SnapshotValues
 
 
 def test_the_recorded_evening_snapshot_is_attributed_to_its_session():
-    captured = _ns("2026-11-05T16:00:00Z")
-    calendar = _turkey("2026-11-04", "2026-11-05", "2026-11-06", "2026-11-09")
+    """Recorded (eod_turkey.json) captured 2026-11-11 17:13Z, 20:13 Istanbul, after the 18:00 close.
+
+    Without a row stamp (row_timestamp_field=None) the session is 2026-11-11: all 25 rows are
+    emitted with one witness (0.5), and the MIC is attributed to that day.
+    """
+    calendar = _turkey("2026-11-10", "2026-11-11", "2026-11-12")
     eod = tv.eod_bars_from_scan(
-        _eod_turkey_scan(),
-        captured_at_ns=captured,
+        _eod_turkey_scan("eod_turkey.json"),
+        captured_at_ns=_captured_ns("eod_turkey"),
         previous={},
         calendars=lambda mic: calendar,
         row_timestamp_field=None,
     )
-    day = date(2026, 11, 5)
-    assert len(eod.bars) == 3
+    day = date(2026, 11, 11)
+    assert len(eod.bars) == 25
     for bar in eod.bars:
         assert isinstance(bar, OHLCV)
         assert bar.source_ts == daily_bar_ts_ns(day)
@@ -755,6 +812,47 @@ def test_the_recorded_evening_snapshot_is_attributed_to_its_session():
         assert bar.adjustment is PriceAdjustment.NONE
         assert bar.asset_class is AssetClass.EQUITY
     assert eod.sessions == {"XIST": day}
+
+
+def test_the_recorded_turkey_stamps_confirm_the_session_and_score_two_witnesses():
+    """With the measured stamp every recorded turkey row's last price is on 2026-11-11."""
+    eod = tv.eod_bars_from_scan(
+        _eod_turkey_scan("eod_turkey.json"),
+        captured_at_ns=_captured_ns("eod_turkey"),
+        previous={},
+        calendars=lambda mic: _turkey("2026-11-10", "2026-11-11", "2026-11-12"),
+    )
+    assert len(eod.bars) == 25
+    assert {bar.prov_confidence for bar in eod.bars} == {1.0}
+    assert {bar.source_ts for bar in eod.bars} == {daily_bar_ts_ns(date(2026, 11, 11))}
+    assert eod.sessions == {"XIST": date(2026, 11, 11)}
+
+
+def test_the_recorded_vietnam_page_skips_its_stale_prices_by_their_stamp():
+    """Recorded (eod_vietnam.json, Ho Chi Minh City): four rows last traded on earlier days.
+
+    Their stamps are before the 2026-11-11 session, so the stamp rule skips them as
+    row_timestamp_before_session; the other 21 rows are the current session.
+    """
+    ho_chi_minh = FakeCalendar(
+        {
+            date.fromisoformat(d): (_utc(f"{d}T02:00:00Z"), _utc(f"{d}T08:00:00Z"))
+            for d in ("2026-11-10", "2026-11-11", "2026-11-12")
+        },
+        mic="XSTC",
+        tz=ZoneInfo("Asia/Ho_Chi_Minh"),
+    )
+    eod = tv.eod_bars_from_scan(
+        _eod_turkey_scan("eod_vietnam.json"),
+        captured_at_ns=_captured_ns("eod_vietnam"),
+        previous={},
+        calendars=lambda mic: ho_chi_minh,
+    )
+    assert eod.skipped == {"row_timestamp_before_session": 4}
+    assert len(eod.bars) == 21
+    assert {bar.source_ts for bar in eod.bars} == {daily_bar_ts_ns(date(2026, 11, 11))}
+    assert set(eod.sessions) <= {"XSTC", "HSTC"}
+    assert eod.sessions["XSTC"] == date(2026, 11, 11)
 
 
 def test_synthetic_rows_on_a_friday_evening_belong_to_friday():
@@ -792,7 +890,7 @@ def test_a_snapshot_inside_the_settle_delay_emits_nothing():
 def test_a_snapshot_during_a_session_emits_nothing():
     calendar = _turkey("2026-11-05", "2026-11-06", "2026-11-09")
     eod = tv.eod_bars_from_scan(
-        _eod_turkey_scan(),
+        _eod_turkey_scan("eod_turkey_next_day_synthetic.json"),
         captured_at_ns=_ns("2026-11-06T10:00:00Z"),
         previous={},
         calendars=lambda mic: calendar,
@@ -818,7 +916,7 @@ def test_a_stamped_row_on_the_session_is_emitted_after_the_next_open_placeholder
     calendar = FakeCalendar(days, quality=CalendarQuality.WEEKDAY_FALLBACK)
     stamp_thu = _ns("2026-11-05T15:00:00Z") // NS
     stamp_fri = _ns("2026-11-06T06:30:00Z") // NS
-    columns = (*tv.EOD_COLUMNS, "stamp")
+    columns = (*_EOD_BASE, "stamp")
     rows = [
         _row(
             "BIST:STAMP", columns, ["STAMP", "BIST", "TRY", 10.0, 11.0, 9.5, 10.5, 500, stamp_thu]
@@ -842,7 +940,7 @@ def test_a_stamped_row_on_the_session_is_emitted_after_the_next_open_placeholder
 
 
 def test_zero_or_missing_volume_emits_no_bar():
-    columns = tv.EOD_COLUMNS
+    columns = _EOD_BASE
     rows = [
         _row("BIST:ZERO", columns, ["ZERO", "BIST", "TRY", 1.0, 1.0, 1.0, 1.0, 0]),
         _row("BIST:NONE", columns, ["NONE", "BIST", "TRY", 1.0, 1.0, 1.0, 1.0, None]),
@@ -861,7 +959,11 @@ def test_zero_or_missing_volume_emits_no_bar():
 
 
 def test_a_row_identical_to_the_previous_snapshot_is_stale():
-    previous = _values_by_symbol(_json(FIXTURES / "eod_turkey_synthetic.json"))
+    """Synthetic next-day page against the recorded turkey page (row_timestamp_field=None).
+
+    Row 0 equals its recorded values (stale), row 1 changed prices (emitted), row 2 has no volume.
+    """
+    previous = _values_by_symbol(_json(FIXTURES / "eod_turkey.json"))
     eod = tv.eod_bars_from_scan(
         _eod_turkey_scan("eod_turkey_next_day_synthetic.json"),
         captured_at_ns=_ns("2026-11-06T16:00:00Z"),
@@ -869,36 +971,35 @@ def test_a_row_identical_to_the_previous_snapshot_is_stale():
         calendars=lambda mic: _turkey("2026-11-05", "2026-11-06", "2026-11-09"),
         row_timestamp_field=None,
     )
-    assert [bar.symbol for bar in eod.bars] == ["AKGRT@XIST"]
+    assert [bar.symbol for bar in eod.bars] == ["A1YEN@XIST"]
     assert eod.skipped == {"stale_identical": 1, "no_volume": 1}
 
 
 def test_a_row_stamp_on_the_session_overrides_the_stale_rule_and_scores_two_witnesses():
-    previous = _values_by_symbol(_json(FIXTURES / "eod_turkey_synthetic.json"))
-    columns = (*tv.EOD_COLUMNS, "stamp")
+    """Synthetic stamped page (stamp column): the on-session row equals its recorded values."""
+    previous = _values_by_symbol(_json(FIXTURES / "eod_turkey.json"))
     eod = tv.eod_bars_from_scan(
-        _fixture_scan("stamped_rows_synthetic.json", columns),
-        captured_at_ns=_ns("2026-11-05T16:00:00Z"),
+        _fixture_scan("stamped_rows_synthetic.json", _STAMPED_COLUMNS),
+        captured_at_ns=_captured_ns("eod_turkey"),
         previous=previous,
-        calendars=lambda mic: _turkey("2026-11-04", "2026-11-05", "2026-11-06"),
+        calendars=lambda mic: _turkey("2026-11-10", "2026-11-11", "2026-11-12"),
         row_timestamp_field="stamp",
     )
-    on_session = [bar for bar in eod.bars if bar.symbol == "THYAO@XIST"]
+    on_session = [bar for bar in eod.bars if bar.symbol == "A1CAP@XIST"]
     assert len(on_session) == 1
     assert on_session[0].prov_confidence == 1.0
-    assert eod.sessions == {"XIST": date(2026, 11, 5)}
+    assert eod.sessions == {"XIST": date(2026, 11, 11)}
 
 
 def test_a_row_stamp_before_the_session_is_stale():
-    columns = (*tv.EOD_COLUMNS, "stamp")
     eod = tv.eod_bars_from_scan(
-        _fixture_scan("stamped_rows_synthetic.json", columns),
-        captured_at_ns=_ns("2026-11-05T16:00:00Z"),
+        _fixture_scan("stamped_rows_synthetic.json", _STAMPED_COLUMNS),
+        captured_at_ns=_captured_ns("eod_turkey"),
         previous={},
-        calendars=lambda mic: _turkey("2026-11-04", "2026-11-05", "2026-11-06"),
+        calendars=lambda mic: _turkey("2026-11-10", "2026-11-11", "2026-11-12"),
         row_timestamp_field="stamp",
     )
-    assert "AKGRT@XIST" not in {bar.symbol for bar in eod.bars}
+    assert "A1YEN@XIST" not in {bar.symbol for bar in eod.bars}
     assert eod.skipped.get("row_timestamp_before_session") == 1
 
 
@@ -913,8 +1014,33 @@ def test_the_real_bist_calendar_attributes_a_friday_evening_to_friday():
     assert calendar_for("XIST").quality is CalendarQuality.LIBRARY
 
 
+def test_the_row_timestamp_field_is_the_measured_one():
+    """The EOD row stamp is ``last-price-update-time``, the field the 2026-11-11 recordings confirm.
+
+    Live check (report section ROW_TIMESTAMP_FIELD): turkey's 25 recorded rows are all stamped on
+    the 2026-11-11 Istanbul date, at or before the 18:00 close; vietnam's recorded rows are
+    stamped 2026-11-11 Ho Chi Minh City except four stale rows stamped 11-05 to 11-10, which the
+    stamp rule must skip. The field is epoch seconds. ``update_time`` is not the witness: it is
+    row metadata that moves independently of the price (on the stale rows it lands on other dates
+    than the price: HNX:ADC has price 2026-11-05 and update 2026-11-09), so a row updated today
+    with an old price would be attributed to today.
+    """
+    assert tv.ROW_TIMESTAMP_FIELD == "last-price-update-time"
+    assert tv.EOD_COLUMNS == (
+        "name",
+        "exchange",
+        "currency",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "last-price-update-time",
+    )
+
+
 def test_eod_bars_carry_the_row_unit():
-    columns = tv.EOD_COLUMNS
+    columns = _EOD_BASE
     rows = [_row("BIST:PENCE", columns, ["PENCE", "BIST", "GBX", 100.0, 110.0, 95.0, 105.0, 900])]
     eod = tv.eod_bars_from_scan(
         _one_row_scan("turkey", columns, rows),
@@ -1000,7 +1126,7 @@ def test_the_provider_is_registered_with_its_declared_channels():
 
 
 def test_run_takes_one_universe_snapshot_and_returns(network_forbidden):
-    fetch = FakeScanner({"turkey": _json(FIXTURES / "universe_turkey_synthetic.json")})
+    fetch = FakeScanner({"turkey": _json(FIXTURES / "universe_turkey.json")})
     sink = MemorySink()
     master = ListingMaster(":memory:")
     try:
@@ -1018,20 +1144,20 @@ def test_run_takes_one_universe_snapshot_and_returns(network_forbidden):
         )
         asyncio.run(provider.run())
         symbols = {record.symbol for record in sink.records if isinstance(record, Instrument)}
-        assert "THYAO@XIST" in symbols
-        assert master.find("XIST", "THYAO") is not None
+        assert "A1YEN@XIST" in symbols
+        assert master.find("XIST", "A1YEN") is not None
         assert any(req.json_body and req.json_body.get("columns") for req in fetch.requests)
     finally:
         master.close()
 
 
 def test_run_for_named_symbols_leaves_the_master_alone():
-    fetch = FakeScanner({"turkey": _json(FIXTURES / "universe_turkey_synthetic.json")})
+    fetch = FakeScanner({"turkey": _json(FIXTURES / "universe_turkey.json")})
     sink = MemorySink()
     master = ListingMaster(":memory:")
     try:
         provider = tv.TradingViewProvider(
-            ["THYAO@XIST"],
+            ["A1YEN@XIST"],
             ["instrument"],
             sink,
             InstrumentRegistry(),
@@ -1043,16 +1169,16 @@ def test_run_for_named_symbols_leaves_the_master_alone():
             clock=lambda: _ns("2026-11-05T16:00:00Z"),
         )
         asyncio.run(provider.run())
-        assert [r.symbol for r in sink.records] == ["THYAO@XIST"]
-        assert master.find("XIST", "THYAO") is None
+        assert [r.symbol for r in sink.records] == ["A1YEN@XIST"]
+        assert master.find("XIST", "A1YEN") is None
     finally:
         master.close()
 
 
 def test_run_for_ohlcv_without_a_lake_refuses_before_any_request():
-    fetch = FakeScanner({"turkey": _json(FIXTURES / "eod_turkey_synthetic.json")})
+    fetch = FakeScanner({"turkey": _json(FIXTURES / "eod_turkey.json")})
     provider = tv.TradingViewProvider(
-        ["THYAO@XIST"],
+        ["A1YEN@XIST"],
         ["ohlcv"],
         MemorySink(),
         InstrumentRegistry(),
@@ -1067,7 +1193,7 @@ def test_run_for_ohlcv_without_a_lake_refuses_before_any_request():
 
 
 def test_run_for_ohlcv_uses_the_previous_loader():
-    previous = _values_by_symbol(_json(FIXTURES / "eod_turkey_synthetic.json"))
+    previous = _values_by_symbol(_json(FIXTURES / "eod_turkey.json"))
     seen_symbols: list[list[str]] = []
 
     def loader(symbols: Sequence[str]) -> Mapping[str, tv.SnapshotValues]:
@@ -1077,7 +1203,7 @@ def test_run_for_ohlcv_uses_the_previous_loader():
     sink = MemorySink()
     fetch = FakeScanner({"turkey": _json(FIXTURES / "eod_turkey_next_day_synthetic.json")})
     provider = tv.TradingViewProvider(
-        ["AKGRT@XIST"],
+        ["A1YEN@XIST"],
         ["ohlcv"],
         sink,
         InstrumentRegistry(),
@@ -1090,7 +1216,7 @@ def test_run_for_ohlcv_uses_the_previous_loader():
     )
     asyncio.run(provider.run())
     assert seen_symbols
-    assert [bar.symbol for bar in sink.records if isinstance(bar, OHLCV)] == ["AKGRT@XIST"]
+    assert [bar.symbol for bar in sink.records if isinstance(bar, OHLCV)] == ["A1YEN@XIST"]
 
 
 def test_a_sanctioned_symbol_is_refused_before_any_request():

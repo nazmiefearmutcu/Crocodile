@@ -1,0 +1,305 @@
+{
+ "data": [
+  {
+   "d": [
+    "A1CAP",
+    3.14,
+    "TRY",
+    "BIST",
+    "A1 Capital Yatitim Menkul Degerler A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:A1CAP"
+  },
+  {
+   "d": [
+    "A1YEN",
+    1.54,
+    "TRY",
+    "BIST",
+    "A1 Yenilenebilir Enerji Uretim AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:A1YEN"
+  },
+  {
+   "d": [
+    "AAGYO",
+    7.4,
+    "TRY",
+    "BIST",
+    "Agaoglu Avrasya Gayrimenkul Yatirim Ortakligi AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AAGYO"
+  },
+  {
+   "d": [
+    "ACSEL",
+    86.6,
+    "TRY",
+    "BIST",
+    "Aciselsan Acipayam Seluloz Sanayi ve Ticaret AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:ACSEL"
+  },
+  {
+   "d": [
+    "ADEL",
+    21.16,
+    "TRY",
+    "BIST",
+    "Adel Kalemcilik Ticaret ve Sanayi A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:ADEL"
+  },
+  {
+   "d": [
+    "ADESE",
+    0.53,
+    "TRY",
+    "BIST",
+    "Adese Gayrimenkul Yatirim AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:ADESE"
+  },
+  {
+   "d": [
+    "ADGYO",
+    52,
+    "TRY",
+    "BIST",
+    "Adra Gayrimenkul Yatirim Ortakligi A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:ADGYO"
+  },
+  {
+   "d": [
+    "AEFES",
+    16.4,
+    "TRY",
+    "BIST",
+    "Anadolu Efes Biracilik ve Malt Sanayii A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AEFES"
+  },
+  {
+   "d": [
+    "AFYON",
+    11.9,
+    "TRY",
+    "BIST",
+    "Afyon Cimento Sanayii T.A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AFYON"
+  },
+  {
+   "d": [
+    "AGESA",
+    209.6,
+    "TRY",
+    "BIST",
+    "AgeSA Hayat ve Emeklilik A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AGESA"
+  },
+  {
+   "d": [
+    "AGHOL",
+    27.68,
+    "TRY",
+    "BIST",
+    "AG Anadolu Grubu Holding Anonim Sirketi",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AGHOL"
+  },
+  {
+   "d": [
+    "AGROT",
+    1.18,
+    "TRY",
+    "BIST",
+    "Agrotech Yuksek Teknoloji ve Yatirim AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AGROT"
+  },
+  {
+   "d": [
+    "AGYO",
+    6.01,
+    "TRY",
+    "BIST",
+    "Atakule Gayrimenkul Yatirim Ortakligi A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AGYO"
+  },
+  {
+   "d": [
+    "AHGAZ",
+    45.9,
+    "TRY",
+    "BIST",
+    "Ahlatci Dogal Gaz Dagitim Enerji ve Yatirim AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AHGAZ"
+  },
+  {
+   "d": [
+    "AHSGY",
+    6.63,
+    "TRY",
+    "BIST",
+    "Ahes Gayrimenkul Yatirim Ortakligi AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AHSGY"
+  },
+  {
+   "d": [
+    "AKBNK",
+    70.8,
+    "TRY",
+    "BIST",
+    "Akbank T.A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKBNK"
+  },
+  {
+   "d": [
+    "AKCNS",
+    194.5,
+    "TRY",
+    "BIST",
+    "Akcansa Cimento Sanayi ve Ticaret A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKCNS"
+  },
+  {
+   "d": [
+    "AKENR",
+    6.61,
+    "TRY",
+    "BIST",
+    "Akenerji Elektrik Uretim A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKENR"
+  },
+  {
+   "d": [
+    "AKFGY",
+    2.27,
+    "TRY",
+    "BIST",
+    "Akfen Gayrimenkul Yatirim Ortakligi A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKFGY"
+  },
+  {
+   "d": [
+    "AKFIS",
+    13.9,
+    "TRY",
+    "BIST",
+    "Akfen insaat Turizm ve Ticaret AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKFIS"
+  },
+  {
+   "d": [
+    "AKFYE",
+    2.9,
+    "TRY",
+    "BIST",
+    "AKFEN YENILENEBILIR ENERJI A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKFYE"
+  },
+  {
+   "d": [
+    "AKGRT",
+    4.65,
+    "TRY",
+    "BIST",
+    "Aksigorta AS",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKGRT"
+  },
+  {
+   "d": [
+    "AKHAN",
+    28,
+    "TRY",
+    "BIST",
+    "Akhan Un Fabrikasi Ve Tarim Urunleri Gida Sanayi Ticaret Anonim Sirketi",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKHAN"
+  },
+  {
+   "d": [
+    "AKMGY",
+    190.6,
+    "TRY",
+    "BIST",
+    "Akmerkez Gayrimenkul Yatirim Ortakligi A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKMGY"
+  },
+  {
+   "d": [
+    "AKSA",
+    10.47,
+    "TRY",
+    "BIST",
+    "Aksa Akrilik Kimya Sanayii A.S.",
+    "stock",
+    "common"
+   ],
+   "s": "BIST:AKSA"
+  }
+ ],
+ "totalCount": 649
+}

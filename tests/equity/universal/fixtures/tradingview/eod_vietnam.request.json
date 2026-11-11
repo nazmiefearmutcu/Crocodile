@@ -1,0 +1,34 @@
+{
+ "_captured_at": "2026-11-11T17:13:43Z",
+ "columns": [
+  "name",
+  "exchange",
+  "currency",
+  "open",
+  "high",
+  "low",
+  "close",
+  "volume",
+  "last-price-update-time"
+ ],
+ "markets": [
+  "vietnam"
+ ],
+ "options": {
+  "lang": "en"
+ },
+ "range": [
+  0,
+  25
+ ],
+ "sort": {
+  "sortBy": "name",
+  "sortOrder": "asc"
+ },
+ "symbols": {
+  "query": {
+   "types": []
+  },
+  "tickers": []
+ }
+}

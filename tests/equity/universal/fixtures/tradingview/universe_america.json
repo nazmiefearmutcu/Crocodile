@@ -1,0 +1,305 @@
+{
+ "data": [
+  {
+   "d": [
+    "A",
+    178.17,
+    "USD",
+    "NYSE",
+    "Agilent Technologies, Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "NYSE:A"
+  },
+  {
+   "d": [
+    "AA",
+    40.85,
+    "USD",
+    "NYSE",
+    "Alcoa Corporation",
+    "stock",
+    "common"
+   ],
+   "s": "NYSE:AA"
+  },
+  {
+   "d": [
+    "AAA",
+    24.82,
+    "USD",
+    "AMEX",
+    "Alternative Access First Priority CLO Bond ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "AMEX:AAA"
+  },
+  {
+   "d": [
+    "AAAA",
+    30.21,
+    "USD",
+    "CBOE",
+    "Amplius Aggressive Asset Allocation ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "CBOE:AAAA"
+  },
+  {
+   "d": [
+    "AAAB",
+    25.085,
+    "USD",
+    "CBOE",
+    "Corgi FTSE Aaa-A Intermediate Corporate Bond ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "CBOE:AAAB"
+  },
+  {
+   "d": [
+    "AAAC",
+    20.045,
+    "USD",
+    "AMEX",
+    "Columbia AAA CLO ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "AMEX:AAAC"
+  },
+  {
+   "d": [
+    "AAAD",
+    48.8023,
+    "USD",
+    "AMEX",
+    "PGIM AAA CLO Aggregate Duration ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "AMEX:AAAD"
+  },
+  {
+   "d": [
+    "AAAP",
+    25.2776,
+    "USD",
+    "NASDAQ",
+    "Pacer Barings CLO Market Flex ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "NASDAQ:AAAP"
+  },
+  {
+   "d": [
+    "AAAU",
+    39.39,
+    "USD",
+    "CBOE",
+    "Goldman Sachs Physical Gold ETF Shares",
+    "fund",
+    "etf"
+   ],
+   "s": "CBOE:AAAU"
+  },
+  {
+   "d": [
+    "AABB",
+    0.0091,
+    "USD",
+    "OTC",
+    "Asia Broadband, Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "OTC:AABB"
+  },
+  {
+   "d": [
+    "AABVF",
+    0.0106,
+    "USD",
+    "OTC",
+    "Aberdeen International Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "OTC:AABVF"
+  },
+  {
+   "d": [
+    "AAC",
+    9.95,
+    "USD",
+    "NYSE",
+    "Ares Acquisition Corporation III",
+    "stock",
+    "common"
+   ],
+   "s": "NYSE:AAC"
+  },
+  {
+   "d": [
+    "AAC.U",
+    10,
+    "USD",
+    "NYSE",
+    "Ares Acquisition Corporation III",
+    "fund",
+    "unit"
+   ],
+   "s": "NYSE:AAC.U"
+  },
+  {
+   "d": [
+    "AACAY",
+    4.87,
+    "USD",
+    "OTC",
+    "AAC Technologies Holdings Inc",
+    "dr",
+    ""
+   ],
+   "s": "OTC:AACAY"
+  },
+  {
+   "d": [
+    "AACG",
+    0.851,
+    "USD",
+    "NASDAQ",
+    "ATA Creativity Global",
+    "dr",
+    ""
+   ],
+   "s": "NASDAQ:AACG"
+  },
+  {
+   "d": [
+    "AACI",
+    10.11,
+    "USD",
+    "NASDAQ",
+    "Armada Acquisition Corp. III",
+    "stock",
+    "common"
+   ],
+   "s": "NASDAQ:AACI"
+  },
+  {
+   "d": [
+    "AACIU",
+    10.14,
+    "USD",
+    "NASDAQ",
+    "Armada Acquisition Corp. III",
+    "fund",
+    "unit"
+   ],
+   "s": "NASDAQ:AACIU"
+  },
+  {
+   "d": [
+    "AACO",
+    10.045,
+    "USD",
+    "NASDAQ",
+    "Abony Acquisition Corp. I",
+    "stock",
+    "common"
+   ],
+   "s": "NASDAQ:AACO"
+  },
+  {
+   "d": [
+    "AACP",
+    10.12,
+    "USD",
+    "NASDAQ",
+    "Apogee Acquisition Corp",
+    "stock",
+    "common"
+   ],
+   "s": "NASDAQ:AACP"
+  },
+  {
+   "d": [
+    "AACPU",
+    10.29,
+    "USD",
+    "NASDAQ",
+    "Apogee Acquisition Corp",
+    "fund",
+    "unit"
+   ],
+   "s": "NASDAQ:AACPU"
+  },
+  {
+   "d": [
+    "AACTF",
+    0.0032,
+    "USD",
+    "OTC",
+    "Aurora Solar Technologies Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "OTC:AACTF"
+  },
+  {
+   "d": [
+    "AADR",
+    79.3003,
+    "USD",
+    "NASDAQ",
+    "AdvisorShares Dorsey Wright",
+    "fund",
+    "etf"
+   ],
+   "s": "NASDAQ:AADR"
+  },
+  {
+   "d": [
+    "AADX",
+    9.615,
+    "USD",
+    "NYSE",
+    "Applied Aerospace & Defense, Inc.",
+    "stock",
+    "common"
+   ],
+   "s": "NYSE:AADX"
+  },
+  {
+   "d": [
+    "AAEQ",
+    53.4104,
+    "USD",
+    "NASDAQ",
+    "Alpha Architect US Equity 2 ETF",
+    "fund",
+    "etf"
+   ],
+   "s": "NASDAQ:AAEQ"
+  },
+  {
+   "d": [
+    "AAFRF",
+    3.5,
+    "USD",
+    "OTC",
+    "Airtel Africa Plc",
+    "stock",
+    "common"
+   ],
+   "s": "OTC:AAFRF"
+  }
+ ],
+ "totalCount": 20223
+}

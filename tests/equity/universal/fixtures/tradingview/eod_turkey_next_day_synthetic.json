@@ -1,44 +1,47 @@
 {
- "_synthetic": "constructed for tests; not a recorded TradingView response",
+ "_synthetic": "constructed for tests; not a recorded TradingView response; row 0 equals the recorded A1CAP row (stamp before the session), row 1 changed prices, row 2 zero volume",
  "data": [
   {
    "d": [
-    "THYAO",
+    "A1CAP",
     "BIST",
     "TRY",
-    300.0,
-    305.5,
-    298.25,
-    303.0,
-    1200000
+    3.24,
+    3.31,
+    3.08,
+    3.14,
+    8095083,
+    1793887200
    ],
-   "s": "BIST:THYAO"
+   "s": "BIST:A1CAP"
   },
   {
    "d": [
-    "AKGRT",
+    "A1YEN",
     "BIST",
     "TRY",
-    10.9,
-    11.1,
-    10.8,
-    11.0,
-    6100000
+    1.64,
+    1.64,
+    1.52,
+    1.57,
+    31604152,
+    1793973600
    ],
-   "s": "BIST:AKGRT"
+   "s": "BIST:A1YEN"
   },
   {
    "d": [
-    "GLDTR",
+    "AAGYO",
     "BIST",
     "TRY",
-    42.2,
-    42.6,
-    42.0,
-    42.4,
-    0
+    7.62,
+    7.7,
+    7.38,
+    7.4,
+    0,
+    1793973600
    ],
-   "s": "BIST:GLDTR"
+   "s": "BIST:AAGYO"
   }
  ],
  "totalCount": 3

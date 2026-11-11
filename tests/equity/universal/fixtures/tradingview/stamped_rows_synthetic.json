@@ -1,33 +1,33 @@
 {
- "_synthetic": "constructed for tests; not a recorded TradingView response",
+ "_synthetic": "constructed for tests; not a recorded TradingView response; the stamp column is the row's last price time: row 0 on 2026-11-11 (the recorded stamp), row 1 on 2026-11-10",
  "data": [
   {
    "d": [
-    "THYAO",
+    "A1CAP",
     "BIST",
     "TRY",
-    300.0,
-    305.5,
-    298.25,
-    303.0,
-    1200000,
-    1793890800
+    3.24,
+    3.31,
+    3.08,
+    3.14,
+    8095083,
+    1794409740
    ],
-   "s": "BIST:THYAO"
+   "s": "BIST:A1CAP"
   },
   {
    "d": [
-    "AKGRT",
+    "A1YEN",
     "BIST",
     "TRY",
-    10.5,
-    10.8,
-    10.4,
-    10.7,
-    5000000,
-    1793804400
+    1.64,
+    1.64,
+    1.52,
+    1.54,
+    31604152,
+    1794319200
    ],
-   "s": "BIST:AKGRT"
+   "s": "BIST:A1YEN"
   }
  ],
  "totalCount": 2

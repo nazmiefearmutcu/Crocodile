@@ -1,0 +1,222 @@
+{
+ "_absent_from_metainfo": [
+  "name",
+  "description",
+  "isin"
+ ],
+ "_full_field_count": 3786,
+ "_source": "GET https://scanner.tradingview.com/turkey/metainfo, 2026-11-11 (file write 17:08 UTC). Trimmed: the chosen columns and the time/update candidates only.",
+ "fields": [
+  {
+   "n": "update-time",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "exchange",
+   "r": [
+    "BIST"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "typespecs",
+   "r": [
+    "common",
+    "etf",
+    "closedend"
+   ],
+   "t": "set"
+  },
+  {
+   "n": "currency",
+   "r": [
+    "TRY"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "subtype",
+   "r": [
+    "common",
+    "etf",
+    "closedend"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "type",
+   "r": [
+    "stock",
+    "fund"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "last-price-update-time-intraday",
+   "r": null,
+   "t": "time"
+  },
+  {
+   "n": "update_time",
+   "r": null,
+   "t": "time"
+  },
+  {
+   "n": "last-price-update-time",
+   "r": null,
+   "t": "time"
+  },
+  {
+   "n": "last_bar_update_time|60",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "time",
+   "r": null,
+   "t": "time"
+  },
+  {
+   "n": "last_bar_update_time|30",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "low",
+   "r": null,
+   "t": "price"
+  },
+  {
+   "n": "last_bar_update_time",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "close",
+   "r": null,
+   "t": "price"
+  },
+  {
+   "n": "high",
+   "r": null,
+   "t": "price"
+  },
+  {
+   "n": "last_bar_update_time|1",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "update_mode",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "update_mode|1M",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "last_bar_update_time|120",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "volume",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "last_bar_update_time|1W",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "last_bar_update_time|1M",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "update_mode|15",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "update_mode|30",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "update_mode|1",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "last_bar_update_time|5",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "last_bar_update_time|15",
+   "r": null,
+   "t": "number"
+  },
+  {
+   "n": "open",
+   "r": null,
+   "t": "price"
+  },
+  {
+   "n": "update_mode|60",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "update_mode|120",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "update_mode|1W",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "update_mode|5",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "update_mode|240",
+   "r": [
+    "streaming"
+   ],
+   "t": "text"
+  },
+  {
+   "n": "last_bar_update_time|240",
+   "r": null,
+   "t": "number"
+  }
+ ],
+ "financial_currency": "TRY"
+}

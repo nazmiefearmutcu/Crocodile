@@ -1,107 +1,107 @@
 market,country,http_status,total_count,exchange_codes,currencies,evidence_date,notes
-america,US,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-argentina,AR,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-armenia,AM,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-australia,AU,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-austria,AT,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-azerbaijan,AZ,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-bahrain,BH,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-bangladesh,BD,200,382,DSEBD,BDT,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
+america,US,200,20223,AMEX CBOE NASDAQ NYSE OTC,USD,2026-11-11,"grammar: AMEX, CBOE, OTC unmapped (no MIC in exchanges.csv, or ambiguous)"
+argentina,AR,200,1488,BCBA,ARS USD,2026-11-11,
+armenia,AM,404,0,,,2026-11-11,
+australia,AU,200,2233,ASX,AUD,2026-11-11,
+austria,AT,200,1509,VIE,EUR,2026-11-11,
+azerbaijan,AZ,404,0,,,2026-11-11,
+bahrain,BH,200,19,BAHRAIN,BHD USD,2026-11-11,
+bangladesh,BD,200,382,DSEBD,BDT,2026-11-11,
 belarus,BY,,,,,2026-11-11,not probed: sanctioned (BY)
-belgium,BE,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-bosnia,BA,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-botswana,BW,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-brazil,BR,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-bulgaria,BG,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-canada,CA,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-chile,CL,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-china,CN,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-colombia,CO,200,222,BVC,COP,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-costarica,CR,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-croatia,HR,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-cyprus,CY,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-czech,CZ,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-denmark,DK,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-ecuador,EC,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-egypt,EG,200,256,EGX,EGP,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-estonia,EE,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-finland,FI,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-france,FR,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-georgia,GE,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-germany,DE,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-ghana,GH,404,0,,,2026-11-08,R&D probe answered 404 (page not found)
-greece,GR,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-hongkong,HK,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-hungary,HU,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-iceland,IS,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-india,IN,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-indonesia,ID,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
+belgium,BE,200,112,EURONEXT,EUR USD,2026-11-11,grammar: EURONEXT unmapped (one code covers several Euronext MICs)
+bosnia,BA,404,0,,,2026-11-11,
+botswana,BW,404,0,,,2026-11-11,
+brazil,BR,200,2342,BMFBOVESPA,BRL USD,2026-11-11,
+bulgaria,BG,200,476,BSESOF,EUR,2026-11-11,
+canada,CA,200,8698,CSE NEO TSX TSXV,CAD USD,2026-11-11,
+chile,CL,200,305,BCS,CLP USD,2026-11-11,
+china,CN,200,7514,SZSE,CNY,2026-11-11,
+colombia,CO,200,222,BVC,COP,2026-11-11,
+costarica,CR,404,0,,,2026-11-11,
+croatia,HR,200,73,ZSE,EUR,2026-11-11,
+cyprus,CY,200,30,CSECY,EUR,2026-11-11,
+czech,CZ,200,58,PSECZ,CZK,2026-11-11,
+denmark,DK,200,184,OMXCOP,DKK EUR,2026-11-11,
+ecuador,EC,404,0,,,2026-11-11,
+egypt,EG,200,298,EGX,EGP USD,2026-11-11,
+estonia,EE,200,30,OMXTSE,EUR,2026-11-11,
+finland,FI,200,198,OMXHEX,EUR,2026-11-11,
+france,FR,200,3826,EURONEXT,EUR GBP JPY USD,2026-11-11,grammar: EURONEXT unmapped (one code covers several Euronext MICs)
+georgia,GE,404,0,,,2026-11-11,
+germany,DE,200,42267,DUS FWB GETTEX HAM HAN LS LSX MUN SWB TRADEGATE XETR,EUR USD,2026-11-11,"grammar: GETTEX, LS, LSX unmapped (ambiguous, or no MIC in exchanges.csv)"
+ghana,GH,404,0,,,2026-11-11,
+greece,GR,200,144,ATHEX,EUR,2026-11-11,
+hongkong,HK,200,3043,HKEX,HKD,2026-11-11,
+hungary,HU,200,116,BET,EUR HUF,2026-11-11,
+iceland,IS,200,29,OMXICE,ISK,2026-11-11,
+india,IN,200,8708,BSE NSE,INR,2026-11-11,
+indonesia,ID,200,882,IDX,IDR,2026-11-11,
 iran,IR,,,,,2026-11-11,not probed: sanctioned (IR)
-iraq,IQ,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-ireland,IE,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-israel,IL,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-italy,IT,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-jamaica,JM,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-japan,JP,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-jordan,JO,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-kazakhstan,KZ,404,0,,,2026-11-08,R&D probe answered 404 (page not found)
-kenya,KE,200,60,NSEKE,KES,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-korea,KR,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-ksa,SA,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-kuwait,KW,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-latvia,LV,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-lebanon,LB,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-lithuania,LT,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-luxembourg,LU,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-macedonia,MK,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-malawi,MW,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-malaysia,MY,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-malta,MT,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-mauritius,MU,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-mexico,MX,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-mongolia,MN,404,0,,,2026-11-08,R&D probe answered 404 (page not found)
-montenegro,ME,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-morocco,MA,200,76,CSEMA,MAD,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-namibia,NA,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-netherlands,NL,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-newzealand,NZ,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-nigeria,NG,200,139,NSENG,NGN,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-norway,NO,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-oman,OM,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-pakistan,PK,200,485,PSX,PKR,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-palestine,PS,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-panama,PA,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-peru,PE,200,310,BVL,PEN USD,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-philippines,PH,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-poland,PL,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-portugal,PT,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-qatar,QA,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-romania,RO,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-rsa,ZA,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
+iraq,IQ,404,0,,,2026-11-11,
+ireland,IE,200,20,EURONEXT,EUR GBP,2026-11-11,grammar: EURONEXT unmapped (one code covers several Euronext MICs)
+israel,IL,200,1050,TASE,ILA,2026-11-11,"grammar: TASE unmapped (the page quotes ILA, not ILS)"
+italy,IT,200,821,EUROTLX MIL,EUR,2026-11-11,grammar: EUROTLX unmapped (no MIC in exchanges.csv); MIL mapped
+jamaica,JM,404,0,,,2026-11-11,
+japan,JP,200,4394,FSE NAG SAPSE TSE,JPY,2026-11-11,
+jordan,JO,404,0,,,2026-11-11,
+kazakhstan,KZ,404,0,,,2026-11-11,
+kenya,KE,200,60,NSEKE,KES USD,2026-11-11,
+korea,KR,200,4315,KRX,KRW,2026-11-11,
+ksa,SA,200,408,TADAWUL,SAR,2026-11-11,
+kuwait,KW,200,137,KSE,KWF,2026-11-11,"grammar: KSE unmapped (the page quotes KWF, not KWD)"
+latvia,LV,200,12,OMXRSE,EUR,2026-11-11,
+lebanon,LB,404,0,,,2026-11-11,
+lithuania,LT,200,24,OMXVSE,EUR,2026-11-11,
+luxembourg,LU,200,293,LUXSE,AUD CHF EUR GBP MXN SGD USD,2026-11-11,
+macedonia,MK,404,0,,,2026-11-11,
+malawi,MW,404,0,,,2026-11-11,
+malaysia,MY,200,1150,MYX,MYR USD,2026-11-11,
+malta,MT,404,0,,,2026-11-11,
+mauritius,MU,404,0,,,2026-11-11,
+mexico,MX,200,3640,BIVA BMV,MXN,2026-11-11,
+mongolia,MN,404,0,,,2026-11-11,
+montenegro,ME,404,0,,,2026-11-11,
+morocco,MA,200,76,CSEMA,MAD,2026-11-11,
+namibia,NA,404,0,,,2026-11-11,
+netherlands,NL,200,885,EURONEXT,CZK EUR GBP HUF JPY USD,2026-11-11,grammar: EURONEXT unmapped (one code covers several Euronext MICs)
+newzealand,NZ,200,166,NZX,NZD,2026-11-11,
+nigeria,NG,200,139,NSENG,NGN,2026-11-11,
+norway,NO,200,289,OSL,NOK,2026-11-11,
+oman,OM,200,87,MSX,OMR,2026-11-11,
+pakistan,PK,200,483,PSX,PKR,2026-11-11,
+palestine,PS,404,0,,,2026-11-11,
+panama,PA,404,0,,,2026-11-11,
+peru,PE,200,298,BVL,PEN USD,2026-11-11,
+philippines,PH,200,265,PSE,PHP USD,2026-11-11,
+poland,PL,200,846,GPW,PLN,2026-11-11,
+portugal,PT,200,34,EURONEXT,EUR,2026-11-11,grammar: EURONEXT unmapped (one code covers several Euronext MICs)
+qatar,QA,200,55,QSE,QAR,2026-11-11,
+romania,RO,200,246,BVB,RON,2026-11-11,
+rsa,ZA,200,470,JSE,ZAC,2026-11-11,"grammar: JSE unmapped (the page quotes ZAC, not ZAR)"
 russia,RU,,,,,2026-11-11,not probed: sanctioned (RU)
-rwanda,RW,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-serbia,RS,200,17,BELEX,RSD,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-singapore,SG,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-slovakia,SK,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-slovenia,SI,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-spain,ES,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-srilanka,LK,200,295,CSELK,LKR,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-sweden,SE,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-switzerland,CH,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
+rwanda,RW,404,0,,,2026-11-11,
+serbia,RS,200,15,BELEX,RSD,2026-11-11,
+singapore,SG,200,640,SGX,EUR GBP HKD SGD USD,2026-11-11,
+slovakia,SK,200,12,BSSE,EUR,2026-11-11,grammar: BSSE unmapped (no MIC in exchanges.csv)
+slovenia,SI,200,23,LJSE,EUR,2026-11-11,
+spain,ES,200,310,BME,EUR,2026-11-11,
+srilanka,LK,200,295,CSELK,LKR,2026-11-11,
+sweden,SE,200,979,NGM OMXSTO,EUR NOK SEK,2026-11-11,
+switzerland,CH,200,3581,BX SIX,AUD CAD CHF EUR GBP JPY USD,2026-11-11,
 syria,SY,,,,,2026-11-11,not probed: sanctioned (SY)
-taiwan,TW,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-tanzania,TZ,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-thailand,TH,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-trinidad,TT,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-tunisia,TN,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-turkey,TR,200,650,BIST,TRY,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-uae,AE,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-uganda,UG,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-uk,GB,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-ukraine,UA,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-uruguay,UY,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-uzbekistan,UZ,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-venezuela,VE,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-vietnam,VN,200,1265,HOSE UPCOM,VND,2026-11-08,"R&D probe, range [0,2]: exchange codes are those seen on the probe page"
-zambia,ZM,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
-zimbabwe,ZW,,,,,2026-11-11,not probed: awaiting the live sweep (task 11b)
+taiwan,TW,200,2756,TPEX TWSE,CNY TWD USD,2026-11-11,
+tanzania,TZ,404,0,,,2026-11-11,
+thailand,TH,200,2342,SET,THB,2026-11-11,
+trinidad,TT,404,0,,,2026-11-11,
+tunisia,TN,200,68,BVMT,TND,2026-11-11,
+turkey,TR,200,649,BIST,TRY,2026-11-11,
+uae,AE,200,188,ADX DFM NASDAQDUBAI,AED USD,2026-11-11,
+uganda,UG,404,0,,,2026-11-11,
+uk,GB,200,9594,LSE LSIN,AUD CAD CHF DKK EUR GBP HKD JPY MXN NOK NZD PLN SEK USD,2026-11-11,grammar: LSIN unmapped (no MIC in exchanges.csv); LSE mapped
+ukraine,UA,404,0,,,2026-11-11,
+uruguay,UY,404,0,,,2026-11-11,
+uzbekistan,UZ,404,0,,,2026-11-11,
+venezuela,VE,200,32,BVCV,VES,2026-11-11,
+vietnam,VN,200,1252,HNX HOSE UPCOM,VND,2026-11-11,
+zambia,ZM,404,0,,,2026-11-11,
+zimbabwe,ZW,404,0,,,2026-11-11,
