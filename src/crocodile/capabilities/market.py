@@ -974,6 +974,13 @@ def markets_equities(ctx: CapabilityContext, params: MarketsParams) -> pl.DataFr
     padding; see :data:`_EQUITY_VENUE_IS_NATIVE` and :data:`_EQUITY_VENUE_IS_CCXT`. Both filters
     are applied structurally so that the day either constant stops being constant the filters
     follow it. ``--native-only`` keeps everything and ``--ccxt-only`` keeps nothing.
+
+    ``sources`` lists the serving sources in rank order: first appearance in the ``ohlcv``
+    chain (the order ``resolve_daily_bars`` applies), then ``instrument``, then
+    ``corp_action``; the rest follow by name. ``usage_classes`` is aligned with it. The three
+    local-state columns are read through :func:`read_market_coverage`, which never creates or
+    writes a file: ``listings_known`` is 0 when no master exists and null when it is unreadable,
+    and ``last_success`` is null when the state holds no success for the MIC or is unreadable.
     """
     mic, country = _market_scope(params.mic, params.country)
     # Both tier filters are applied structurally rather than one being left implicit, so that
