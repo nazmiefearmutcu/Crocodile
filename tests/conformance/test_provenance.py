@@ -956,7 +956,7 @@ def test_session_snapshot_refuses_a_count_the_method_cannot_produce():
         confidence_for("session_snapshot", {})
 
 
-# listing_directory — the official survivorship snapshots
+# listing_directory -- the official survivorship snapshots
 # ---------------------------------------------------------------------------
 
 
