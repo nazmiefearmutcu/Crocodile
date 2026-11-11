@@ -10,6 +10,7 @@ NASDAQ listed this morning.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import polars as pl
@@ -17,6 +18,7 @@ import pytest
 
 from crocodile.core.config import Settings
 from crocodile.core.errors import ConfigError
+from crocodile.core.markets.exchanges import ExchangeRegistry
 from crocodile.core.schema.enums import AssetClass, SecurityType
 from crocodile.core.schema.provenance import Provenance
 from crocodile.equity.providers.openfigi.models import FigiRecord
@@ -584,3 +586,62 @@ def test_a_fourth_source_is_not_silently_dropped_from_the_merge() -> None:
         reference.ReferenceEvidence(
             as_of_ns=_AS_OF, by_source=fourth, currency=evidence.currency
         ).merged()
+
+
+_NON_US = ("000001", "SHE", "CNY")
+
+
+def test_tiingo_rows_on_non_us_exchange_labels_are_skipped_and_counted(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A non-US label cannot enter the US-scoped universe, and the skip is logged per label."""
+    caplog.set_level(logging.INFO, logger="crocodile.equity.reference.universe")
+    rows = [
+        _tiingo("AAPL"),
+        _tiingo("000001", exchange="SHE", currency="CNY"),
+        _tiingo("000002", exchange="SHE", currency="CNY"),
+        _tiingo("600519", exchange="SHG", currency="CNY"),
+    ]
+    built = reference.instruments_from_tiingo(rows, as_of_ns=_AS_OF)
+    assert [instrument.symbol for instrument in built] == ["AAPL"]
+    assert "skipped 3 row(s)" in caplog.text
+    assert "SHE=2" in caplog.text
+    assert "SHG=1" in caplog.text
+
+
+def test_no_skip_line_is_logged_when_every_label_is_us(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger="crocodile.equity.reference.universe")
+    built = reference.instruments_from_tiingo(
+        [_tiingo("AAPL"), _tiingo("SPY", exchange="NYSE ARCA", asset_type="ETF")],
+        as_of_ns=_AS_OF,
+    )
+    assert len(built) == 2
+    assert "skipped" not in caplog.text
+
+
+def test_every_tiingo_us_label_maps_to_a_us_market_or_to_no_mic() -> None:
+    registry = ExchangeRegistry()
+    for key, value in reference.TIINGO_US_EXCHANGES.items():
+        assert key == key.strip().upper()
+        if value is not None:
+            assert registry.get(value).country == "US"
+
+
+def test_the_code_derived_us_labels_are_in_the_table() -> None:
+    assert {"NASDAQ", "NYSE", "NYSE ARCA", "NYSE MKT", "BATS"} <= set(
+        reference.TIINGO_US_EXCHANGES
+    )
+
+
+async def test_a_skipped_tiingo_row_contributes_no_currency() -> None:
+    evidence = await reference.fetch_bulk_evidence(
+        as_of_ns=_AS_OF,
+        sec=_FakeSec([_sec("AAPL", 320193)]),  # type: ignore[arg-type]
+        tiingo=_FakeTiingo(  # type: ignore[arg-type]
+            [_tiingo("AAPL"), _tiingo(_NON_US[0], exchange=_NON_US[1], currency=_NON_US[2])]
+        ),
+    )
+    assert evidence.currency == {"AAPL": "USD"}
+    assert "000001" not in evidence.currency

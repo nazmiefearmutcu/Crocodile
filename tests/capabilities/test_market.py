@@ -481,12 +481,16 @@ def _lake_with_bars(tmp_path: Path, volumes: dict[str, float]) -> Catalog:
 
 
 def test_equity_markets_lists_the_venues_the_reference_data_names(_reference: None) -> None:
-    """The row source is the resolved universe, so a venue exists because a listing says so."""
+    """The row source is the resolved universe, so a venue exists because a listing says so.
+
+    ``TSX`` is absent because ``instruments_from_tiingo`` keeps US exchange labels only (spec
+    3.6), and ``SHOP``'s SEC row has no exchange, so no venue is named for it. The ``TSX`` row
+    stays in the fixture: it demonstrates the scoping end to end.
+    """
     rows = market.markets_equities(_equity_ctx(), market.MarketsParams()).to_dicts()
     assert rows == [
         {"venue": "NASDAQ", "native": True, "ccxt": False},
         {"venue": "NYSE ARCA", "native": True, "ccxt": False},
-        {"venue": "TSX", "native": True, "ccxt": False},
     ]
 
 
@@ -550,7 +554,7 @@ def test_equity_universe_applies_the_kind_and_currency_filters(_reference: None)
     assert etfs["symbol"].to_list() == ["SPY"]
 
     wrong_currency = market.universe_equities(
-        _equity_ctx(), market.UniverseParams(source="TSX", quote="USD")
+        _equity_ctx(), market.UniverseParams(source="NASDAQ", quote="CAD")
     )
     assert wrong_currency.height == 0
 
@@ -675,9 +679,11 @@ def test_a_key_raises_the_enrichment_budget_and_buys_no_extra_fields() -> None:
 def test_equity_census_counts_the_venues_and_the_listings_m3_resolves(_reference: None) -> None:
     """The crypto census counts a venue universe and a coin universe; this counts listings."""
     snapshot = market.census_equities(_equity_ctx(), market.CensusParams())
+    # TSX is absent: the Tiingo universe keeps US exchange labels only (spec 3.6), so SHOP's
+    # Tiingo row is skipped and only its SEC row remains, under the blank venue it names.
     assert snapshot["venues"]["enumerated"] == 3
     assert snapshot["venues"]["total_markets"] == 4
-    assert snapshot["venues"]["by_kind"]["CS"] == 3
+    assert snapshot["venues"]["by_kind"]["CS"] == 2
     assert snapshot["venues"]["by_kind"]["ETF"] == 1
     assert snapshot["venues"]["rows"][0]["exchange"] == "NASDAQ"
     assert snapshot["venues"]["rows"][0]["markets"] == 2
@@ -693,11 +699,11 @@ def test_equity_census_reports_how_many_registries_agreed(_reference: None) -> N
     """
     snapshot = market.census_equities(_equity_ctx(), market.CensusParams())
     assert snapshot["securities"]["attested_by"] == {
-        "one_source": 0,
-        "two_sources": 4,
+        "one_source": 1,
+        "two_sources": 3,
         "three_sources": 0,
     }
-    assert snapshot["securities"]["by_source"] == {"tiingo": 4, "openfigi": 0, "sec_edgar": 4}
+    assert snapshot["securities"]["by_source"] == {"tiingo": 3, "openfigi": 0, "sec_edgar": 4}
 
 
 def test_equity_census_restricts_the_count_to_the_venues_it_was_given(_reference: None) -> None:

@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self
 
+from crocodile.core.markets.errors import ListingConflictError
 from crocodile.core.schema.enums import SecurityType
 from crocodile.equity.reference.models import Security, TickerMapping
 
@@ -24,7 +25,15 @@ def _parse_iso(iso_str: str) -> datetime:
 
 
 class SecurityMaster:
-    """Database registry and manager for securities and ticker mappings."""
+    """Database registry and manager for securities and ticker mappings.
+
+    SecurityMaster is US-scoped and keyed on the ticker. A listing of the same ticker on another
+    exchange is a different listing, so :meth:`register_security` refuses it with
+    ``ListingConflictError`` instead of silently re-pointing the row; that listing belongs in
+    ``crocodile.core.markets.master.ListingMaster`` (spec 3.6). Ruling: the refusal makes a caller
+    that re-lists a ticker elsewhere see an error, where the old overwrite hid the change. Cost if
+    wrong: a re-listing that should replace the old row must be done by an explicit step.
+    """
 
     def __init__(self, db_path: str | Path = ":memory:") -> None:
         self.db_path = db_path
@@ -132,12 +141,27 @@ class SecurityMaster:
         """Register a new security or update an existing one.
 
         Also automatically registers a ticker mapping for the security's ticker.
+
+        Raises:
+            ListingConflictError: the symbol is already stored on another exchange. The
+                stored row and its ticker mapping are left untouched.
         """
         now = _now_iso()
         created_at = security.created_at.isoformat() if security.created_at else now
         updated_at = security.updated_at.isoformat() if security.updated_at else now
 
         with self.conn:
+            held = self.conn.execute(
+                "SELECT exchange FROM securities WHERE symbol = ?", (security.symbol,)
+            ).fetchone()
+            if held is not None and (
+                held["exchange"].strip().upper() != security.exchange.strip().upper()
+            ):
+                raise ListingConflictError(
+                    security.symbol,
+                    f"{security.symbol} on {held['exchange']} in SecurityMaster",
+                    f"{security.symbol} on {security.exchange}",
+                )
             self.conn.execute(
                 """
                 INSERT INTO securities (

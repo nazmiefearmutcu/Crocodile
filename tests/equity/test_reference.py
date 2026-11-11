@@ -4,6 +4,8 @@ from datetime import UTC, datetime
 
 import pytest
 
+from crocodile.core.errors import CrocodileError, StoreError
+from crocodile.core.markets.errors import ListingConflictError
 from crocodile.core.schema.enums import SecurityType
 from crocodile.equity.reference.master import SecurityMaster
 from crocodile.equity.reference.models import Security
@@ -213,25 +215,42 @@ def test_case_insensitive_lookups() -> None:
         assert secs[0].symbol == "AAPL"
 
 
-def test_register_security_exchange_update_on_conflict() -> None:
-    """Test that register_security updates the exchange mapping when it changes."""
+def test_register_security_refuses_a_same_symbol_different_exchange_overwrite() -> None:
+    """SecurityMaster is US-scoped and keyed on the ticker: a second exchange is a conflict."""
     with SecurityMaster() as master:
-        sec1 = Security(symbol="AAPL", ticker="AAPL", exchange="NASDAQ")
-        master.register_security(sec1)
+        master.register_security(Security(symbol="AAPL", ticker="AAPL", exchange="NASDAQ"))
 
-        # Mapping exchange should be NASDAQ
-        retrieved_mappings = master.get_ticker_mappings("AAPL")
-        assert len(retrieved_mappings) == 1
-        assert retrieved_mappings[0].exchange == "NASDAQ"
+        with pytest.raises(ListingConflictError):
+            master.register_security(Security(symbol="AAPL", ticker="AAPL", exchange="NYSE"))
 
-        # Update security to NYSE
-        sec2 = Security(symbol="AAPL", ticker="AAPL", exchange="NYSE")
-        master.register_security(sec2)
+        stored = master.get_by_symbol("AAPL")
+        assert stored is not None and stored.exchange == "NASDAQ"
+        mappings = master.get_ticker_mappings("AAPL")
+        assert len(mappings) == 1
+        assert mappings[0].exchange == "NASDAQ"
 
-        # Mapping exchange should be updated to NYSE
-        retrieved_mappings = master.get_ticker_mappings("AAPL")
-        assert len(retrieved_mappings) == 1
-        assert retrieved_mappings[0].exchange == "NYSE"
+
+def test_register_security_compares_exchanges_case_insensitively() -> None:
+    """The same exchange in another letter case is the same listing and still updates."""
+    with SecurityMaster() as master:
+        master.register_security(
+            Security(symbol="AAPL", ticker="AAPL", exchange="NASDAQ", name="Apple")
+        )
+        master.register_security(
+            Security(symbol="AAPL", ticker="AAPL", exchange="nasdaq", name="Apple Inc.")
+        )
+        stored = master.get_by_symbol("AAPL")
+        assert stored is not None and stored.name == "Apple Inc."
+
+
+def test_the_security_master_refusal_is_the_listing_conflict_error_of_core_markets() -> None:
+    with SecurityMaster() as master:
+        master.register_security(Security(symbol="AAPL", ticker="AAPL", exchange="NASDAQ"))
+        with pytest.raises(ListingConflictError) as info:
+            master.register_security(Security(symbol="AAPL", ticker="AAPL", exchange="NYSE"))
+    assert type(info.value) is ListingConflictError
+    assert isinstance(info.value, CrocodileError)
+    assert isinstance(info.value, StoreError)
 
 
 def test_instrument_registry_fallback() -> None:

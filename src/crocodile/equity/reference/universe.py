@@ -50,8 +50,11 @@ written into a ``channel=instrument/`` partition stays the record the union decl
 
 from __future__ import annotations
 
+import logging
+from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
+from types import MappingProxyType
 from typing import Final
 
 import polars as pl
@@ -76,6 +79,7 @@ __all__ = [
     "SOURCE_OPENFIGI",
     "SOURCE_SEC",
     "SOURCE_TIINGO",
+    "TIINGO_US_EXCHANGES",
     "VOLUME_RANK_SQL",
     "Listing",
     "ReferenceEvidence",
@@ -94,6 +98,44 @@ __all__ = [
 SOURCE_SEC: Final = "sec_edgar"
 SOURCE_TIINGO: Final = "tiingo"
 SOURCE_OPENFIGI: Final = "openfigi"
+
+log = logging.getLogger(__name__)
+
+TIINGO_US_EXCHANGES: Final[Mapping[str, str | None]] = MappingProxyType(
+    {
+        # Code-derived: the first five labels map to the MIC that exchanges.csv names for them.
+        "NASDAQ": "XNAS",
+        "NYSE": "XNYS",
+        "NYSE ARCA": "XNYS",  # ISO 10383 segment ARCX of XNYS
+        "NYSE MKT": "XNYS",  # ISO 10383 segment XASE (NYSE American) of XNYS
+        "BATS": "XCBO",  # ISO 10383 segment BATS (Cboe BZX) of XCBO
+        # observed in supported_tickers.zip on 2026-11-11: 374 rows, all USD
+        "AMEX": "XNYS",  # NYSE American under its older label, segment XASE of XNYS
+        # US-only venue names, listed defensively: none of them can admit a non-US listing.
+        "NYSE NAT": "XNYS",  # US venue, ISO segment XCIS
+        "IEX": "IEXG",  # US venue
+        # US OTC tiers. Their ISO operating MICs (OTCM, FINR) are not in exchanges.csv, so
+        # they carry no MIC here, but the rows are kept rather than dropped.
+        "OTC": None,
+        "OTCBB": None,
+        "OTCQB": None,
+        "OTCQX": None,
+        "OTCGREY": None,
+        "OTCMKTS": None,
+        "PINK": None,
+        "EXPM": None,
+        # observed in supported_tickers.zip on 2026-11-11: 389 rows, all USD
+        "OTCCE": None,
+        "NMFQS": None,  # Nasdaq mutual-fund quotation service, US
+    }
+)
+"""Tiingo exchange label -> operating MIC, or None for a US tier with no exchanges.csv MIC.
+
+Keys are the upper-cased, stripped labels, the form :func:`instruments_from_tiingo` compares.
+The first five labels are code-derived. The rest are US-only venue names whose presence cannot
+admit a non-US listing. A label Tiingo never emits costs nothing. A US label missing from this
+table drops its rows, and the log line names it.
+"""
 
 REFERENCE_MERGE_BASIS: Final = "reference_merge"
 """The registered basis every row this module emits rests on."""
@@ -487,12 +529,20 @@ def instruments_from_tiingo(rows: Sequence[TiingoTicker], *, as_of_ns: int) -> l
     enumerates what the registries name, delisted rows included, and the ``top`` slice sheds
     them on evidence instead: a delisted ticker has no recent traded volume, so it sorts
     where it belongs rather than where a guessed cutoff put it.
+
+    The universe is US-scoped (spec 3.6). A row whose exchange label is not a key of
+    :data:`TIINGO_US_EXCHANGES` is skipped and counted per label, and one INFO line names the
+    counts. Non-US listings belong to the listing master, not to this universe.
     """
     built: list[Instrument] = []
+    skipped: Counter[str] = Counter()
     for row in rows:
         ticker = row.ticker.strip().upper()
         exchange = row.exchange.strip().upper()
         if not ticker or not exchange:
+            continue
+        if exchange not in TIINGO_US_EXCHANGES:
+            skipped[exchange] += 1
             continue
         tail = _read_from_a_registry()
         built.append(
@@ -511,6 +561,13 @@ def instruments_from_tiingo(rows: Sequence[TiingoTicker], *, as_of_ns: int) -> l
                 security_type=_security_type(row.asset_type, _TIINGO_ASSET_TYPES),
                 listing_date=row.start_date or None,
             )
+        )
+    if skipped:
+        log.info(
+            "tiingo universe: skipped %d row(s) on non-US exchange labels (%s); "
+            "SecurityMaster and this universe are US-scoped",
+            sum(skipped.values()),
+            ", ".join(f"{label}={count}" for label, count in sorted(skipped.items())),
         )
     return built
 
@@ -710,6 +767,7 @@ async def fetch_bulk_evidence(
             row.ticker.upper(): row.price_currency.strip().upper()
             for row in tiingo_rows
             if row.price_currency.strip()
+            and row.exchange.strip().upper() in TIINGO_US_EXCHANGES
         },
     )
 
