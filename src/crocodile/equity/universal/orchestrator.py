@@ -1295,8 +1295,15 @@ class UniversalOrchestrator:
         if not passed:
             return
         try:
-            batch = await source.snapshot(unit, passed, captured_ns=self.now_ns())
+            batch = await self._with_retries(
+                lambda: source.snapshot(unit, passed, captured_ns=self.now_ns())
+            )
+            counts = await self._write_snapshot_bars(run, batch, passed, explicit)
+            await self._commit_batch()
         except Exception as exc:
+            # Every failure of this unit (the fetch after its retries, the bar writes, the commit)
+            # is classified per spec 3.10e. Its MICs keep no marker and fall back to history; the
+            # other units of the run keep going.
             status, reason = _classify(exc)
             if status is OutcomeStatus.FAILED:
                 logger.warning("snapshot unit %s/%s failed", name, unit, exc_info=True)
@@ -1310,8 +1317,6 @@ class UniversalOrchestrator:
                     reason=reason,
                 )
             return
-        counts = await self._write_snapshot_bars(run, batch, passed, explicit)
-        await self._commit_batch()
         for mic in mics:
             if mic not in batch.attributed_mics:
                 run.add(_not_attributable(mic, name))
@@ -1374,28 +1379,48 @@ class UniversalOrchestrator:
                 )
                 return
             count = 0
-            for record in records:
-                if (
-                    not isinstance(record, OHLCV)
-                    or record.interval != _DAILY_INTERVAL
-                    or record.symbol != listing.symbol
-                    or record.source_ts != day_ns
-                ):
-                    continue
-                if await self._write_checked(run, record, listing):
-                    count += 1
-            if count:
-                await self._queue_success(
-                    _Pending(
-                        source=hist.name,
-                        symbol=listing.symbol,
-                        mic=listing.mic,
-                        channel="ohlcv",
-                        interval=_EOD_INTERVAL,
-                        lo=day_ns,
-                        hi=day_ns,
+            try:
+                for record in records:
+                    if (
+                        not isinstance(record, OHLCV)
+                        or record.interval != _DAILY_INTERVAL
+                        or record.symbol != listing.symbol
+                        or record.source_ts != day_ns
+                    ):
+                        continue
+                    if await self._write_checked(run, record, listing):
+                        count += 1
+                if count:
+                    await self._queue_success(
+                        _Pending(
+                            source=hist.name,
+                            symbol=listing.symbol,
+                            mic=listing.mic,
+                            channel="ohlcv",
+                            interval=_EOD_INTERVAL,
+                            lo=day_ns,
+                            hi=day_ns,
+                        )
                     )
+            except Exception as exc:
+                # A sink or watermark failure of this listing is its own classified outcome; the
+                # other listings of the batch keep running.
+                status, reason = _classify(exc)
+                logger.warning(
+                    "fallback write %s %s failed", hist.name, listing.symbol, exc_info=True
                 )
+                results[listing.symbol] = (
+                    0,
+                    Outcome(
+                        subject=listing.symbol,
+                        mic=listing.mic,
+                        source=hist.name,
+                        channel="ohlcv",
+                        status=status,
+                        reason=reason,
+                    ),
+                )
+                return
             results[listing.symbol] = (count, None)
 
     async def _fallback_market(
@@ -1469,7 +1494,22 @@ class UniversalOrchestrator:
                 )
             )
             return
-        await self._commit_batch()
+        try:
+            await self._commit_batch()
+        except Exception as exc:
+            # A failed flush or watermark commit writes no marker: the next call refetches.
+            status, reason = _classify(exc)
+            run.add(
+                Outcome(
+                    subject=mic,
+                    mic=mic,
+                    source=hist.name,
+                    channel="ohlcv",
+                    status=status,
+                    reason=reason,
+                )
+            )
+            return
         self._state.record_eod(
             source=hist.name,
             mic=mic,
@@ -1673,22 +1713,39 @@ class UniversalOrchestrator:
                 )
                 return
             written = 0
-            for bar in sorted(fresh, key=lambda item: item.source_ts or 0):
-                if await self._write_checked(run, bar, listing):
-                    written += 1
             stamps = [bar.source_ts for bar in fresh if bar.source_ts is not None]
-            if written and stamps:
-                await self._queue_success(
-                    _Pending(
-                        source=source.name,
-                        symbol=listing.symbol,
+            try:
+                for bar in sorted(fresh, key=lambda item: item.source_ts or 0):
+                    if await self._write_checked(run, bar, listing):
+                        written += 1
+                if written and stamps:
+                    await self._queue_success(
+                        _Pending(
+                            source=source.name,
+                            symbol=listing.symbol,
+                            mic=listing.mic,
+                            channel="ohlcv",
+                            interval=interval,
+                            lo=min(stamps),
+                            hi=max(stamps),
+                        )
+                    )
+            except Exception as exc:
+                status, reason = _classify(exc)
+                logger.warning(
+                    "intraday write %s %s failed", source.name, listing.symbol, exc_info=True
+                )
+                run.add(
+                    Outcome(
+                        subject=listing.symbol,
                         mic=listing.mic,
+                        source=source.name,
                         channel="ohlcv",
-                        interval=interval,
-                        lo=min(stamps),
-                        hi=max(stamps),
+                        status=status,
+                        reason=reason,
                     )
                 )
+                return
             run.add(
                 Outcome(
                     subject=listing.symbol,

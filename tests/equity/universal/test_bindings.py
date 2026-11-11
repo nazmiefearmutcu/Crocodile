@@ -374,3 +374,50 @@ async def test_open_orchestrator_wires_the_default_bindings_offline(tmp_path: Pa
         assert set(orch.bindings.snapshot) == {"tradingview"}
     finally:
         await orch.aclose()
+
+
+# The synthetic 5m payload (THYAO_5m_synthetic.json) answers any request with three 5m bars at
+# 1793946600, 1793946900 and 1793947200 seconds; the capture below is after the last one closed.
+INTRADAY_CAPTURE_NS = 1_793_948_000 * 1_000_000_000
+FIVE_MINUTE_STARTS = (1_793_946_600, 1_793_946_900, 1_793_947_200)
+
+
+async def _yahoo_intraday_fetch(request: HttpRequest) -> HttpResponse:
+    body = (FIXTURES / "yahoo_chart" / "THYAO_5m_synthetic.json").read_bytes()
+    return HttpResponse(
+        status=200,
+        headers={"content-type": "application/json"},
+        body=body,
+        url=request.url,
+    )
+
+
+@pytest.mark.usefixtures("network_forbidden")
+async def test_the_yahoo_chart_binding_yields_the_closed_intraday_bars(tmp_path: Path) -> None:
+    master = _master(tmp_path)
+    bindings = bindings_module.default_bindings(
+        _settings(tmp_path),
+        RecordingSink(),
+        master=master,
+        clock_ns=lambda: INTRADAY_CAPTURE_NS,
+        yahoo_client=yc.YahooChartClient(fetch=_yahoo_intraday_fetch),
+        tradingview_client=tv.TradingViewClient(fetch=_ScannerFake({})),
+        directory_fetch=_no_directory,
+    )
+    listing = master.get("THYAO@XIST")
+    assert listing is not None
+    history = bindings.history["yahoo_chart"]
+    try:
+        records = [
+            record
+            async for record in history.intraday(listing, "5m", captured_ns=INTRADAY_CAPTURE_NS)
+        ]
+    finally:
+        await _close_all(bindings)
+        master.close()
+    bars = [record for record in records if isinstance(record, OHLCV)]
+    assert [bar.source_ts for bar in bars] == [
+        start * 1_000_000_000 for start in FIVE_MINUTE_STARTS
+    ]
+    assert {bar.symbol for bar in bars} == {"THYAO@XIST"}
+    assert {bar.interval for bar in bars} == {"5m"}

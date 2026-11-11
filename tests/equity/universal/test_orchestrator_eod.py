@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from crocodile.core.markets.errors import CalendarRangeError, SanctionedMarketError
+from crocodile.core.markets.exchanges import ExchangeRegistry
 from crocodile.core.markets.master import ListingMaster
 from crocodile.core.schema.enums import AssetClass
 from crocodile.core.schema.provenance import provenance_fields
@@ -36,6 +38,7 @@ from tests.equity.universal.fakes import (
 TURKEY_SESSION = datetime.date(2024, 3, 8)
 NEW_YORK_SESSION = datetime.date(2024, 3, 7)
 NS_PER_MINUTE = 60 * 1_000_000_000
+SANCTIONED_MIC: str = next(info.mic for info in ExchangeRegistry().all() if info.sanctioned)
 
 
 def _bindings(
@@ -513,3 +516,352 @@ async def test_a_transient_snapshot_error_without_history_is_reported_not_raised
     assert outcome.status is OutcomeStatus.TRANSIENT_ERROR
     assert outcome.source == "tradingview"
     assert UniversalState.at(tmp_path).eod_marker("tradingview", "XIST") is None
+
+
+# ---------------------------------------------------- failure classification (fix round 1)
+
+
+async def _no_sleep(seconds: float) -> None:
+    return None
+
+
+class _FlakySnapshot:
+    """A snapshot source that raises a transient error on its first ``failures`` attempts."""
+
+    def __init__(self, inner: FakeSnapshotSource, failures: int) -> None:
+        self.inner = inner
+        self.name = inner.name
+        self.failures = failures
+        self.attempts = 0
+
+    def units_for(self, mics: frozenset[str]) -> dict[str, frozenset[str]]:
+        return self.inner.units_for(mics)
+
+    async def snapshot(
+        self, unit: str, sessions: dict[str, datetime.date], *, captured_ns: int
+    ) -> object:
+        self.attempts += 1
+        if self.attempts <= self.failures:
+            raise TransientProviderError("busy")
+        return await self.inner.snapshot(unit, sessions, captured_ns=captured_ns)
+
+
+class _FailingSink(RecordingSink):
+    """A sink whose ``put`` raises ``OSError`` for one symbol and stores every other record."""
+
+    def __init__(self, failing_symbol: str) -> None:
+        super().__init__()
+        self.failing_symbol = failing_symbol
+
+    async def put(self, record: object) -> None:
+        if getattr(record, "symbol", None) == self.failing_symbol:
+            raise OSError("disk full")
+        await super().put(record)  # type: ignore[arg-type]
+
+
+def _turkey_snapshot(**kw: object) -> FakeSnapshotSource:
+    return FakeSnapshotSource(
+        "tradingview",
+        units={"turkey": frozenset({"XIST"})},
+        bars={
+            "turkey": (
+                daily_bar(
+                    "tradingview",
+                    "THYAO@XIST",
+                    TURKEY_SESSION,
+                    300.0,
+                    currency="TRY",
+                    price_scale=0,
+                ),
+            )
+        },
+        **kw,  # type: ignore[arg-type]
+    )
+
+
+async def test_a_transient_snapshot_error_that_clears_on_retry_still_yields_the_bars(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    flaky = _FlakySnapshot(_turkey_snapshot(), failures=1)
+    orch = make_orchestrator(
+        tmp_path,
+        _bindings(snapshot=(flaky,)),
+        master=master,
+        sleep=_no_sleep,  # type: ignore[arg-type]
+    )
+    try:
+        report = await orch.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert flaky.attempts == 2
+    assert report.records_written == 1
+    (outcome,) = [o for o in report.market_outcomes("XIST") if o.source == "tradingview"]
+    assert outcome.status is OutcomeStatus.OK
+    marker = UniversalState.at(tmp_path).eod_marker("tradingview", "XIST")
+    assert marker is not None
+    assert (marker.session, marker.status) == (TURKEY_SESSION, "ok")
+
+
+async def test_a_transient_snapshot_error_on_every_attempt_makes_exactly_the_bounded_calls(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    flaky = _FlakySnapshot(_turkey_snapshot(), failures=10**6)
+    orch = make_orchestrator(
+        tmp_path,
+        _bindings(snapshot=(flaky,)),
+        master=master,
+        sleep=_no_sleep,  # type: ignore[arg-type]
+    )
+    try:
+        report = await orch.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert flaky.attempts == module.MAX_TRANSIENT_ATTEMPTS
+    (outcome,) = report.market_outcomes("XIST")
+    assert outcome.status is OutcomeStatus.TRANSIENT_ERROR
+    assert outcome.source == "tradingview"
+    assert UniversalState.at(tmp_path).eod_marker("tradingview", "XIST") is None
+
+
+async def test_a_history_batch_whose_every_attempt_fails_writes_no_marker(tmp_path: Path) -> None:
+    master = _thyao_master(tmp_path)
+    history = FakeHistorySource(
+        "yahoo_chart",
+        bars={"THYAO@XIST": [(TURKEY_SESSION, 300.0)]},
+        raises={"THYAO@XIST": TransientProviderError("busy")},
+    )
+    orch = make_orchestrator(
+        tmp_path, _bindings(history=(history,)), master=master, sleep=_no_sleep
+    )
+    try:
+        report = await orch.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert len(history.calls) == module.MAX_TRANSIENT_ATTEMPTS
+    assert report.records_written == 0
+    (outcome,) = [o for o in report.market_outcomes("XIST") if o.source == "yahoo_chart"]
+    assert outcome.status is OutcomeStatus.TRANSIENT_ERROR
+    assert UniversalState.at(tmp_path).eod_marker("yahoo_chart", "XIST") is None
+
+
+async def test_a_sink_failure_on_one_unit_is_classified_and_the_other_units_still_run(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    seed_master(
+        master,
+        [
+            make_observation(
+                "tradingview", "NASDAQ:AAPL", "XNYS", "AAPL", currency="USD", price_scale=0
+            )
+        ],
+    )
+    snapshot = FakeSnapshotSource(
+        "tradingview",
+        units={"turkey": frozenset({"XIST"}), "us": frozenset({"XNYS"})},
+        bars={
+            "turkey": (
+                daily_bar(
+                    "tradingview",
+                    "THYAO@XIST",
+                    TURKEY_SESSION,
+                    300.0,
+                    currency="TRY",
+                    price_scale=0,
+                ),
+            ),
+            "us": (
+                daily_bar(
+                    "tradingview", "AAPL", NEW_YORK_SESSION, 170.0, currency="USD", price_scale=0
+                ),
+            ),
+        },
+        mics_by_symbol={"AAPL": "XNYS"},
+    )
+    sink = _FailingSink("THYAO@XIST")
+    orch = make_orchestrator(tmp_path, _bindings(snapshot=(snapshot,)), master=master, sink=sink)
+    try:
+        report = await orch.collect_eod(Scope(symbols=("THYAO@XIST", "AAPL")), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    (xist,) = report.market_outcomes("XIST")
+    assert xist.status is OutcomeStatus.FAILED
+    assert xist.source == "tradingview"
+    assert xist.reason is not None and xist.reason.startswith("OSError")
+    assert UniversalState.at(tmp_path).eod_marker("tradingview", "XIST") is None
+    (xnys,) = [o for o in report.market_outcomes("XNYS") if o.source == "tradingview"]
+    assert xnys.status is OutcomeStatus.OK
+    assert [record.symbol for record in sink.records] == ["AAPL"]
+
+
+async def test_a_sink_failure_on_a_history_fallback_write_is_classified_and_leaves_no_marker(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    history = FakeHistorySource("yahoo_chart", bars={"THYAO@XIST": [(TURKEY_SESSION, 300.0)]})
+    orch = make_orchestrator(
+        tmp_path,
+        _bindings(history=(history,)),
+        master=master,
+        sink=_FailingSink("THYAO@XIST"),
+    )
+    try:
+        report = await orch.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    (outcome,) = [o for o in report.market_outcomes("XIST") if o.source == "yahoo_chart"]
+    assert outcome.status is OutcomeStatus.FAILED
+    assert outcome.reason is not None and outcome.reason.startswith("OSError")
+    assert UniversalState.at(tmp_path).eod_marker("yahoo_chart", "XIST") is None
+
+
+async def test_a_sink_failure_on_intraday_bars_is_classified_and_leaves_no_watermark(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    closed_at = int(FIXED_NS) - 2 * NS_PER_MINUTE
+    history = FakeHistorySource(
+        "yahoo_chart",
+        intraday_bars={"THYAO@XIST": [_minute_bar("THYAO@XIST", closed_at, 10.0)]},
+    )
+    orch = make_orchestrator(
+        tmp_path,
+        _bindings(history=(history,)),
+        master=master,
+        sink=_FailingSink("THYAO@XIST"),
+    )
+    try:
+        report = await orch.collect_intraday(["THYAO@XIST"], "1m", now=FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    (outcome,) = report.outcomes
+    assert outcome.status is OutcomeStatus.FAILED
+    assert outcome.reason is not None and outcome.reason.startswith("OSError")
+    assert report.records_written == 0
+    assert UniversalState.at(tmp_path).coverage("yahoo_chart", "THYAO@XIST", "ohlcv", "1m") is None
+
+
+async def test_a_market_outside_its_calendar_bounds_is_reported_as_a_failed_calendar_range(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def out_of_range(mic: str) -> None:
+        raise CalendarRangeError(mic, FIXED_NOW.date(), None, None)
+
+    monkeypatch.setattr(module, "calendar_for", out_of_range)
+    master = _thyao_master(tmp_path)
+    snapshot = _turkey_snapshot()
+    orch = make_orchestrator(tmp_path, _bindings(snapshot=(snapshot,)), master=master)
+    try:
+        report = await orch.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert snapshot.calls == []
+    (outcome,) = report.market_outcomes("XIST")
+    assert outcome.status is OutcomeStatus.FAILED
+    assert outcome.reason == "calendar_range"
+
+
+async def test_a_market_no_source_serves_is_reported_as_no_source(tmp_path: Path) -> None:
+    master = _thyao_master(tmp_path)
+    orch = make_orchestrator(tmp_path, _bindings(), master=master)
+    try:
+        report = await orch.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    (outcome,) = report.market_outcomes("XIST")
+    assert outcome.status is OutcomeStatus.NO_SOURCE
+    assert outcome.reason == "no source serves this market and channel"
+
+
+async def test_collect_eod_refuses_a_sanctioned_market_without_asking_any_source(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    snapshot = _turkey_snapshot()
+    orch = make_orchestrator(tmp_path, _bindings(snapshot=(snapshot,)), master=master)
+    try:
+        report = await orch.collect_eod(Scope(all_markets=True), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    refused = [o for o in report.outcomes if o.mic == SANCTIONED_MIC]
+    assert [o.status for o in refused] == [OutcomeStatus.SANCTIONED] * len(refused)
+    assert refused
+    assert all(SANCTIONED_MIC not in sessions for _unit, sessions, _c in snapshot.calls)
+
+
+async def test_collect_intraday_reports_no_data_when_the_source_has_no_bars(tmp_path: Path) -> None:
+    master = _thyao_master(tmp_path)
+    history = FakeHistorySource("yahoo_chart")
+    orch = make_orchestrator(tmp_path, _bindings(history=(history,)), master=master)
+    try:
+        report = await orch.collect_intraday(["THYAO@XIST"], "1m", now=FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert history.intraday_calls == [("THYAO@XIST", "1m")]
+    (outcome,) = report.outcomes
+    assert outcome.status is OutcomeStatus.NO_DATA
+    assert outcome.source == "yahoo_chart"
+    assert report.records_written == 0
+
+
+async def test_collect_intraday_reports_an_unknown_listing_and_collects_the_known_one(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    closed_at = int(FIXED_NS) - 2 * NS_PER_MINUTE
+    history = FakeHistorySource(
+        "yahoo_chart",
+        intraday_bars={"THYAO@XIST": [_minute_bar("THYAO@XIST", closed_at, 10.0)]},
+    )
+    orch = make_orchestrator(tmp_path, _bindings(history=(history,)), master=master)
+    try:
+        report = await orch.collect_intraday(["NOPE@XIST", "THYAO@XIST"], "1m", now=FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    unknown = [o for o in report.outcomes if o.status is OutcomeStatus.UNKNOWN_LISTING]
+    assert [(o.subject, o.reason) for o in unknown] == [("NOPE@XIST", "unknown listing")]
+    assert report.records_written == 1
+    assert [symbol for symbol, _interval in history.intraday_calls] == ["THYAO@XIST"]
+
+
+async def test_collect_intraday_refuses_when_no_named_listing_is_known(tmp_path: Path) -> None:
+    master = _thyao_master(tmp_path)
+    history = FakeHistorySource("yahoo_chart")
+    orch = make_orchestrator(tmp_path, _bindings(history=(history,)), master=master)
+    try:
+        with pytest.raises(ValueError, match="none of the named listings"):
+            await orch.collect_intraday(["NOPE@XIST"], "1m", now=FIXED_NOW)
+    finally:
+        await orch.aclose()
+    assert history.intraday_calls == []
+
+
+async def test_collect_intraday_refuses_a_sanctioned_market_before_any_request(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path)
+    seed_master(
+        master,
+        [make_observation("tradingview", "XX:ABC", SANCTIONED_MIC, "ABC")],
+    )
+    history = FakeHistorySource("yahoo_chart")
+    orch = make_orchestrator(tmp_path, _bindings(history=(history,)), master=master)
+    try:
+        with pytest.raises(SanctionedMarketError):
+            await orch.collect_intraday([f"ABC@{SANCTIONED_MIC}"], "1m", now=FIXED_NOW)
+    finally:
+        await orch.aclose()
+    assert history.intraday_calls == []
