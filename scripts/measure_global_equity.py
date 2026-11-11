@@ -680,7 +680,10 @@ def _met(flag: object) -> str:
 
 
 def _cell(value: object) -> str:
-    text = "" if value is None else str(value)
+    if isinstance(value, float):
+        text = f"{round(value, 6):.6f}".rstrip("0").rstrip(".")
+    else:
+        text = "" if value is None else str(value)
     return text.replace("|", "\\|").replace("\n", " ")
 
 
@@ -1516,6 +1519,21 @@ def _say(message: str) -> None:
     print(message.encode("ascii", "backslashreplace").decode("ascii"), file=sys.stderr, flush=True)
 
 
+def _summary(message: str) -> None:
+    """The final line of a run, on stdout (progress goes to stderr through ``_say``)."""
+    print(message.encode("ascii", "backslashreplace").decode("ascii"), flush=True)
+
+
+def _data_dir_cleanup(data_dir: Path, *, created_by_run: bool, keep: bool) -> str:
+    """Remove the data dir only when this run created it; a directory the operator named is kept."""
+    if keep:
+        return "not_requested"
+    if not created_by_run:
+        return "kept_preexisting"
+    shutil.rmtree(data_dir, ignore_errors=True)
+    return "completed" if not data_dir.exists() else "incomplete"
+
+
 def _csv(text: str) -> tuple[str, ...]:
     return tuple(part.strip().upper() for part in text.split(",") if part.strip())
 
@@ -1591,6 +1609,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.dry_plan:
         _print_dry_plan(plans, args)
         return 0
+    created_by_run = args.data_dir is None or not args.data_dir.exists()
     try:
         data_dir = prepare_data_dir(args.data_dir)
     except ValueError as exc:
@@ -1603,14 +1622,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args.environment_scrubbed = scrubbed
     args.out_dir.mkdir(parents=True, exist_ok=True)
     result = run_measurement(args)
-    if args.keep_data:
-        result["arguments"]["data_dir_cleanup"] = "not_requested"
-        result["data_dir_kept"] = True
-    else:
-        shutil.rmtree(data_dir, ignore_errors=True)
-        completed = not data_dir.exists()
-        result["arguments"]["data_dir_cleanup"] = "completed" if completed else "incomplete"
-        result["data_dir_kept"] = not completed
+    cleanup = _data_dir_cleanup(data_dir, created_by_run=created_by_run, keep=args.keep_data)
+    result["arguments"]["data_dir_cleanup"] = cleanup
+    result["data_dir_kept"] = cleanup != "completed"
     stamp = datetime.fromisoformat(result["started_at_utc"]).strftime("%Y%m%dT%H%M%SZ")
     json_path = args.out_dir / f"global-equity-{stamp}.json"
     payload = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False, default=str)
@@ -1621,7 +1635,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     md_path.write_text(
         render_markdown(result, json_path=json_path, json_sha256=sha), encoding="utf-8"
     )
-    _say(f"wrote {json_path} and {md_path}")
+    _summary(f"wrote {json_path} and {md_path}")
     return {"interrupted": 130, "aborted": 1}.get(str(result["status"]), 0)
 
 

@@ -23,6 +23,9 @@ from scripts.measure_global_equity import (
     HostNotAllowed,
     HttpLedger,
     RequestRecord,
+    _cell,
+    _data_dir_cleanup,
+    _summary,
     acceptance_summary,
     build_plan,
     choose_samples,
@@ -438,3 +441,33 @@ def test_every_phase_call_opens_and_closes_its_own_orchestrator_on_its_own_loop(
     assert len(loops) == 2
     assert loops[0] is not loops[1]
     assert events == [("sink", 0), ("orchestrator", 0), ("sink", 1), ("orchestrator", 1)]
+
+
+def test_a_data_dir_this_run_created_is_removed_and_a_preexisting_one_is_kept(
+    tmp_path: pathlib.Path,
+) -> None:
+    created = tmp_path / "made"
+    created.mkdir()
+    (created / "lake.txt").write_text("x", encoding="utf-8")
+    assert _data_dir_cleanup(created, created_by_run=True, keep=False) == "completed"
+    assert not created.exists()
+    given = tmp_path / "given"
+    given.mkdir()
+    assert _data_dir_cleanup(given, created_by_run=False, keep=False) == "kept_preexisting"
+    assert given.exists()
+    assert _data_dir_cleanup(given, created_by_run=True, keep=True) == "not_requested"
+    assert given.exists()
+
+
+def test_markdown_cells_round_floats_for_display() -> None:
+    assert _cell(2343.0000000007567) == "2343"
+    assert _cell(0.1234567) == "0.123457"
+    assert _cell(1234567.5) == "1234567.5"
+    assert _cell(None) == ""
+
+
+def test_the_final_summary_goes_to_stdout(capsys: pytest.CaptureFixture[str]) -> None:
+    _summary("wrote a.json and a.md")
+    captured = capsys.readouterr()
+    assert captured.out == "wrote a.json and a.md\n"
+    assert captured.err == ""
