@@ -176,7 +176,9 @@ async def test_coordinator_simple_run() -> None:
 async def test_coordinator_catch_up() -> None:
     """Test catch-up functionality when multiple periods are missed."""
     state = InMemoryStateStore()
-    coord = ScheduledPullCoordinator(state)
+    # max_dates_per_tick=1: this test pins the order in which the watermark walks the missed
+    # dates, one per tick. Batching (default 5 per tick) is covered in test_scheduler_calendars.py.
+    coord = ScheduledPullCoordinator(state, max_dates_per_tick=1)
 
     executed_dates = []
 
@@ -276,7 +278,9 @@ async def test_coordinator_policies() -> None:
 async def test_coordinator_intervals() -> None:
     """Test interval calculations (weekly, semi_monthly, monthly, bi_monthly)."""
     state = InMemoryStateStore()
-    coord = ScheduledPullCoordinator(state)
+    # max_dates_per_tick=1: each tick pins one due date of the interval; batching (default 5)
+    # is covered in test_scheduler_calendars.py.
+    coord = ScheduledPullCoordinator(state, max_dates_per_tick=1)
 
     weekly_runs = []
     semi_monthly_runs = []
@@ -428,7 +432,9 @@ async def test_coordinator_parameterless_bypass_catchup() -> None:
 async def test_coordinator_first_run_full_catchup() -> None:
     """Test that a newly registered task catches up day-by-day starting from start_date forward."""
     state = InMemoryStateStore()
-    coord = ScheduledPullCoordinator(state)
+    # max_dates_per_tick=1: the test asserts one catch-up date per tick; the default batch of 5
+    # is covered in test_scheduler_calendars.py.
+    coord = ScheduledPullCoordinator(state, max_dates_per_tick=1)
     executed_dates = []
 
     def task_with_date(run_date: datetime.date) -> None:
@@ -501,7 +507,13 @@ async def test_coordinator_task_retry_and_cooldown() -> None:
     assert runs == 0
     assert run_count == 3
 
-    # Check after another 5 minutes (903s later): should be permanently skipped (exceeded 3 retries)
+    # The third failure reached max_failures: Jan 7 is recorded as a gap and the watermark
+    # moved past it (spec 3.9), so nothing is due any more. Previously the date was skipped
+    # with no record; now it is a GapEntry in the state store.
+    assert [g.logical_date for g in coord.gaps("failing")] == [datetime.date(2026, 1, 7)]
+    assert state.get_last_run("failing")[1] == datetime.date(2026, 1, 7)
+
+    # Check after another 5 minutes (903s later): nothing is due (the gap stepped past Jan 7)
     runs = await coord.check_and_run_once(now + datetime.timedelta(seconds=903))
     assert runs == 0
     assert run_count == 3
