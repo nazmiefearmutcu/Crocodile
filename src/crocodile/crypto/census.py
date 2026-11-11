@@ -312,7 +312,7 @@ _TOKENS_LIGHT = (
 _HTML_TEMPLATE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Crypcodile — Market Census</title>
+<title>Crocodile — Market Census</title>
 <style>
 :root { {dark} }
 @media (prefers-color-scheme: light) { :root { {light} } }
@@ -390,7 +390,7 @@ code{font-family:var(--mono);font-size:.9em;color:var(--accent)}
 .foot{color:var(--dim);font-size:12px;margin-top:22px;text-align:center;font-family:var(--mono)}
 </style></head>
 <body>
-<div class="wm"><span class="dot"></span><h1>Crypcodile <b>/</b> Market Census</h1></div>
+<div class="wm"><span class="dot"></span><h1>Crocodile <b>/</b> Market Census</h1></div>
 <div class="lede">The entire crypto market, on one instrument.</div>
 <div class="gen">{generated} · live · keyless public feeds</div>
 <div class="readout">
@@ -418,8 +418,8 @@ code{font-family:var(--mono);font-size:.9em;color:var(--accent)}
 <div class="grid" style="margin-top:16px">
   <div class="card"><h2>DeFi TVL by chain</h2>{defi_rows}</div>
   <div class="card"><h2>What this measures</h2>
-    <p class="note">Every figure is live from keyless public APIs. <b>Venues</b> and their market counts come from ccxt <code>load_markets</code>; the <b>coin universe</b>, market cap and dominance from CoinGecko; <b>TVL</b> from DeFiLlama. Crypcodile ingests any of it into one Parquet lake under a single record schema — a ccxt venue and a native connector are indistinguishable downstream.</p>
+    <p class="note">Every figure is live from keyless public APIs. <b>Venues</b> and their market counts come from ccxt <code>load_markets</code>; the <b>coin universe</b>, market cap and dominance from CoinGecko; <b>TVL</b> from DeFiLlama. Crocodile ingests any of it into one Parquet lake under a single record schema — a ccxt venue and a native connector are indistinguishable downstream.</p>
   </div>
 </div>
-<div class="foot">crypcodile census — the whole market, quantified</div>
+<div class="foot">crocodile census — the whole market, quantified</div>
 </body></html>""".replace("{dark}", _TOKENS_DARK).replace("{light}", _TOKENS_LIGHT)

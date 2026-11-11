@@ -431,7 +431,7 @@ class SciPyGreeksSolverAdapter(GreeksSolverAdapter):
             import scipy.stats
         except ModuleNotFoundError as e:
             raise ModuleNotFoundError(
-                "scipy is required for Black-Scholes analytics — install 'crypcodile[ml]'"
+                "scipy is required for Black-Scholes analytics — install 'crocodile[ml]'"
             ) from e
 
         sqrt_t = math.sqrt(t_years)
@@ -462,7 +462,7 @@ class SciPyGreeksSolverAdapter(GreeksSolverAdapter):
             import scipy.stats
         except ModuleNotFoundError as e:
             raise ModuleNotFoundError(
-                "scipy is required for Black-Scholes analytics — install 'crypcodile[ml]'"
+                "scipy is required for Black-Scholes analytics — install 'crocodile[ml]'"
             ) from e
 
         D = math.exp(-rate * t_years)
@@ -514,7 +514,7 @@ class SciPyGreeksSolverAdapter(GreeksSolverAdapter):
                 import scipy.optimize
             except ModuleNotFoundError as e:
                 raise ModuleNotFoundError(
-                    "scipy is required for Black-Scholes analytics — install 'crypcodile[ml]'"
+                    "scipy is required for Black-Scholes analytics — install 'crocodile[ml]'"
                 ) from e
 
             def f(v: float) -> float:

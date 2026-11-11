@@ -231,7 +231,7 @@ def _make_ccxt_connector(
         raise ValueError(
             f"Unknown exchange {exchange!r}. Native: {_VALID_NAMES}. "
             f"Or pass any of the {len(ccxt.exchanges)} ccxt exchange ids "
-            f"(see `crypcodile markets`)."
+            f"(see `crocodile markets`)."
         )
 
     from crocodile.crypto.exchanges.ccxt_universal.connector import CCXTConnector
