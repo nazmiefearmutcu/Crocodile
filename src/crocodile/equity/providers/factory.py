@@ -186,6 +186,21 @@ def supported_mics(provider: str) -> frozenset[str] | None:
     return None if cls is None else cls.supported_mics
 
 
+def provider_class(provider: str) -> type[Provider]:
+    """The registered class for ``provider``.
+
+    Raises ValueError for an unknown name, with the same message as :func:`make_provider`.
+
+    The one public way to ask which package a registered source lives in: the source order
+    (``crocodile.equity.universal.order``) classifies a source by its class's module, and must
+    not read ``_REGISTRY`` across the package boundary to do it.
+    """
+    cls = _REGISTRY.get(provider)
+    if cls is None:
+        raise ValueError(f"Unknown provider {provider!r}. Valid names: {_VALID_NAMES}")
+    return cls
+
+
 def make_provider(
     provider: str,
     symbols: list[str],
