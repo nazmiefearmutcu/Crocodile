@@ -29,7 +29,15 @@ from crocodile.core.capability import (
     run_to_completion,
 )
 from crocodile.core.config import Settings
-from crocodile.core.errors import ConfigError
+from crocodile.core.errors import CapabilityUnavailable, ConfigError
+from crocodile.core.markets.calendar import CalendarQuality, calendar_for
+from crocodile.core.markets.exchanges import ExchangeRegistry
+from crocodile.core.markets.master import (
+    ListingMaster,
+    ListingObservation,
+    ListingStatus,
+    default_listings_path,
+)
 from crocodile.core.schema.enums import SecurityType
 from crocodile.core.schema.provenance import Provenance, level_for, provenance_fields
 from crocodile.core.schema.records import DepthProfile, OpenInterest, OptionsChain
@@ -42,6 +50,7 @@ from crocodile.equity.providers.openfigi.models import FigiRecord
 from crocodile.equity.providers.sec_edgar.client import SecCompanyTicker
 from crocodile.equity.providers.tiingo.client import TiingoTicker
 from crocodile.equity.reference import universe as reference
+from crocodile.surfaces import dispatch
 
 _BASE_NS = 1_704_067_200_000_000_000
 
@@ -171,10 +180,101 @@ def _two_tiers(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
+def test_markets_and_universe_take_mic_and_country_fields() -> None:
+    """Both structs carry the two market dimensions, both optional; ``source`` is optional too.
+
+    ``source`` became optional so that ``universe --asset-class equity --mic XIST`` can answer
+    without a reference-merge exchange label (spec 3.11).
+    """
+    for struct in (market.MarketsParams, market.UniverseParams):
+        fields = {f.name: f for f in msgspec.structs.fields(struct)}
+        assert {"mic", "country"} <= set(fields), struct.__name__
+        assert fields["mic"].default is None
+        assert fields["country"].default is None
+    universe_fields = {f.name: f for f in msgspec.structs.fields(market.UniverseParams)}
+    assert universe_fields["source"].default is None
+
+
+def test_crypto_markets_refuses_a_mic(_two_tiers: None) -> None:
+    """A crypto venue has no MIC, so ignoring the filter would return every venue as an answer."""
+    with pytest.raises(CapabilityUnavailable) as exc:
+        market.markets(_ctx(), market.MarketsParams(mic="XJPX"))
+    assert exc.value.capability == "markets"
+    assert exc.value.asset_class == "crypto"
+    assert "mic" in exc.value.reason
+
+
+def test_crypto_markets_refuses_a_country(_two_tiers: None) -> None:
+    with pytest.raises(CapabilityUnavailable) as exc:
+        market.markets(_ctx(), market.MarketsParams(country="JP"))
+    assert exc.value.capability == "markets"
+    assert exc.value.asset_class == "crypto"
+    assert "country" in exc.value.reason
+
+
+def test_crypto_markets_refuses_both_dimensions_and_names_both(_two_tiers: None) -> None:
+    with pytest.raises(CapabilityUnavailable) as exc:
+        market.markets(_ctx(), market.MarketsParams(mic="XJPX", country="JP"))
+    assert "mic" in exc.value.reason
+    assert "country" in exc.value.reason
+
+
+async def _must_not_be_reached(*_: Any, **__: Any) -> Any:
+    raise AssertionError("must not be reached")
+
+
+def test_crypto_universe_refuses_a_mic_before_reaching_the_venue(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(market, "exchange_instruments", _must_not_be_reached)
+    monkeypatch.setattr(market, "top_symbols_by_volume", _must_not_be_reached)
+    with pytest.raises(CapabilityUnavailable) as exc:
+        market.universe(_ctx(), market.UniverseParams(source="binance", mic="XJPX"))
+    assert exc.value.capability == "universe"
+    assert exc.value.asset_class == "crypto"
+    assert "mic" in exc.value.reason
+
+
+def test_crypto_universe_refuses_a_country_before_reaching_the_venue(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(market, "exchange_instruments", _must_not_be_reached)
+    monkeypatch.setattr(market, "top_symbols_by_volume", _must_not_be_reached)
+    with pytest.raises(CapabilityUnavailable) as exc:
+        market.universe(_ctx(), market.UniverseParams(source="binance", country="JP"))
+    assert exc.value.capability == "universe"
+    assert "country" in exc.value.reason
+
+
+def test_crypto_universe_needs_a_source() -> None:
+    """With no venue and no market dimension, the crypto half has nothing to enumerate."""
+    with pytest.raises(ValueError, match="source"):
+        market.universe(_ctx(), market.UniverseParams())
+
+
+def test_crypto_markets_leaves_every_exchange_column_null(_two_tiers: None) -> None:
+    """The one schema is shared with the equity half; crypto fills only what it observes.
+
+    The exchange reference columns (``mic``, ``name``, ``country``, ...) are null on this half
+    because it does not observe them, which is a different statement from "this venue lacks
+    them" (the argument ``_UNIVERSE_SCHEMA``'s docstring makes).
+    """
+    frame = market.markets(_ctx(), market.MarketsParams())
+    observed = {"venue", "native", "ccxt"}
+    for row in frame.to_dicts():
+        for key in market._MARKETS_SCHEMA:
+            if key not in observed:
+                assert row[key] is None, key
+
+
 def test_markets_tags_a_venue_served_by_both_tiers_as_both(_two_tiers: None) -> None:
-    """One row per venue, not two: a name in both routes to the native connector."""
-    rows = market.markets(_ctx(), market.MarketsParams()).to_dicts()
-    assert rows == [
+    """One row per venue, not two: a name in both routes to the native connector.
+
+    The comparison selects the three tier columns because the frame now carries the equity
+    reference columns too, null on this half (see ``_MARKETS_SCHEMA``).
+    """
+    rows = market.markets(_ctx(), market.MarketsParams()).select("venue", "native", "ccxt")
+    assert rows.to_dicts() == [
         {"venue": "base_onchain", "native": True, "ccxt": False},
         {"venue": "binance", "native": True, "ccxt": True},
         {"venue": "kraken", "native": False, "ccxt": True},
@@ -202,20 +302,26 @@ def test_markets_with_both_tier_flags_returns_the_overlap_rather_than_nothing(
 def test_markets_reports_only_native_venues_when_the_ccxt_extra_is_absent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A missing optional extra is "no extra venues", never an error."""
+    """A missing optional extra is "no extra venues", never an error.
+
+    Selects the tier columns: the frame also carries the equity reference columns, null here.
+    """
     monkeypatch.setattr(market.factory, "list_ccxt_exchanges", lambda: [])
     monkeypatch.setattr(market.factory, "list_exchanges", lambda: ["binance"])
     monkeypatch.setattr(market.factory, "list_all_exchanges", lambda: ["binance"])
-    assert market.markets(_ctx(), market.MarketsParams()).to_dicts() == [
-        {"venue": "binance", "native": True, "ccxt": False}
-    ]
+    frame = market.markets(_ctx(), market.MarketsParams()).select("venue", "native", "ccxt")
+    assert frame.to_dicts() == [{"venue": "binance", "native": True, "ccxt": False}]
 
 
 def test_markets_returns_a_table_with_its_columns_when_nothing_matches(_two_tiers: None) -> None:
-    """An empty result is still a table; a caller selecting a column must not get a KeyError."""
+    """An empty result is still a table; a caller selecting a column must not get a KeyError.
+
+    The expected columns are the whole shared schema: the frame now carries the equity
+    reference columns too (null on this half), so the list is ``_MARKETS_SCHEMA`` itself.
+    """
     frame = market.markets(_ctx(), market.MarketsParams(search="no-such-venue"))
     assert frame.height == 0
-    assert frame.columns == ["venue", "native", "ccxt"]
+    assert frame.columns == list(market._MARKETS_SCHEMA)
 
 
 # ---------------------------------------------------------------------------
@@ -481,50 +587,199 @@ def _lake_with_bars(tmp_path: Path, volumes: dict[str, float]) -> Catalog:
 # markets
 
 
-def test_equity_markets_lists_the_venues_the_reference_data_names(_reference: None) -> None:
-    """The row source is the resolved universe, so a venue exists because a listing says so.
+_EQUITY_TIER_COLUMNS = ("venue", "native", "ccxt")
+"""The tier columns every equity row states; the reference columns are checked separately."""
 
-    ``TSX`` is absent because ``instruments_from_tiingo`` keeps US exchange labels only (spec
-    3.6), and ``SHOP``'s SEC row has no exchange, so no venue is named for it. The ``TSX`` row
-    stays in the fixture: it demonstrates the scoping end to end.
+
+def test_equity_markets_lists_every_exchange_in_the_table() -> None:
+    """The row source is ``exchanges.csv``, not the listing data, so every exchange is here.
+
+    Before this change the equity half listed the venues the merged reference data named,
+    which is why a clean lake had none. Now the bundled exchange table is the source (spec
+    3.11): one row per allow-listed MIC, sorted by MIC, with the operating MIC as venue.
     """
-    rows = market.markets_equities(_equity_ctx(), market.MarketsParams()).to_dicts()
-    assert rows == [
-        {"venue": "NASDAQ", "native": True, "ccxt": False},
-        {"venue": "NYSE ARCA", "native": True, "ccxt": False},
-    ]
+    registry = ExchangeRegistry()
+    frame = market.markets_equities(_equity_ctx(), market.MarketsParams())
+    assert frame.height == len(registry.all())
+    assert frame["mic"].to_list() == [info.mic for info in registry.all()]
+    assert frame["venue"].to_list() == frame["mic"].to_list()
+    assert set(frame["native"].to_list()) == {True}
+    assert set(frame["ccxt"].to_list()) == {False}
+
+
+def test_an_equity_markets_row_states_the_exchange_reference_columns() -> None:
+    info = ExchangeRegistry().get("XIST")
+    row = market.markets_equities(_equity_ctx(), market.MarketsParams(mic="XIST")).to_dicts()[0]
+    reference_columns = {
+        key: value
+        for key, value in row.items()
+        if key not in _EQUITY_TIER_COLUMNS and key != "sources"
+    }
+    assert reference_columns == {
+        "mic": "XIST",
+        "name": info.name,
+        "country": "TR",
+        "timezone": "Europe/Istanbul",
+        "currency": "TRY",
+        "quote_scale": 0,
+        "tier_research": info.tier_research,
+        "sanctioned": False,
+        "calendar_quality": CalendarQuality.LIBRARY.value,
+    }
+
+
+def test_a_minor_unit_exchange_says_so_in_quote_scale() -> None:
+    """The column is how a reader learns that prices are in pence, not pounds (spec 3.3)."""
+    row = market.markets_equities(_equity_ctx(), market.MarketsParams(mic="XLON")).to_dicts()[0]
+    assert row["currency"] == "GBP"
+    assert row["quote_scale"] == 2
+
+
+def test_a_sanctioned_exchange_is_listed_and_flagged() -> None:
+    """Acceptance 4 lists every MIC; refusing collection is the collection paths' job."""
+    frame = market.markets_equities(_equity_ctx(), market.MarketsParams(mic="MISX"))
+    assert frame.height == 1
+    assert frame["sanctioned"].to_list() == [True]
+
+
+def test_an_exchange_without_a_library_calendar_says_weekday_fallback() -> None:
+    frame = market.markets_equities(_equity_ctx(), market.MarketsParams())
+    qualities = dict(zip(frame["mic"].to_list(), frame["calendar_quality"].to_list(), strict=True))
+    for mic in ("XNSE", "XCAI"):
+        assert qualities[mic] == CalendarQuality.WEEKDAY_FALLBACK.value, mic
+
+
+def test_equity_markets_calendar_quality_agrees_with_calendar_for() -> None:
+    """The row's quality is what ``calendar_for`` answers, so the two can never diverge."""
+    for mic in ("XNYS", "XNAS", "XIST", "XJPX", "XNSE", "XCAI"):
+        row = market.markets_equities(_equity_ctx(), market.MarketsParams(mic=mic)).to_dicts()[0]
+        assert row["calendar_quality"] == calendar_for(mic).quality.value, mic
+
+
+def test_equity_markets_filters_by_mic_case_insensitively() -> None:
+    frame = market.markets_equities(_equity_ctx(), market.MarketsParams(mic="xist"))
+    assert frame["mic"].to_list() == ["XIST"]
+
+
+def test_equity_markets_answers_a_segment_mic_with_its_operating_exchange() -> None:
+    frame = market.markets_equities(_equity_ctx(), market.MarketsParams(mic="XTKS"))
+    assert frame["mic"].to_list() == ["XJPX"]
+
+
+def test_equity_markets_filters_by_country() -> None:
+    frame = market.markets_equities(_equity_ctx(), market.MarketsParams(country="jp"))
+    assert frame.height > 0
+    assert set(frame["country"].to_list()) == {"JP"}
+    assert "XJPX" in frame["mic"].to_list()
+
+
+def test_equity_markets_refuses_an_unknown_mic() -> None:
+    """ZZZZ is absent from the ISO snapshot; XXXX would be an ISO code and is not used."""
+    with pytest.raises(ValueError, match="ZZZZ"):
+        market.markets_equities(_equity_ctx(), market.MarketsParams(mic="ZZZZ"))
+
+
+def test_equity_markets_refuses_an_expired_mic_and_names_its_replacement() -> None:
+    with pytest.raises(ValueError, match="XIST"):
+        market.markets_equities(_equity_ctx(), market.MarketsParams(mic="XTUR"))
+
+
+def test_equity_markets_refuses_an_active_mic_outside_the_exchange_table() -> None:
+    """XOFF is an active ISO MIC (an OPRT) that exchanges.csv does not allow-list."""
+    with pytest.raises(ValueError, match="XOFF"):
+        market.markets_equities(_equity_ctx(), market.MarketsParams(mic="XOFF"))
+
+
+def test_equity_markets_refuses_a_country_with_no_exchange() -> None:
+    with pytest.raises(ValueError, match="AQ"):
+        market.markets_equities(_equity_ctx(), market.MarketsParams(country="AQ"))
+    with pytest.raises(ValueError, match="TUR"):
+        market.markets_equities(_equity_ctx(), market.MarketsParams(country="TUR"))
+
+
+def test_equity_markets_refuses_a_mic_and_country_that_disagree() -> None:
+    with pytest.raises(ValueError, match="TR"):
+        market.markets_equities(_equity_ctx(), market.MarketsParams(mic="XIST", country="DE"))
+
+
+def test_equity_markets_search_matches_mic_or_name() -> None:
+    assert market.markets_equities(
+        _equity_ctx(), market.MarketsParams(search="istanbul")
+    )["mic"].to_list() == ["XIST"]
+    assert "XJPX" in market.markets_equities(
+        _equity_ctx(), market.MarketsParams(search="xjp")
+    )["mic"].to_list()
+
+
+def test_equity_markets_needs_no_network_and_no_sec_contact_string(
+    network_forbidden: None,
+) -> None:
+    """The table is packaged data: no SEC, no network, no CROCODILE_SEC_USER_AGENT."""
+    frame = market.markets_equities(
+        _equity_ctx(sec_user_agent=None), market.MarketsParams()
+    )
+    assert frame.height == len(ExchangeRegistry().all())
+
+
+def test_equity_markets_lists_the_registered_sources_that_serve_a_mic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``sources`` is the registered providers that claim a MIC, by declaration or by grammar.
+
+    ``google_finance`` serves XIST, XNAS and XNYS through its grammar table; ``fake_feed``
+    declares XIST. An unregistered source contributes nothing: a grammar table for a source
+    nothing can collect from is not coverage.
+    """
+    monkeypatch.setattr(
+        market.provider_factory, "list_providers", lambda: ["fake_feed", "google_finance"]
+    )
+    monkeypatch.setattr(
+        market.provider_factory, "supported_mics", {"fake_feed": frozenset({"XIST"})}.get
+    )
+    rows = {
+        row["mic"]: row["sources"]
+        for row in market.markets_equities(_equity_ctx(), market.MarketsParams()).to_dicts()
+    }
+    assert rows["XIST"] == ["fake_feed", "google_finance"]
+    assert rows["XNYS"] == ["google_finance"]
+    assert rows["XJPX"] == []
 
 
 def test_equity_markets_filters_by_substring_case_insensitively(_reference: None) -> None:
-    frame = market.markets_equities(_equity_ctx(), market.MarketsParams(search="nas"))
-    assert frame["venue"].to_list() == ["NASDAQ"]
+    """The venue-list fixture is no longer the row source; the search is still case-blind."""
+    frame = market.markets_equities(_equity_ctx(), market.MarketsParams(search="NASDAQ"))
+    assert "XNAS" in frame["mic"].to_list()
+    assert frame["venue"].to_list() == frame["mic"].to_list()
 
 
-def test_equity_markets_answers_the_ccxt_filter_with_nothing_because_that_is_the_answer(
-    _reference: None,
-) -> None:
+def test_equity_markets_answers_the_ccxt_filter_with_nothing_because_that_is_the_answer() -> None:
     """ccxt is a cryptocurrency exchange library and reaches no equity venue at any version.
 
     Empty here is a statement about the tier, not a filter that failed to match — which is
-    why the columns are still present for a caller that selects on them.
+    why the columns are still present for a caller that selects on them. The frame carries
+    the whole shared schema, reference columns included, because both halves share one.
     """
     frame = market.markets_equities(_equity_ctx(), market.MarketsParams(ccxt_only=True))
     assert frame.height == 0
-    assert frame.columns == ["venue", "native", "ccxt"]
+    assert frame.columns == list(market._MARKETS_SCHEMA)
 
 
-def test_equity_markets_keeps_everything_under_the_native_filter(_reference: None) -> None:
+def test_equity_markets_keeps_everything_under_the_native_filter() -> None:
     """One connector tier, and it is the hand-written one; ``--native-only`` narrows nothing."""
     unfiltered = market.markets_equities(_equity_ctx(), market.MarketsParams())
     native = market.markets_equities(_equity_ctx(), market.MarketsParams(native_only=True))
     assert native["venue"].to_list() == unfiltered["venue"].to_list()
 
 
-def test_both_halves_of_markets_return_the_same_columns(_reference: None, _two_tiers: None) -> None:
-    """A projection renders one capability; two column sets would make that impossible."""
+def test_both_halves_of_markets_return_the_same_columns(_two_tiers: None) -> None:
+    """A projection renders one capability; two column sets would make that impossible.
+
+    The equity half no longer reads the listing fixture, so this compares the two halves
+    against the shared schema and against each other.
+    """
     crypto = market.markets(_ctx(), market.MarketsParams())
     equity = market.markets_equities(_equity_ctx(), market.MarketsParams())
-    assert crypto.columns == equity.columns
+    assert crypto.columns == equity.columns == list(market._MARKETS_SCHEMA)
     assert crypto.schema == equity.schema
 
 
@@ -677,6 +932,210 @@ def test_a_key_raises_the_enrichment_budget_and_buys_no_extra_fields() -> None:
 # census
 
 
+# ---------------------------------------------------------------------------
+# universe from the listing master (mic / country), spec 3.11
+# ---------------------------------------------------------------------------
+
+
+def _observation(
+    mic: str,
+    local: str,
+    currency: str,
+    *,
+    observed_ns: int = 1,
+    status: ListingStatus = ListingStatus.ACTIVE,
+    kind: SecurityType = SecurityType.CS,
+) -> ListingObservation:
+    return ListingObservation(
+        source="fixture",
+        mic=mic,
+        local_symbol=local,
+        symbol_raw=f"{mic}:{local}",
+        observed_ns=observed_ns,
+        currency=currency,
+        price_scale=0,
+        status=status,
+        security_type=kind,
+    )
+
+
+def _master(*observations: ListingObservation) -> ListingMaster:
+    master = ListingMaster(":memory:")
+    for observation in observations:
+        master.upsert(observation)
+    return master
+
+
+_FIXTURE_ROWS = (
+    ("XIST", "THYAO", "TRY"),
+    ("XIST", "GARAN", "TRY"),
+    ("XJPX", "7203", "JPY"),
+)
+
+
+@pytest.fixture
+def _listing_world(monkeypatch: pytest.MonkeyPatch) -> None:
+    """THYAO and GARAN on XIST (TRY, CS) and 7203 on XJPX (JPY, CS), behind the seam.
+
+    The seam returns a fresh master per call because the adapter closes what it opens.
+    """
+    monkeypatch.setattr(
+        market,
+        "_listing_master",
+        lambda ctx: _master(*(_observation(m, local, ccy) for m, local, ccy in _FIXTURE_ROWS)),
+    )
+
+
+def _equity_ctx_at(data_dir: Path, catalog: Any = None) -> CapabilityContext:
+    return CapabilityContext(
+        catalog=catalog,
+        settings=Settings(data_dir=data_dir, sec_user_agent=_SEC_AGENT),
+        asset_class=AssetClass.EQUITY,
+    )
+
+
+def test_equity_universe_lists_one_mic_out_of_the_listing_master(_listing_world: None) -> None:
+    rows = market.universe_equities(_equity_ctx(), market.UniverseParams(mic="XIST")).to_dicts()
+    assert rows == [
+        {"symbol": "GARAN@XIST", "kind": "CS", "base": "GARAN@XIST", "quote": "TRY", "rank": None},
+        {"symbol": "THYAO@XIST", "kind": "CS", "base": "THYAO@XIST", "quote": "TRY", "rank": None},
+    ]
+
+
+def test_equity_universe_lists_one_country_out_of_the_listing_master(_listing_world: None) -> None:
+    symbols = market.universe_equities(
+        _equity_ctx(), market.UniverseParams(country="tr")
+    )["symbol"].to_list()
+    assert symbols == ["GARAN@XIST", "THYAO@XIST"]
+    jp = market.universe_equities(_equity_ctx(), market.UniverseParams(country="JP"))
+    assert jp["symbol"].to_list() == ["7203@XJPX"]
+
+
+def test_equity_universe_keeps_unseen_listings_and_drops_delisted_ones(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Unseen is absence of evidence, not evidence of absence (as ``rank_listings`` argues)."""
+    master = _master(
+        _observation("XIST", "THYAO", "TRY", observed_ns=1),
+        _observation("XIST", "GARAN", "TRY", observed_ns=1),
+        _observation("XIST", "OLDCO", "TRY", observed_ns=1),
+    )
+    master.mark_unseen("XIST", "fixture", {"THYAO"}, at_ns=2)
+    master.upsert(
+        _observation("XIST", "OLDCO", "TRY", observed_ns=3, status=ListingStatus.DELISTED)
+    )
+    monkeypatch.setattr(market, "_listing_master", lambda ctx: master)
+    symbols = market.universe_equities(_equity_ctx(), market.UniverseParams(mic="XIST"))[
+        "symbol"
+    ].to_list()
+    assert symbols == ["GARAN@XIST", "THYAO@XIST"]
+
+
+def test_equity_universe_applies_kind_and_currency_filters_to_a_listing_master_slice(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A fresh master per call: the adapter closes what it opens.
+    monkeypatch.setattr(
+        market,
+        "_listing_master",
+        lambda ctx: _master(
+            _observation("XIST", "THYAO", "TRY"),
+            _observation("XIST", "GLDTR", "TRY", kind=SecurityType.ETF),
+        ),
+    )
+    etfs = market.universe_equities(
+        _equity_ctx(), market.UniverseParams(mic="XIST", kinds=("ETF",))
+    )
+    assert etfs["symbol"].to_list() == ["GLDTR@XIST"]
+    usd = market.universe_equities(_equity_ctx(), market.UniverseParams(mic="XIST", quote="usd"))
+    assert usd.height == 0
+    assert usd.columns == list(market._UNIVERSE_SCHEMA)
+
+
+def test_equity_universe_rejects_an_unknown_kind_on_a_listing_master_slice(
+    _listing_world: None,
+) -> None:
+    with pytest.raises(ValueError, match="unknown instrument kind"):
+        market.universe_equities(_equity_ctx(), market.UniverseParams(mic="XIST", kinds=("perpetual",)))
+
+
+def test_equity_universe_caps_a_listing_master_slice_at_limit(_listing_world: None) -> None:
+    rows = market.universe_equities(_equity_ctx(), market.UniverseParams(mic="XIST", limit=1))
+    assert rows["symbol"].to_list() == ["GARAN@XIST"]
+
+
+def test_equity_universe_ranks_a_listing_master_slice_by_lake_volume(
+    tmp_path: Path, _listing_world: None
+) -> None:
+    catalog = _lake_with_bars(tmp_path, {"GARAN@XIST": 100.0, "THYAO@XIST": 900.0})
+    frame = market.universe_equities(
+        _equity_ctx(catalog), market.UniverseParams(mic="XIST", top=2)
+    )
+    assert [(row["symbol"], row["rank"]) for row in frame.to_dicts()] == [
+        ("THYAO@XIST", 1),
+        ("GARAN@XIST", 2),
+    ]
+
+
+def test_equity_universe_refuses_to_rank_a_listing_master_slice_without_bars(
+    tmp_path: Path, _listing_world: None
+) -> None:
+    with pytest.raises(ValueError, match="collect or backfill"):
+        market.universe_equities(
+            _equity_ctx(Catalog(tmp_path)), market.UniverseParams(mic="XIST", top=1)
+        )
+
+
+def test_equity_universe_needs_a_source_or_a_market_dimension() -> None:
+    with pytest.raises(ValueError, match="mic"):
+        market.universe_equities(_equity_ctx(), market.UniverseParams())
+
+
+def test_equity_universe_refuses_a_source_together_with_a_market_dimension(
+    _listing_world: None,
+) -> None:
+    with pytest.raises(ValueError):
+        market.universe_equities(
+            _equity_ctx(), market.UniverseParams(source="NASDAQ", mic="XIST")
+        )
+
+
+def test_equity_universe_refuses_an_empty_listing_master_slice(_listing_world: None) -> None:
+    with pytest.raises(ValueError, match="universe-sync"):
+        market.universe_equities(_equity_ctx(), market.UniverseParams(mic="XLON"))
+
+
+def test_equity_universe_refuses_when_no_listing_master_exists_and_creates_none(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(ValueError, match="universe-sync"):
+        market.universe_equities(
+            _equity_ctx_at(tmp_path), market.UniverseParams(mic="XIST")
+        )
+    assert not (tmp_path / "reference").exists()
+
+
+def test_equity_universe_opens_the_master_at_the_lake_path(tmp_path: Path) -> None:
+    """A read leaves no -wal or -shm behind: universe is served on read-only surfaces too."""
+    writer = ListingMaster(default_listings_path(tmp_path))
+    writer.upsert(_observation("XIST", "THYAO", "TRY"))
+    writer.close()
+    frame = market.universe_equities(_equity_ctx_at(tmp_path), market.UniverseParams(mic="XIST"))
+    assert frame["symbol"].to_list() == ["THYAO@XIST"]
+    assert sorted(p.name for p in (tmp_path / "reference").iterdir()) == ["listings.sqlite"]
+
+
+def test_a_listing_master_slice_is_cut_by_the_surface_ceiling_and_says_so(
+    _listing_world: None,
+) -> None:
+    """The adapter does not pre-cut at the row ceiling; ``dispatch.payload`` sets ``truncated``."""
+    frame = market.universe_equities(_equity_ctx(), market.UniverseParams(mic="XIST"))
+    assert frame.height == 2
+    shaped = dispatch.payload(REGISTRY["universe"], frame, row_limit=1)
+    assert len(shaped["rows"]) == 1
+    assert shaped["truncated"] is True
+
+
 def test_equity_census_counts_the_venues_and_the_listings_m3_resolves(_reference: None) -> None:
     """The crypto census counts a venue universe and a coin universe; this counts listings."""
     snapshot = market.census_equities(_equity_ctx(), market.CensusParams())
@@ -767,7 +1226,9 @@ def test_equity_census_reports_every_security_type_even_at_zero(_reference: None
 @pytest.mark.parametrize(
     ("adapter", "params"),
     [
-        ("markets_equities", market.MarketsParams()),
+        # ``markets_equities`` is not here: it reads the bundled exchange table and never
+        # contacts SEC, so it needs no contact string (task 08a, spec 3.11). ``universe``
+        # (source branch) and ``census`` still do.
         ("universe_equities", market.UniverseParams(source="NASDAQ")),
         ("census_equities", market.CensusParams()),
     ],
@@ -786,19 +1247,27 @@ def test_every_equity_half_refuses_to_invent_a_contact_string_for_sec(
 # The declarations these adapters landed
 
 
-def test_the_three_equity_halves_declare_the_merge_they_rest_on() -> None:
+def test_universe_and_census_equity_halves_declare_the_merge_they_rest_on() -> None:
     """``prov`` is the ceiling and ``basis`` names the inputs; both moved off the crypto pair.
 
     DERIVED because no registry published the merged row, and ``reference_merge`` because
     the inputs are three registries reconciled rather than one venue's own market list.
     ``native`` there would claim a venue reported the universe, which is the one thing no
-    equity source does.
+    equity source does. ``markets`` is split out: it no longer reads the merge.
     """
-    for name in ("markets", "universe", "census"):
+    for name in ("universe", "census"):
         impl = REGISTRY[name].impls[AssetClass.EQUITY]
         assert impl.prov is Provenance.DERIVED, name
         assert impl.basis == "reference_merge", name
         assert level_for(impl.basis) is Provenance.DERIVED
+
+
+def test_equity_markets_is_native_because_it_reads_this_builds_reference_table() -> None:
+    """Read from the bundled exchange table and the build's declarations, not reconstructed."""
+    impl = REGISTRY["markets"].impls[AssetClass.EQUITY]
+    assert impl.prov is Provenance.NATIVE
+    assert impl.basis == "native"
+    assert impl.reads == ()
 
 
 # ---------------------------------------------------------------------------

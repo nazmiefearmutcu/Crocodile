@@ -4,7 +4,8 @@ Owns ``list-exchanges``, ``markets``, ``universe``, ``census``, ``open-interest`
 ``depth`` — what exists to trade, where, and in what size, as opposed to what the lake
 happens to hold about it.
 
-Four of the six reach a venue rather than the lake, which makes this the batch where the
+Three of the six reach a venue rather than the lake (``universe``, ``census`` and ``depth``;
+``markets`` reads the build), which makes this the batch where the
 two questions below had to be answered once, out loud, instead of per declaration.
 
 **Why every adapter here is synchronous, including the four whose work is not.**
@@ -42,6 +43,13 @@ module is the record of what left and why. Every entry is gone: ``open-interest`
 ledger could not express because its missing half was the crypto one. ``list-exchanges``
 never needed an entry; both markets could always answer it.
 
+**Why the crypto halves refuse ``mic`` and ``country``.** Codemap 5.2 rule 3: a parameter a
+capability does not understand must be refused or filtered, never ignored. A crypto venue has
+neither an ISO 10383 MIC nor an ISO 3166 country, so ignoring either filter would return every
+crypto venue for a request that asked for one market, a plausible wrong answer. The crypto
+halves therefore raise :class:`~crocodile.core.errors.CapabilityUnavailable` naming each
+dimension set, before any network or registry work.
+
 A fifth question this batch had to answer, once M3 gave it two adapters per capability rather
 than one: **an asymmetric capability resolves its own asset class and a symmetric one does
 not.** ``crocodile.surfaces.dispatch.resolve_asset_class`` falls through to "there is only one
@@ -74,6 +82,12 @@ from crocodile.core.capability import (
     run_to_completion,
 )
 from crocodile.core.config import Settings
+from crocodile.core.errors import CapabilityUnavailable
+from crocodile.core.markets.calendar import calendar_for
+from crocodile.core.markets.errors import UnknownMarketError
+from crocodile.core.markets.exchanges import ExchangeInfo, ExchangeRegistry
+from crocodile.core.markets.grammar import GRAMMAR_SOURCES, load_grammar
+from crocodile.core.markets.master import ListingMaster, ListingStatus, default_listings_path
 from crocodile.core.schema.enums import SecurityType
 from crocodile.core.schema.provenance import Provenance
 from crocodile.core.schema.records import DepthProfile
@@ -146,6 +160,13 @@ class MarketsParams(msgspec.Struct, frozen=True):
     sections rather than an answer; two filters over one row set compose.
     """
 
+    mic: str | None = None
+    """ISO 10383 MIC of one exchange, operating or segment (a segment answers for its operating
+    MIC). Equity only: the crypto half refuses it rather than ignore it."""
+
+    country: str | None = None
+    """ISO 3166-1 alpha-2 country code. Equity only, refused by the crypto half."""
+
 
 class UniverseParams(msgspec.Struct, frozen=True):
     """Parameters for ``universe``. One struct, and the equity half M3 landed inherits it.
@@ -154,13 +175,21 @@ class UniverseParams(msgspec.Struct, frozen=True):
     renders this answer, not a different answer.
     """
 
-    source: str
-    """Venue id, native or ccxt.
+    source: str | None = None
+    """Venue id, native or ccxt. Required by the crypto half.
 
-    ``source``, which is the lake's merged partition key and what the ops batch already
-    called it. This struct said ``exchange`` — the crypto fork's word, which has no meaning
-    on the equity half M3 landed, where a `source` is an exchange rather than a venue and
-    a `quote` is the currency a listing is priced in."""
+    On the equity half it names a reference-merge exchange label (the US reference universe)
+    and is mutually exclusive with ``mic`` and ``country``, which select the listing master
+    instead. ``source``, which is the lake's merged partition key and what the ops batch
+    already called it. This struct said ``exchange`` — the crypto fork's word, which has no
+    meaning on the equity half M3 landed, where a `source` is an exchange rather than a venue
+    and a `quote` is the currency a listing is priced in.
+
+    Ruling: ``UniverseParams.source`` becomes optional, so ``universe --asset-class equity
+    --mic XIST`` works as spec 3.11 writes it. Cost if wrong: the CLI stops synthesising the
+    positional for ``universe`` (``cli.positional_field`` only does so for exactly one
+    required field, ``cli.py:128-146``), so ``crocodile universe binance`` must be spelled
+    ``--source binance``; bringing it back needs a CLI rule, not a struct change."""
 
     top: int | None = None
     """Rank by traded volume and return the top N, instead of enumerating.
@@ -197,6 +226,14 @@ class UniverseParams(msgspec.Struct, frozen=True):
 
     limit: int = 50
     """Cap on enumerated rows. Ignored when ``top`` is set, which caps itself."""
+
+    mic: str | None = None
+    """ISO 10383 MIC of one exchange, operating or segment. Equity only: selects the listing
+    master (``universe-sync`` builds it). Refused by the crypto half."""
+
+    country: str | None = None
+    """ISO 3166-1 alpha-2 country code. Equity only, selects the listing master. Refused by the
+    crypto half."""
 
 
 class CensusParams(msgspec.Struct, frozen=True):
@@ -337,11 +374,52 @@ def list_providers(ctx: CapabilityContext, params: ListExchangesParams) -> list[
 
 
 _MARKETS_SCHEMA: Final[Mapping[str, pl.DataType]] = {
-    "venue": pl.String(),
-    "native": pl.Boolean(),
-    "ccxt": pl.Boolean(),
+    "venue": pl.String(),             # crypto: venue id; equity: operating MIC (same as mic)
+    "native": pl.Boolean(),           # equity: _EQUITY_VENUE_IS_NATIVE
+    "ccxt": pl.Boolean(),             # equity: _EQUITY_VENUE_IS_CCXT
+    "mic": pl.String(),               # equity only (crypto rows: null)
+    "name": pl.String(),              # ExchangeInfo.name
+    "country": pl.String(),           # ISO 3166-1 alpha-2
+    "timezone": pl.String(),          # ExchangeInfo.tz.key (IANA)
+    "currency": pl.String(),          # ISO 4217 trading currency
+    "quote_scale": pl.Int64(),        # 0 major unit, 2 minor unit (pence, cents, agorot)
+    "calendar_quality": pl.String(),  # CalendarQuality member .value
+    "sources": pl.List(pl.String()),  # registered equity sources serving the MIC, sorted by name
+    "tier_research": pl.String(),     # "A".."D"
+    "sanctioned": pl.Boolean(),       # ExchangeInfo.sanctioned (data fact, not the opt-in)
 }
-"""Stated so an empty result is still a table with the columns a caller selects on."""
+"""One schema for both halves of ``markets``, with nulls where a half does not observe a column.
+
+Stated so an empty result is still a table with the columns a caller selects on. A null says
+"this half does not observe it", not "this venue lacks it": the same argument
+``_UNIVERSE_SCHEMA``'s docstring makes. Keeping one schema keeps the two halves projectable by
+one renderer, and a later column cannot be left off one half by accident because crypto rows
+start from ``dict.fromkeys(_MARKETS_SCHEMA)``.
+"""
+
+
+def _refuse_market_dimensions(capability: str, params: MarketsParams | UniverseParams) -> None:
+    """Refuse ``mic`` and ``country`` on a crypto answer, before any network or registry work.
+
+    A crypto venue has neither an ISO 10383 MIC nor an ISO 3166 country, so a crypto answer
+    to a request that names one could only ignore the filter and return every venue, which is
+    a plausible wrong answer (codemap 5.2 rule 3). The refusal names every dimension that was
+    set.
+
+    Raises:
+        CapabilityUnavailable: naming each dimension set. REST maps it to 501.
+    """
+    named = [name for name in ("mic", "country") if getattr(params, name, None) is not None]
+    if named:
+        raise CapabilityUnavailable(
+            capability,
+            AssetClass.CRYPTO.value,
+            reason=(
+                f"{' and '.join(named)} slice equity exchanges (ISO 10383 MIC, ISO 3166 "
+                "country); no crypto venue has either, so a crypto answer could only "
+                "ignore the filter. Ask with --asset-class equity"
+            ),
+        )
 
 
 def markets(ctx: CapabilityContext, params: MarketsParams) -> pl.DataFrame:
@@ -355,7 +433,11 @@ def markets(ctx: CapabilityContext, params: MarketsParams) -> pl.DataFrame:
     ``list_all_exchanges()`` is the row source rather than the union of the other two calls,
     so the "total reachable" number the CLI printed and the rows it printed can no longer
     come from two different unions.
+
+    Only the three tier columns are observed here; every exchange column is null (see
+    ``_MARKETS_SCHEMA``). ``mic`` and ``country`` are refused, not ignored.
     """
+    _refuse_market_dimensions("markets", params)
     native = set(factory.list_exchanges())
     ccxt = set(factory.list_ccxt_exchanges())
     needle = params.search.lower() if params.search is not None else None
@@ -369,7 +451,9 @@ def markets(ctx: CapabilityContext, params: MarketsParams) -> pl.DataFrame:
             continue
         if needle is not None and needle not in venue.lower():
             continue
-        rows.append({"venue": venue, "native": is_native, "ccxt": is_ccxt})
+        row: dict[str, Any] = dict.fromkeys(_MARKETS_SCHEMA)
+        row.update(venue=venue, native=is_native, ccxt=is_ccxt)
+        rows.append(row)
     return pl.DataFrame(rows, schema=_MARKETS_SCHEMA)
 
 
@@ -416,12 +500,20 @@ def universe(ctx: CapabilityContext, params: UniverseParams) -> pl.DataFrame:
     venue publishes about itself, which is why this capability can answer for a symbol that
     has never been collected. The coroutine is driven here rather than returned; see
     :func:`~crocodile.core.capability.run_to_completion`.
+
+    ``mic`` and ``country`` are refused before anything is reached. ``source`` is required:
+    a crypto venue is named by its id, and the crypto half has no other way to scope.
     """
+    _refuse_market_dimensions("universe", params)
+    if params.source is None:
+        raise ValueError("universe for crypto needs source=<venue id>, e.g. source=binance")
+    # Bound once: mypy does not carry the narrowing of ``params.source`` into the lambdas.
+    source = params.source
     kinds = _kinds(params.kinds)
     top = params.top
     if top is not None:
         symbols = run_to_completion(
-            lambda: top_symbols_by_volume(params.source, top, quote=params.quote, kinds=kinds)
+            lambda: top_symbols_by_volume(source, top, quote=params.quote, kinds=kinds)
         )
         return pl.DataFrame(
             [
@@ -432,7 +524,7 @@ def universe(ctx: CapabilityContext, params: UniverseParams) -> pl.DataFrame:
         )
 
     instruments = filter_instruments(
-        run_to_completion(lambda: exchange_instruments(params.source)),
+        run_to_completion(lambda: exchange_instruments(source)),
         kinds=kinds,
         quote=params.quote,
     )
@@ -589,12 +681,11 @@ def depth_crypto(ctx: CapabilityContext, params: DepthParams) -> DepthProfile:
 # `CoverageResolver`; the three adapters below are argument shuffling and framing over it.
 #
 # One difference from the crypto halves is worth naming rather than leaving to be found.
-# Crypto's `markets` is a pure function of the *build* — it lists the connectors this binary
-# registers and touches nothing. Its equity twin cannot be: an equity venue list is data, not
-# a build fact, because no equity venue ships a connector here and the only thing that knows
-# NASDAQ exists is the reference data. So the equity half reaches the network where the
-# crypto half does not, and the two are symmetric in what they answer rather than in what
-# they cost.
+# Both halves of `markets` are now a pure function of this build: crypto reads its connector
+# registry, and equity reads the bundled exchange table (`core/markets/data/exchanges.csv`)
+# plus the providers' and grammars' MIC declarations, so neither touches the network. The
+# equity halves of `universe` and `census` still reach the network for the US reference merge
+# (their source branch) and read the listing master, a local file, for `mic`/`country`.
 
 _FIGI_KEYLESS_BURST: Final[int] = 250
 """Tickers OpenFIGI's keyless tier maps before its own limiter starts pacing.
@@ -627,7 +718,7 @@ _EQUITY_VENUE_IS_NATIVE: Final[bool] = True
 """Whether a hand-written connector serves an equity venue. It does, for all of them.
 
 The flag means "served by a hand-written connector rather than by a generic library", and
-the equity side has only the hand-written tier — the five providers ``list-exchanges``
+the equity side has only the hand-written tier — the hand-written providers ``list-exchanges``
 returns. Constant for this asset class and not for the other, which is what the column is
 for: it distinguishes two tiers, and equities have one.
 """
@@ -694,22 +785,123 @@ def _enriched(
     return enriched
 
 
-def markets_equities(ctx: CapabilityContext, params: MarketsParams) -> pl.DataFrame:
-    """Every venue the resolved equity reference data names, tagged by connector tier.
+def _require_mic(raw: str) -> str:
+    """The operating MIC of ``raw``, which must be an ``exchanges.csv`` row.
 
-    The row source is the merged universe rather than a hand-kept exchange list, which is the
-    point: a venue is here because a listing says it exists, so a new exchange appears the
-    day the reference data names one and a dead one leaves when nothing is listed on it any
-    more. The names are whatever won the merge — Tiingo's exchange labels for anything it
-    lists, OpenFIGI's exchange codes for the rest — and
-    :data:`~crocodile.equity.reference.universe.REFERENCE_PRIORITY` argues that ordering.
-
-    The two flags are constant for this asset class and that is an answer rather than
-    padding; see :data:`_EQUITY_VENUE_IS_NATIVE` and :data:`_EQUITY_VENUE_IS_CCXT`. Both
-    filters therefore keep working and mean what they say: ``--native-only`` keeps
-    everything and ``--ccxt-only`` keeps nothing, because ccxt reaches no equity venue.
+    Surfaces may upper-case input; the core registries do not guess, so the adapter does.
+    ``UnknownMarketError`` is a ``LookupError`` and would surface as a 500, so it is re-raised
+    as the ``ValueError`` every surface maps to 400. The registry's message is kept, which is
+    how an expired code names its replacement.
     """
-    needle = params.search.lower() if params.search is not None else None
+    try:
+        return ExchangeRegistry().resolve(raw.strip().upper()).mic
+    except UnknownMarketError as exc:
+        raise ValueError(f"mic {raw!r}: {exc}") from exc
+
+
+def _require_country(raw: str) -> str:
+    """The upper-case ISO 3166 alpha-2 code of ``raw``, which must name at least one exchange."""
+    code = raw.strip().upper()
+    try:
+        found = ExchangeRegistry().by_country(code)
+    except ValueError as exc:
+        raise ValueError(f"country {raw!r} is not an ISO 3166-1 alpha-2 code") from exc
+    if not found:
+        raise ValueError(
+            f"exchanges.csv lists no exchange in country {code!r}; "
+            "`markets --asset-class equity` lists the countries it covers"
+        )
+    return code
+
+
+def _market_scope(mic: str | None, country: str | None) -> tuple[str | None, str | None]:
+    """Validate the two market dimensions and check that they agree when both are set."""
+    mic_code = None if mic is None else _require_mic(mic)
+    country_code = None if country is None else _require_country(country)
+    if mic_code is not None and country_code is not None:
+        mic_country = ExchangeRegistry().get(mic_code).country
+        if mic_country != country_code:
+            raise ValueError(
+                f"mic {mic_code!r} is in country {mic_country!r}, not {country_code!r}"
+            )
+    return mic_code, country_code
+
+
+def _calendar_quality(info: ExchangeInfo) -> str:
+    """The calendar quality ``calendar_for`` answers, so the two can never disagree.
+
+    Measured at task 08 (Step 0): reading the quality of all 172 calendars takes about 0.04 s on
+    this host, far under the 1.5 s the brief allows, so the row asks ``calendar_for`` itself
+    rather than re-deriving the rule from ``xcal_code``.
+    """
+    return calendar_for(info.mic).quality.value
+
+
+def _grammar_mics() -> dict[str, frozenset[str]]:
+    """The MICs each grammar table serves, for the registered sources only.
+
+    Only registered providers count: a grammar table for a source nothing can collect from is
+    not coverage.
+    """
+    registered = set(provider_factory.list_providers())
+    return {
+        source: load_grammar(source).supported_mics()
+        for source in GRAMMAR_SOURCES
+        if source in registered
+    }
+
+
+def _serving_sources(mic: str, grammar_mics: Mapping[str, frozenset[str]]) -> list[str]:
+    """The registered equity sources that serve ``mic``, by declaration or by grammar table."""
+    serving: list[str] = []
+    for name in sorted(provider_factory.list_providers()):
+        declared = provider_factory.supported_mics(name)
+        in_grammar = mic in grammar_mics.get(name, frozenset())
+        if in_grammar or (declared is not None and mic in declared):
+            serving.append(name)
+    return serving
+
+
+def _exchange_row(info: ExchangeInfo, grammar_mics: Mapping[str, frozenset[str]]) -> dict[str, Any]:
+    """One ``markets`` row for an allow-listed exchange, with every column of the schema."""
+    return {
+        "venue": info.mic,
+        "native": _EQUITY_VENUE_IS_NATIVE,
+        "ccxt": _EQUITY_VENUE_IS_CCXT,
+        "mic": info.mic,
+        "name": info.name,
+        "country": info.country,
+        "timezone": info.tz.key,
+        "currency": info.currency,
+        "quote_scale": info.quote_scale,
+        "calendar_quality": _calendar_quality(info),
+        "sources": _serving_sources(info.mic, grammar_mics),
+        "tier_research": info.tier_research,
+        "sanctioned": info.sanctioned,
+    }
+
+
+def markets_equities(ctx: CapabilityContext, params: MarketsParams) -> pl.DataFrame:
+    """Every allow-listed exchange, from the bundled exchange table, with its reference facts.
+
+    The row source is ``exchanges.csv`` (through :class:`ExchangeRegistry`) plus the providers'
+    and grammars' MIC declarations. Nothing here contacts SEC or any network, so no SEC contact
+    string is needed: the table is packaged data, read rather than reconstructed, which is what
+    ``native`` scores. Before this change the row source was the merged reference universe, so
+    a clean lake had no exchanges to list.
+
+    ``mic`` selects one exchange (a segment answers for its operating exchange), ``country`` the
+    exchanges of one country, and ``search`` is a case-insensitive substring of the MIC or the
+    name. Bad input raises ``ValueError`` naming the input: an unknown or expired MIC (the
+    registry's replacement is kept), a malformed or exchange-less country, and a MIC and a
+    country that disagree.
+
+    The two tier flags are constant for this asset class and that is an answer rather than
+    padding; see :data:`_EQUITY_VENUE_IS_NATIVE` and :data:`_EQUITY_VENUE_IS_CCXT`. Both filters
+    are applied structurally so that the day either constant stops being constant the filters
+    follow it. ``--native-only`` keeps everything and ``--ccxt-only`` keeps nothing.
+    """
+    mic, country = _market_scope(params.mic, params.country)
     # Both tier filters are applied structurally rather than one being left implicit, so that
     # the day either constant stops being constant the filters follow it instead of quietly
     # disagreeing with the column they read.
@@ -718,24 +910,95 @@ def markets_equities(ctx: CapabilityContext, params: MarketsParams) -> pl.DataFr
     ):
         return pl.DataFrame([], schema=_MARKETS_SCHEMA)
 
-    venues = sorted(
-        {
-            listing.instrument.exchange
-            for listing in _reference_evidence(ctx).merged()
-            if listing.instrument.exchange
-        }
-    )
+    registry = ExchangeRegistry()
+    infos = (registry.get(mic),) if mic is not None else registry.all()
+    needle = params.search.lower() if params.search is not None else None
+    grammar_mics = _grammar_mics()
+    rows: list[dict[str, Any]] = []
+    for info in infos:
+        if country is not None and info.country != country:
+            continue
+        if needle is not None and not (
+            needle in info.mic.lower() or needle in info.name.lower()
+        ):
+            continue
+        rows.append(_exchange_row(info, grammar_mics))
+    return pl.DataFrame(rows, schema=_MARKETS_SCHEMA)
+
+
+def _listing_master(ctx: CapabilityContext) -> ListingMaster:
+    """Open the lake's listing master read-only, or refuse. Never creates one.
+
+    Task 04's read-write constructor creates the parent directory and the file, which would
+    make a read capability write to the lake root from REST and MCP. Even on an existing file
+    a read-write open runs ``PRAGMA journal_mode``, the DDL and possibly a ``schema_version``
+    insert, and a plain ``?mode=ro`` open leaves ``-wal``/``-shm`` behind. ``readonly=True``
+    does neither (interfaces ruling 27). This is the monkeypatch seam the tests use.
+    """
+    path = default_listings_path(ctx.settings.data_dir)
+    if not path.exists():
+        raise ValueError(
+            f"no listing master at {path}; run `crocodile universe-sync` (with --mic or "
+            "--country) to build one"
+        )
+    return ListingMaster(path, readonly=True)
+
+
+def _universe_from_listing_master(ctx: CapabilityContext, params: UniverseParams) -> pl.DataFrame:
+    """One MIC or one country out of the listing master, under the same filters and ranking.
+
+    Delisted listings are dropped; unseen ones are kept, because an unseen listing is absence of
+    evidence rather than evidence of absence. ``top`` ranks by the lake's stored bars, exactly as
+    the legacy branch does, and ``limit`` caps the enumeration. The full slice is returned: the
+    surface ceiling is applied by ``dispatch.payload``, which must see every row to set
+    ``truncated``.
+    """
+    mic, country = _market_scope(params.mic, params.country)
+    kinds = reference.parse_kinds(params.kinds)
+    currency = params.quote.strip().upper() if params.quote else None
+    scope = f"mic={mic!r}" if mic is not None else f"country={country!r}"
+    with _listing_master(ctx) as master:
+        found = master.listings(mic=mic, country=country)
+    if not found:
+        raise ValueError(
+            f"the listing master holds no listing for {scope}; run `crocodile universe-sync` "
+            "for that market first"
+        )
+    kept = [
+        listing
+        for listing in found
+        if listing.status is not ListingStatus.DELISTED
+        and (kinds is None or listing.security_type in kinds)
+        and (currency is None or (listing.currency or "").upper() == currency)
+    ]
+    if params.top is not None:
+        volumes = _volume_evidence(ctx)
+        if not volumes:
+            raise ValueError(
+                "ranking equities by traded volume reads this lake's own stored ohlcv bars "
+                "and it holds none, so there is nothing to rank; collect or backfill the "
+                "ohlcv channel first, or drop --top to enumerate the universe instead"
+            )
+        selected = sorted(kept, key=lambda item: (-volumes.get(item.symbol, 0.0), item.symbol))
+        selected = selected[: params.top]
+        ranks: list[int | None] = list(range(1, len(selected) + 1))
+    else:
+        selected = kept[: params.limit]
+        ranks = [None] * len(selected)
     return pl.DataFrame(
         [
             {
-                "venue": venue,
-                "native": _EQUITY_VENUE_IS_NATIVE,
-                "ccxt": _EQUITY_VENUE_IS_CCXT,
+                "symbol": listing.symbol,
+                "kind": listing.security_type.value
+                if listing.security_type is not None
+                else None,
+                "base": listing.symbol,
+                "quote": listing.currency,
+                "rank": rank,
             }
-            for venue in venues
-            if needle is None or needle in venue.lower()
+            for listing, rank in zip(selected, ranks, strict=True)
         ],
-        schema=_MARKETS_SCHEMA,
+        schema=_UNIVERSE_SCHEMA,
     )
 
 
@@ -756,14 +1019,33 @@ def universe_equities(ctx: CapabilityContext, params: UniverseParams) -> pl.Data
     ``Kind`` — the same column asking each market its own question, exactly as ``source``
     does.
 
+    Two scopes, and exactly one may be named. ``source`` takes the US reference merge above.
+    ``mic`` or ``country`` takes the listing master (``universe-sync`` builds it): delisted
+    listings are dropped, unseen ones kept, and kinds, quote, limit and top are honoured the same
+    way. Naming both scopes, or neither, is a ``ValueError``.
+
     ``rank`` is filled only on the ``top`` branch, which is the crypto contract: the
     enumerating branch returns the universe in ticker order and observes no ranking, and a
     null says the path did not observe it rather than that the venue has none.
     """
+    if params.mic is not None or params.country is not None:
+        if params.source is not None:
+            raise ValueError(
+                "universe takes one scope: source (the US reference merge) or mic/country "
+                "(the listing master), not both"
+            )
+        return _universe_from_listing_master(ctx, params)
+    if params.source is None:
+        raise ValueError(
+            "universe for equities needs a scope: source=<exchange label> for the US reference "
+            "merge, or mic=/country= for the listing master"
+        )
+    # Bound once: mypy does not carry the narrowing of ``params.source`` into the call below.
+    source = params.source
     kinds = reference.parse_kinds(params.kinds)
     evidence = _reference_evidence(ctx)
     listings = reference.filter_listings(
-        evidence.merged(), exchange=params.source, kinds=kinds, currency=params.quote
+        evidence.merged(), exchange=source, kinds=kinds, currency=params.quote
     )
 
     if params.top is not None:
@@ -906,14 +1188,14 @@ MARKETS = declare(
         returns=ReturnKind.TABLE,
         impls={
             AssetClass.CRYPTO: Impl(fn=markets, prov=Provenance.NATIVE, basis="native"),
-            # DERIVED where crypto is NATIVE, and the split is the same one `census` makes
-            # against `universe`: the crypto venue list is this build's own connector
-            # registry, read rather than reconstructed, while the equity one is the distinct
-            # set of exchange names left standing after three registries were merged. No
-            # registry publishes "the list of equity venues"; this computes it.
-            AssetClass.EQUITY: Impl(
-                fn=markets_equities, prov=Provenance.DERIVED, basis="reference_merge"
-            ),
+            # NATIVE on both sides. Both halves now read this build's own declarations: the
+            # crypto connector registry on one side, and the bundled exchange table
+            # (`core/markets/data/exchanges.csv`) plus the providers' and grammars' MIC
+            # declarations on the other, read rather than reconstructed, which is what
+            # `native` scores (`core/schema/provenance.py:324-331`). The equity half no longer
+            # merges three registries, so `reference_merge` would name a method that does not
+            # run.
+            AssetClass.EQUITY: Impl(fn=markets_equities, prov=Provenance.NATIVE, basis="native"),
         },
     )
 )
@@ -933,6 +1215,10 @@ UNIVERSE = declare(
             # The equity rows are nobody's published market list — they are one assembled
             # from three registries under a stated priority, which is what `reference_merge`
             # names and why the ceiling is DERIVED rather than the NATIVE its twin reaches.
+            # The listing-master branch (``mic``/``country``) is also a merged reference view:
+            # observations from several sources are reconciled per (mic, local_symbol). So the
+            # ceiling and the basis stand, and spec 3.13 adds no basis for it (a new one would
+            # widen scope).
             # The ranked branch does not lower it further: ranking sorts rows by evidence
             # already in the lake and adds no modelling, exactly as on the crypto side.
             AssetClass.EQUITY: Impl(

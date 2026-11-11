@@ -336,7 +336,9 @@ async def test_a_line_that_is_not_json_is_a_parse_error_with_a_null_id(
 
 
 _NEEDS_A_CONTACT_STRING = {"asset_class": "equity"}
-"""``markets``/equity reads SEC EDGAR, which blocks a request with no identifying User-Agent.
+"""``census``/equity counts the US reference universe, which reads SEC EDGAR, and SEC blocks a
+request with no identifying User-Agent. (``markets``/equity used to read it too and no longer does:
+it reads the bundled exchange table, so it needs no contact string.)
 
 ``Settings.sec_user_agent`` is deliberately undefaulted — an invented address passes the
 string check and gives the regulator a dead mailbox — so an unconfigured install raises
@@ -362,7 +364,7 @@ def test_a_configuration_error_is_an_actionable_501_rather_than_a_bare_500(
     implementation, and it is the same sentence.
     """
     _unconfigured(monkeypatch)
-    response = _client(lake).get("/api/v1/markets", params=_NEEDS_A_CONTACT_STRING)
+    response = _client(lake).get("/api/v1/census", params=_NEEDS_A_CONTACT_STRING)
     assert response.status_code == 501, response.text
     assert "CROCODILE_SEC_USER_AGENT" in response.json()["detail"]
 
@@ -375,17 +377,17 @@ def test_the_three_surfaces_say_the_same_thing_about_an_unconfigured_deployment(
 
     from_cli = CliRunner().invoke(
         cli.build_app(),
-        ["markets", "--asset-class", "equity", "--data-dir", str(lake)],
+        ["census", "--asset-class", "equity", "--data-dir", str(lake)],
     )
     assert from_cli.exit_code == 1
     assert "CROCODILE_SEC_USER_AGENT" in from_cli.output
 
-    from_rest = _client(lake).get("/api/v1/markets", params=_NEEDS_A_CONTACT_STRING)
+    from_rest = _client(lake).get("/api/v1/census", params=_NEEDS_A_CONTACT_STRING)
     assert "CROCODILE_SEC_USER_AGENT" in from_rest.json()["detail"]
 
     from_mcp = stdio.handle_request(
         {"jsonrpc": "2.0", "id": 21, "method": "tools/call",
-         "params": {"name": "markets", "arguments": dict(_NEEDS_A_CONTACT_STRING)}},
+         "params": {"name": "census", "arguments": dict(_NEEDS_A_CONTACT_STRING)}},
         data_dir=lake,
     )
     assert "error" not in from_mcp, from_mcp
