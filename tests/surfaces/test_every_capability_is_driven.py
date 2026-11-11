@@ -112,6 +112,10 @@ _BY_NAME: dict[str, Any] = {
     "start_ns": str(START_NS),
     "end_ns": str(END_NS),
     "at_ns": str(START_NS),
+    # `calendar` takes ISO dates. The crypto half answers 200 and the equity half, which gets
+    # no `mic` here, answers a classified 400 on all three surfaces.
+    "start": "2026-01-05",
+    "end": "2026-01-09",
 }
 """Values that mean something to this lake, keyed by the name the registry already uses.
 

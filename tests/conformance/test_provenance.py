@@ -776,6 +776,19 @@ def test_the_capabilities_that_compute_over_caller_supplied_numbers_declare_it()
     )
 
 
+_CALLER_SUPPLIED_HALVES = frozenset(
+    {
+        # One half of a capability whose other half is native. `calendar`'s crypto half is a
+        # pure function of the caller's date range under a market that never closes: no
+        # number in it came from a lake or a venue, so the caller's inputs are the whole
+        # story. Its equity half reads published exchange schedules and is `native`, so the
+        # capability cannot be on `_CALLER_SUPPLIED_CAPABILITIES`, which pins every half.
+        ("calendar", "crypto"),
+    }
+)
+"""(capability, asset class value) pairs whose one half is ``caller_supplied`` on purpose."""
+
+
 def test_no_capability_reading_the_lake_claims_its_inputs_were_handed_in():
     """The other direction, so the basis stays a filter rather than a habit.
 
@@ -789,10 +802,12 @@ def test_no_capability_reading_the_lake_claims_its_inputs_were_handed_in():
     load_all()
 
     unexpected = sorted(
-        name
+        f"{name}/{asset_class.value}"
         for name, cap in REGISTRY.items()
-        if any(impl.basis == "caller_supplied" for impl in cap.impls.values())
+        for asset_class, impl in cap.impls.items()
+        if impl.basis == "caller_supplied"
         and name not in _CALLER_SUPPLIED_CAPABILITIES
+        and (name, asset_class.value) not in _CALLER_SUPPLIED_HALVES
     )
     assert not unexpected, (
         f"{unexpected} declare caller_supplied and are not on the list that argues for it; "

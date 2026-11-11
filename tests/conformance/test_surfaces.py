@@ -251,3 +251,31 @@ def test_the_context_carries_no_default_trust_level() -> None:
         parameter = signature.parameters[name]
         assert parameter.kind is inspect.Parameter.KEYWORD_ONLY, name
         assert parameter.default is inspect.Parameter.empty, f"{name} has a default"
+
+
+def test_the_calendar_is_served_on_get_because_every_parameter_is_a_scalar() -> None:
+    """``start`` and ``end`` are strings, so no field is structured and REST may serve GET."""
+    cap = dispatch.resolve("calendar")
+    assert dispatch.structured_fields(cap) == frozenset()
+    assert rest.methods_for(cap) == ["GET", "POST"]
+
+
+def test_the_market_dimensions_are_published_on_every_surface() -> None:
+    """``mic`` and ``country`` (and ``calendar``'s ``start``/``end``) reach MCP, the CLI and
+    the REST document, so no surface can silently lack a parameter another one offers."""
+    import inspect
+
+    expected = {
+        "markets": {"mic", "country"},
+        "universe": {"mic", "country"},
+        "calendar": {"start", "end", "mic"},
+    }
+    tools = {tool["name"]: tool for tool in mcp.tool_definitions()}
+    commands = {command.name: command for command in cli.build_app().registered_commands}
+    for name, names in expected.items():
+        properties = set(tools[name]["inputSchema"]["properties"])
+        assert names <= properties, (name, names - properties)
+        cli_params = set(inspect.signature(commands[name].callback).parameters)
+        assert names <= cli_params, (name, names - cli_params)
+        rest_params = {param["name"] for param in rest._openapi_parameters(dispatch.resolve(name))}
+        assert names <= rest_params, (name, names - rest_params)

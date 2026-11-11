@@ -45,7 +45,7 @@ def _definition(cap: Capability, wire: str) -> dict[str, Any]:
 
     ``asset_class`` is added on top, because it is the one input a caller may supply that
     is not a capability parameter: it selects the implementation rather than describing the
-    request. It was in neither the schema, the description nor the error text, and for the 32
+    request. It was in neither the schema, the description nor the error text, and for the 31
     wire names with two implementations and no symbol field it is the *only* thing that makes
     the call answerable — so an agent reading the published contract could not call them, and
     found out with a 400. It is listed as required for exactly those.

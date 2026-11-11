@@ -795,8 +795,8 @@ _ASYMMETRIC_AS_SHIPPED: dict[str, tuple[str, ...]] = {
 """Every capability that does not serve both asset classes, and which one it serves.
 
 Everything else in ``REGISTRY`` is symmetric, asserted rather than assumed: a name absent
-from this mapping and asymmetric at runtime is a failure, so the pin covers all 49 without
-listing 49.
+from this mapping and asymmetric at runtime is a failure, so the pin covers every symmetric
+capability without listing them.
 
 **Why this exists beside the ledger censuses rather than instead of them.** They watch the
 excuses; this watches the fact. Each of the last two reviews closed a route into

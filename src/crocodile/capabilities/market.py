@@ -1,11 +1,11 @@
 """Capabilities describing market structure and reference data.
 
-Owns ``list-exchanges``, ``markets``, ``universe``, ``census``, ``open-interest`` and
-``depth`` — what exists to trade, where, and in what size, as opposed to what the lake
-happens to hold about it.
+Owns ``list-exchanges``, ``markets``, ``universe``, ``census``, ``open-interest``, ``depth``
+and ``calendar`` — what exists to trade, where, when, and in what size, as opposed to what the
+lake happens to hold about it.
 
-Three of the six reach a venue rather than the lake (``universe``, ``census`` and ``depth``;
-``markets`` reads the build), which makes this the batch where the
+Three of the seven reach a venue rather than the lake (``universe``, ``census`` and ``depth``;
+``markets`` and ``calendar`` read the build), which makes this the batch where the
 two questions below had to be answered once, out loud, instead of per declaration.
 
 **Why every adapter here is synchronous, including the four whose work is not.**
@@ -48,15 +48,19 @@ capability does not understand must be refused or filtered, never ignored. A cry
 neither an ISO 10383 MIC nor an ISO 3166 country, so ignoring either filter would return every
 crypto venue for a request that asked for one market, a plausible wrong answer. The crypto
 halves therefore raise :class:`~crocodile.core.errors.CapabilityUnavailable` naming each
-dimension set, before any network or registry work.
+dimension set, before any network or registry work. ``calendar_crypto`` refuses ``mic`` the
+same way. Its answer for crypto is not a blank for the filter: every crypto venue trades every
+calendar day, so the crypto calendar is the always-open one, and a ``mic`` it cannot honour is
+refused rather than ignored.
 
 A fifth question this batch had to answer, once M3 gave it two adapters per capability rather
 than one: **an asymmetric capability resolves its own asset class and a symmetric one does
 not.** ``crocodile.surfaces.dispatch.resolve_asset_class`` falls through to "there is only one
 implementation, so there is nothing to decide" — and four capabilities here just stopped
-having one. None of ``MarketsParams``, ``UniverseParams``, ``CensusParams`` or
-``OpenInterestParams`` carries a ``symbol`` field, so nothing about a request for them is
-evidence about a market, and callers name ``--asset-class`` explicitly from here on. That is
+having one. None of ``MarketsParams``, ``UniverseParams``, ``CensusParams``,
+``OpenInterestParams`` or ``CalendarParams`` carries a ``symbol`` field, so nothing about a
+request for them is evidence about a market, and callers name ``--asset-class`` explicitly
+from here on (``calendar`` included: a bare ``mic`` field is not market evidence). That is
 the documented step 3 of that function's order working as designed rather than a regression:
 the alternative is defaulting to crypto, which would answer an equity request with a crypto
 venue list and no error.
@@ -65,6 +69,7 @@ venue list and no error.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import date
 from typing import Any, Final
 
 import msgspec
@@ -83,7 +88,12 @@ from crocodile.core.capability import (
 )
 from crocodile.core.config import Settings
 from crocodile.core.errors import CapabilityUnavailable
-from crocodile.core.markets.calendar import calendar_for
+from crocodile.core.markets.calendar import (
+    AlwaysOpenCalendar,
+    CalendarQuality,
+    ExchangeCalendar,
+    calendar_for,
+)
 from crocodile.core.markets.errors import UnknownMarketError
 from crocodile.core.markets.exchanges import ExchangeInfo, ExchangeRegistry
 from crocodile.core.markets.grammar import GRAMMAR_SOURCES, load_grammar
@@ -108,12 +118,14 @@ from crocodile.equity.providers import factory as provider_factory
 from crocodile.equity.reference import universe as reference
 
 __all__ = [
+    "CALENDAR",
     "CENSUS",
     "DEPTH",
     "LIST_EXCHANGES",
     "MARKETS",
     "OPEN_INTEREST",
     "UNIVERSE",
+    "CalendarParams",
     "CensusParams",
     "DepthParams",
     "ListExchangesParams",
@@ -234,6 +246,25 @@ class UniverseParams(msgspec.Struct, frozen=True):
     country: str | None = None
     """ISO 3166-1 alpha-2 country code. Equity only, selects the listing master. Refused by the
     crypto half."""
+
+
+class CalendarParams(msgspec.Struct, frozen=True):
+    """Parameters for ``calendar``. One struct, and the equity half inherits it.
+
+    ``start`` and ``end`` are strings on purpose: a ``datetime.date`` field is not a scalar to
+    the surface projection, which would make ``calendar`` POST-only on REST and unreachable by
+    GET. The adapters parse them.
+    """
+
+    start: str
+    """ISO date (YYYY-MM-DD), inclusive, in the exchange's own calendar."""
+
+    end: str
+    """ISO date (YYYY-MM-DD), inclusive, in the exchange's own calendar."""
+
+    mic: str | None = None
+    """Operating or segment MIC; required for equities. Refused by the crypto half, where every
+    venue trades around the clock."""
 
 
 class CensusParams(msgspec.Struct, frozen=True):
@@ -398,7 +429,9 @@ start from ``dict.fromkeys(_MARKETS_SCHEMA)``.
 """
 
 
-def _refuse_market_dimensions(capability: str, params: MarketsParams | UniverseParams) -> None:
+def _refuse_market_dimensions(
+    capability: str, params: MarketsParams | UniverseParams | CalendarParams
+) -> None:
     """Refuse ``mic`` and ``country`` on a crypto answer, before any network or registry work.
 
     A crypto venue has neither an ISO 10383 MIC nor an ISO 3166 country, so a crypto answer
@@ -1161,6 +1194,121 @@ def census_equities(ctx: CapabilityContext, params: CensusParams) -> dict[str, A
     }
 
 
+# ---------------------------------------------------------------------------
+# calendar
+# ---------------------------------------------------------------------------
+
+_CALENDAR_SCHEMA: Final[Mapping[str, pl.DataType]] = {
+    "mic": pl.String(),  # equity: operating MIC; crypto: null
+    "date": pl.Date(),  # session date in the exchange's own calendar
+    "open_utc": pl.Datetime("us", "UTC"),  # null on WEEKDAY_FALLBACK rows (open unknown)
+    "close_utc": pl.Datetime("us", "UTC"),  # null on WEEKDAY_FALLBACK rows without a known close
+    "quality": pl.String(),  # CalendarQuality member .value
+}
+"""One schema for both halves of ``calendar``, nulls where a half does not observe a column.
+
+The same argument as ``_MARKETS_SCHEMA``: a null says "this half does not observe it", and the
+two halves project through one renderer.
+"""
+
+_CALENDAR_MAX_DAYS: Final[int] = 36_600
+"""Longest range one request may span, about a century. No holiday table reaches that far, so
+the cap only refuses a typo such as year 20260 that would otherwise materialise millions of
+always-open rows."""
+
+
+def _iso_date(field: str, value: str) -> date:
+    """``value`` as a date, or a ``ValueError`` that names the field it came from."""
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"calendar: {field} {value!r} is not an ISO date (YYYY-MM-DD)") from exc
+
+
+def _calendar_dates(params: CalendarParams) -> tuple[date, date]:
+    """Both bounds of the request, validated: ISO dates, ordered, and inside the span cap.
+
+    Raises:
+        ValueError: naming the field that is malformed, the inverted range, or the day count
+            and the cap when the span is longer than ``_CALENDAR_MAX_DAYS``.
+    """
+    start = _iso_date("start", params.start)
+    end = _iso_date("end", params.end)
+    if end < start:
+        raise ValueError(f"calendar: end {params.end!r} is before start {params.start!r}")
+    days = (end - start).days + 1
+    if days > _CALENDAR_MAX_DAYS:
+        raise ValueError(
+            f"calendar: the range spans {days} days, more than the {_CALENDAR_MAX_DAYS}-day cap"
+        )
+    return start, end
+
+
+def _calendar_frame(
+    calendar: ExchangeCalendar, start: date, end: date, *, mic: str | None, close_known: bool
+) -> pl.DataFrame:
+    """One row per session of ``calendar`` in ``[start, end]``, with the quality of each row.
+
+    Ruling: a row's quality is ``calendar.quality_for(d)``, not ``calendar.quality``, because a
+    library MIC past its bound answers by the weekday fallback (XSHG, XBOM and XSES after
+    2026-12-31 with exchange_calendars 4.13.2). For every quality except ``WEEKDAY_FALLBACK``
+    both times come from the calendar. On a ``WEEKDAY_FALLBACK`` row the open is unknown and is
+    emitted as null, never the placeholder local midnight the protocol reports so that the
+    scheduler stays total; the close is emitted only when ``exchanges.csv`` carries one
+    (``close_known``), never the 23:00 placeholder. Cost if wrong: a reader of a fallback row
+    sees nulls where a placeholder used to be, and no hours are invented for a venue.
+    """
+    rows: list[dict[str, Any]] = []
+    for d in calendar.sessions(start, end):
+        quality = calendar.quality_for(d)
+        if quality is CalendarQuality.WEEKDAY_FALLBACK:
+            opened = None
+            closed = calendar.session_close_utc(d) if close_known else None
+        else:
+            opened = calendar.session_open_utc(d)
+            closed = calendar.session_close_utc(d)
+        rows.append(
+            {
+                "mic": mic,
+                "date": d,
+                "open_utc": opened,
+                "close_utc": closed,
+                "quality": quality.value,
+            }
+        )
+    return pl.DataFrame(rows, schema=_CALENDAR_SCHEMA)
+
+
+def calendar_crypto(ctx: CapabilityContext, params: CalendarParams) -> pl.DataFrame:
+    """Every day is a session and every session is open from 00:00 UTC to 00:00 UTC next day.
+
+    ``mic`` stays null: ``AlwaysOpenCalendar``'s own ``mic`` is a free label (``"24/7"``), not an
+    ISO 10383 code, so writing it into the column would present a label as a market.
+    """
+    _refuse_market_dimensions("calendar", params)
+    start, end = _calendar_dates(params)
+    return _calendar_frame(AlwaysOpenCalendar(), start, end, mic=None, close_known=True)
+
+
+def calendar_equities(ctx: CapabilityContext, params: CalendarParams) -> pl.DataFrame:
+    """The sessions of one exchange, by its calendar, with open and close in UTC.
+
+    The MIC is resolved to its operating exchange first, so a segment answers with the
+    operating MIC in the ``mic`` column. The close is known when ``exchanges.csv`` carries a
+    ``close_local``; a fallback row without one says so by a null close.
+    """
+    if params.mic is None:
+        raise ValueError(
+            "calendar for equities needs mic=<MIC>; `markets --asset-class equity` lists them"
+        )
+    operating = _require_mic(params.mic)
+    start, end = _calendar_dates(params)
+    close_known = ExchangeRegistry().get(operating).close_local is not None
+    return _calendar_frame(
+        calendar_for(operating), start, end, mic=operating, close_known=close_known
+    )
+
+
 LIST_EXCHANGES = declare(
     Capability(
         name="list-exchanges",
@@ -1344,6 +1492,31 @@ DEPTH = declare(
                 basis="book_snapshot_slice",
                 reads=("book_snapshot",),
             ),
+        },
+    )
+)
+
+
+CALENDAR = declare(
+    Capability(
+        name="calendar",
+        summary="Trading sessions of one exchange by MIC, in UTC; crypto never closes.",
+        params=CalendarParams,
+        returns=ReturnKind.TABLE,
+        impls={
+            # The crypto rows are a pure function of the caller's date range under a market that
+            # never closes, which is `caller_supplied`'s argument (`core/schema/provenance.py`,
+            # the basis whose inputs are the caller's own parameters). The equity rows are
+            # computed from published exchange schedules as the calendar library encodes them,
+            # or from the exchange table's weekend and close columns: those inputs are read
+            # rather than modelled, so they are `native`, and the computed table is `DERIVED`.
+            # The per-row `quality` column says which encoding answered, and a WEEKDAY_FALLBACK
+            # row knows no holidays. Both halves are within the trust-rank gate
+            # (`tests/conformance/test_capability.py`).
+            AssetClass.CRYPTO: Impl(
+                fn=calendar_crypto, prov=Provenance.DERIVED, basis="caller_supplied"
+            ),
+            AssetClass.EQUITY: Impl(fn=calendar_equities, prov=Provenance.DERIVED, basis="native"),
         },
     )
 )

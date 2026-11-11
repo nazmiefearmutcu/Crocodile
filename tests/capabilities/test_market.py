@@ -11,6 +11,7 @@ mocking at all: its input is the lake, so it gets a real one, written into ``tmp
 from __future__ import annotations
 
 import asyncio
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,7 @@ from crocodile.core.capability import (
 )
 from crocodile.core.config import Settings
 from crocodile.core.errors import CapabilityUnavailable, ConfigError
-from crocodile.core.markets.calendar import CalendarQuality, calendar_for
+from crocodile.core.markets.calendar import AlwaysOpenCalendar, CalendarQuality, calendar_for
 from crocodile.core.markets.exchanges import ExchangeRegistry
 from crocodile.core.markets.master import (
     ListingMaster,
@@ -61,6 +62,7 @@ _MARKET_CAPABILITIES = (
     "census",
     "open-interest",
     "depth",
+    "calendar",
 )
 
 
@@ -1769,3 +1771,210 @@ def test_both_halves_of_open_interest_declare_the_same_ceiling() -> None:
         assert impl.prov is Provenance.DERIVED
         assert impl.basis == "native"
         assert level_for(impl.basis) is Provenance.NATIVE
+
+
+# calendar
+
+
+def _sessions(frame: pl.DataFrame) -> list[tuple[date, Any, Any]]:
+    return list(
+        zip(
+            frame["date"].to_list(),
+            frame["open_utc"].to_list(),
+            frame["close_utc"].to_list(),
+            strict=True,
+        )
+    )
+
+
+def test_calendar_crypto_is_always_open_every_calendar_day() -> None:
+    """Saturday and Sunday are sessions too, and the bounds are the always-open calendar's."""
+    frame = market.calendar_crypto(
+        _ctx(), market.CalendarParams(start="2026-01-02", end="2026-01-05")
+    )
+    assert frame["date"].to_list() == [
+        date(2026, 1, 2),
+        date(2026, 1, 3),
+        date(2026, 1, 4),
+        date(2026, 1, 5),
+    ]
+    assert frame["mic"].null_count() == frame.height
+    assert frame["quality"].to_list() == [CalendarQuality.ALWAYS_OPEN.value] * 4
+    cal = AlwaysOpenCalendar()
+    expected = [(d, cal.session_open_utc(d), cal.session_close_utc(d)) for d in frame["date"]]
+    assert _sessions(frame) == expected
+
+
+def test_calendar_crypto_refuses_a_mic() -> None:
+    """Every crypto venue trades around the clock, so a MIC cannot be honoured by it."""
+    with pytest.raises(CapabilityUnavailable) as exc:
+        market.calendar_crypto(
+            _ctx(), market.CalendarParams(start="2026-01-02", end="2026-01-05", mic="XIST")
+        )
+    assert exc.value.capability == "calendar"
+    assert exc.value.asset_class == "crypto"
+    assert "mic" in exc.value.reason
+
+
+def test_calendar_equities_lists_the_sessions_of_one_mic() -> None:
+    """Framing, not holiday data: the rows are the calendar's own sessions, in UTC."""
+    cal = calendar_for("XIST")
+    frame = market.calendar_equities(
+        _equity_ctx(),
+        market.CalendarParams(mic="XIST", start="2026-01-05", end="2026-01-11"),
+    )
+    expected = [
+        (d, cal.session_open_utc(d), cal.session_close_utc(d))
+        for d in cal.sessions(date(2026, 1, 5), date(2026, 1, 11))
+    ]
+    assert _sessions(frame) == expected
+    assert all(d.weekday() < 5 for d in frame["date"].to_list())
+    assert frame["mic"].to_list() == ["XIST"] * frame.height
+    assert frame["quality"].to_list() == [CalendarQuality.LIBRARY.value] * frame.height
+
+
+def test_calendar_equities_answers_a_segment_mic_with_its_operating_exchange() -> None:
+    frame = market.calendar_equities(
+        _equity_ctx(),
+        market.CalendarParams(mic="XTKS", start="2026-01-05", end="2026-01-07"),
+    )
+    assert frame.height > 0
+    assert frame["mic"].to_list() == ["XJPX"] * frame.height
+
+
+def test_calendar_rows_of_a_fallback_exchange_say_so() -> None:
+    """XCAI has no library calendar: weekday rules, no holidays, no open, and a close only
+    when the exchange table carries one."""
+    frame = market.calendar_equities(
+        _equity_ctx(),
+        market.CalendarParams(mic="XCAI", start="2026-01-04", end="2026-01-10"),
+    )
+    dates = frame["date"].to_list()
+    assert date(2026, 1, 9) not in dates
+    assert date(2026, 1, 10) not in dates
+    assert frame["quality"].to_list() == [CalendarQuality.WEEKDAY_FALLBACK.value] * frame.height
+    assert frame["open_utc"].null_count() == frame.height
+    closes_known = ExchangeRegistry().get("XCAI").close_local is not None
+    assert frame["close_utc"].null_count() == (0 if closes_known else frame.height)
+
+
+def test_a_fallback_exchange_with_a_known_close_reports_it() -> None:
+    """XNAM has no library alias and a curated close (17:00 local), so its closes are known
+    while its opens are not. (XSHE, the brief's example, now has the XSHG alias from task C1
+    and answers from the library, so it is not a fallback exchange any more.)"""
+    cal = calendar_for("XNAM")
+    frame = market.calendar_equities(
+        _equity_ctx(),
+        market.CalendarParams(mic="XNAM", start="2026-01-05", end="2026-01-09"),
+    )
+    assert frame.height == 5
+    assert frame["quality"].to_list() == [CalendarQuality.WEEKDAY_FALLBACK.value] * 5
+    assert frame["open_utc"].null_count() == 5
+    assert frame["close_utc"].to_list() == [
+        cal.session_close_utc(d) for d in frame["date"].to_list()
+    ]
+
+
+def test_calendar_rows_past_a_library_bound_say_weekday_fallback() -> None:
+    """XSHG's library ends at its window bound; later dates answer by weekday rules."""
+    last = calendar_for("XSHG").window[1]  # type: ignore[attr-defined]
+    frame = market.calendar_equities(
+        _equity_ctx(),
+        market.CalendarParams(
+            mic="XSHG",
+            start=(last + timedelta(days=4)).isoformat(),
+            end=(last + timedelta(days=10)).isoformat(),
+        ),
+    )
+    assert frame.height > 0
+    assert frame["quality"].to_list() == [CalendarQuality.WEEKDAY_FALLBACK.value] * frame.height
+    assert frame["open_utc"].null_count() == frame.height
+
+
+def test_a_range_across_a_library_bound_switches_quality_on_the_bound() -> None:
+    last = calendar_for("XSHG").window[1]  # type: ignore[attr-defined]
+    frame = market.calendar_equities(
+        _equity_ctx(),
+        market.CalendarParams(
+            mic="XSHG",
+            start=(last - timedelta(days=3)).isoformat(),
+            end=(last + timedelta(days=7)).isoformat(),
+        ),
+    )
+    library_rows = [q for d, q in zip(frame["date"], frame["quality"], strict=True) if d <= last]
+    fallback_rows = [q for d, q in zip(frame["date"], frame["quality"], strict=True) if d > last]
+    assert library_rows and fallback_rows
+    assert set(library_rows) == {CalendarQuality.LIBRARY.value}
+    assert set(fallback_rows) == {CalendarQuality.WEEKDAY_FALLBACK.value}
+
+
+def test_calendar_equities_needs_a_mic() -> None:
+    with pytest.raises(ValueError, match="mic"):
+        market.calendar_equities(
+            _equity_ctx(), market.CalendarParams(start="2026-01-05", end="2026-01-09")
+        )
+
+
+def test_calendar_equities_refuses_an_unknown_mic() -> None:
+    with pytest.raises(ValueError, match="ZZZZ"):
+        market.calendar_equities(
+            _equity_ctx(),
+            market.CalendarParams(mic="ZZZZ", start="2026-01-05", end="2026-01-09"),
+        )
+
+
+@pytest.mark.parametrize("field", ["start", "end"])
+def test_calendar_rejects_a_malformed_date(field: str) -> None:
+    dates = {"start": "2026-01-05", "end": "2026-01-09"}
+    dates[field] = "2026-13-01"
+    with pytest.raises(ValueError, match=field):
+        market.calendar_crypto(_ctx(), market.CalendarParams(**dates))
+
+
+def test_calendar_rejects_an_inverted_range() -> None:
+    with pytest.raises(ValueError):
+        market.calendar_crypto(_ctx(), market.CalendarParams(start="2026-01-09", end="2026-01-05"))
+
+
+def test_calendar_rejects_a_range_longer_than_the_cap() -> None:
+    """No holiday table reaches a century, so a longer span is a typo, not a question."""
+    with pytest.raises(ValueError, match="days"):
+        market.calendar_crypto(_ctx(), market.CalendarParams(start="0001-01-01", end="9999-12-31"))
+
+
+def test_calendar_maps_a_library_range_error_to_a_bad_request() -> None:
+    with pytest.raises(ValueError) as exc:
+        market.calendar_equities(
+            _equity_ctx(),
+            market.CalendarParams(mic="XIST", start="1800-01-01", end="1800-01-10"),
+        )
+    assert isinstance(exc.value, ValueError)
+
+
+def test_both_halves_of_calendar_return_the_same_columns() -> None:
+    crypto = market.calendar_crypto(
+        _ctx(), market.CalendarParams(start="2026-01-05", end="2026-01-09")
+    )
+    equity = market.calendar_equities(
+        _equity_ctx(),
+        market.CalendarParams(mic="XIST", start="2026-01-05", end="2026-01-09"),
+    )
+    assert crypto.columns == equity.columns == list(market._CALENDAR_SCHEMA)
+    assert crypto.schema == equity.schema
+
+
+def test_calendar_declares_two_distinct_derived_halves() -> None:
+    """Crypto is a pure function of the caller's dates (caller_supplied); equity reads the
+    published schedules the library encodes (native), and the rows are computed from them."""
+    cap = REGISTRY["calendar"]
+    assert cap.returns is ReturnKind.TABLE
+    assert cap.params is market.CalendarParams
+    crypto = cap.impls[AssetClass.CRYPTO]
+    equity = cap.impls[AssetClass.EQUITY]
+    assert (crypto.prov, crypto.basis, crypto.reads) == (
+        Provenance.DERIVED,
+        "caller_supplied",
+        (),
+    )
+    assert (equity.prov, equity.basis, equity.reads) == (Provenance.DERIVED, "native", ())
+    assert crypto.fn is not equity.fn

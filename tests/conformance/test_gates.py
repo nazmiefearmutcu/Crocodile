@@ -449,6 +449,17 @@ A census cannot be evaded that way, because it is the one assertion whose subjec
 number this file states rather than a list the code supplies.
 """
 
+_ADDED_AFTER_PHASE_2: dict[str, str] = {
+    "calendar": (
+        "Global equities, docs/superpowers/specs/2026-11-08-global-equity-design.md "
+        "section 3.11: exchange sessions by MIC; the crypto half is always open."
+    ),
+}
+"""Capabilities declared after Phase 2's census closed, each with the package that added it.
+
+Kept apart from ``_REGISTRY_AS_SHIPPED`` so that set keeps meaning what its docstring says,
+and so prose about Phase 2 (``test_prose_counts.py``) stays checkable against it."""
+
 
 def test_gate2_no_capability_leaves_the_registry_unremarked() -> None:
     """Phase 1 lost seven capabilities and nothing raised; the queries came back empty.
@@ -464,8 +475,15 @@ def test_gate2_no_capability_leaves_the_registry_unremarked() -> None:
 
     load_all()
     live = set(REGISTRY)
+    pinned = _REGISTRY_AS_SHIPPED | set(_ADDED_AFTER_PHASE_2)
+    assert not (_REGISTRY_AS_SHIPPED & set(_ADDED_AFTER_PHASE_2)), (
+        "a capability is listed both as shipped in Phase 2 and as added after it"
+    )
+    assert all(why.strip() for why in _ADDED_AFTER_PHASE_2.values()), (
+        "every capability added after Phase 2 must say which package and spec section added it"
+    )
 
-    gone = sorted(_REGISTRY_AS_SHIPPED - live)
+    gone = sorted(pinned - live)
     assert not gone, (
         f"{gone} were declared capabilities and are not in REGISTRY any more. A capability "
         "that leaves takes its command, its route and its tool with it, and every gate that "
@@ -474,11 +492,11 @@ def test_gate2_no_capability_leaves_the_registry_unremarked() -> None:
         "stopped answering."
     )
 
-    added = sorted(live - _REGISTRY_AS_SHIPPED)
+    added = sorted(live - pinned)
     assert not added, (
         f"{added} are declared and unrecorded here. New capabilities are welcome; add them "
-        "to _REGISTRY_AS_SHIPPED so the census keeps counting, and so the next deletion is "
-        "measured against a list that includes them."
+        "to _ADDED_AFTER_PHASE_2 with the package that added them, so the census keeps "
+        "counting and the next deletion is measured against a list that includes them."
     )
 
 

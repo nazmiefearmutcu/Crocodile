@@ -379,7 +379,7 @@ def requires_explicit_asset_class(cap: Capability) -> bool:
     :func:`resolve_asset_class` resolves in three steps and only the first two can succeed
     without the caller saying anything: an explicit choice, or a canonical ``source:RAW``
     symbol the source registries can place. A capability with two implementations and no
-    symbol field has neither, so omitting the class is a hard refusal — and 32 of the 57 wire
+    symbol field has neither, so omitting the class is a hard refusal — and 31 of the 58 wire
     names are in exactly that position.
 
     Published rather than discovered. The MCP ``inputSchema`` did not mention ``asset_class``

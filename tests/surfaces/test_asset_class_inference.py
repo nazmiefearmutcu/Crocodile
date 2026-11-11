@@ -269,6 +269,15 @@ _NO_CANONICAL_SYMBOL: dict[str, str] = {
         "keys on `underlying`, which is an asset name and not a canonical symbol: "
         "`OptionsChain.underlying` stores `BTC` and `AAPL`, with no source to resolve.",
     ),
+    # Asks about an exchange's sessions, named by its MIC in a bare `mic` field, not about an
+    # instrument. Reading a market off that field would be the separate rule this table's
+    # neighbours decline, and the crypto half has no MIC at all. This gate is about symbols.
+    "calendar": (
+        "asks about an exchange's sessions, named by its MIC in a bare `mic` field, not about "
+        "an instrument. Reading a market off that field would be the separate rule this "
+        "table's neighbours decline, and the crypto half has no MIC at all. This gate is about "
+        "symbols."
+    ),
 }
 """Two-implementation capabilities that carry no canonical symbol, and why.
 

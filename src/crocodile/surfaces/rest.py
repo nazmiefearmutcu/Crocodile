@@ -116,7 +116,7 @@ def _openapi_parameters(cap: Capability) -> list[dict[str, Any]]:
         {
             "name": "asset_class",
             "in": "query",
-            # Mandatory on the 26 routes whose capability has two implementations and no
+            # Mandatory on every route whose capability has two implementations and no
             # symbol to infer from: `resolve_asset_class` refuses outright there, so
             # `required: false` was describing a request that can only answer 400. The enum
             # is narrowed to what this capability implements for the same reason — a route

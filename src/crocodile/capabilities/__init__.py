@@ -5,7 +5,8 @@ split is not tidiness. Porting 47 capabilities off the six legacy surfaces is fo
 work, and one declaration file would serialise them into a queue behind a single set of
 merge conflicts. Four modules, four owners, one registry — and then ``onchain``, a fifth
 module for the two capabilities the parity gate found after the batches closed, which is
-what brings the registry to the 49 names ``tests/conformance/test_gates.py`` pins.
+what brought Phase 2's registry to the 49 names ``tests/conformance/test_gates.py`` pins as
+``_REGISTRY_AS_SHIPPED``.
 
 The families, and what belongs in each:
 
@@ -14,7 +15,7 @@ The families, and what belongs in each:
     ``data-coverage``, ``resolve-symbols``.
 ``market``
     Market structure and reference data: ``markets``, ``universe``, ``census``,
-    ``list-exchanges``, ``open-interest``, and the instrument-level lookups.
+    ``list-exchanges``, ``open-interest``, ``calendar``, and the instrument-level lookups.
 ``analytics``
     Anything computed from stored records: ``basis``, ``funding-apr``, ``iv-surface``,
     ``vol-skew``, ``term-structure``, ``slippage``, ``ofi``, ``indicators``.
@@ -27,6 +28,10 @@ The families, and what belongs in each:
     Things that move data rather than read it, plus the
     :data:`~crocodile.core.capability.IRREDUCIBLE` names: ``collect``, ``backfill``,
     ``replay``, ``export``.
+
+``calendar`` joined ``market`` with the global-equities package (design 2026-11-08, section
+3.11), the first capability declared after Phase 2. ``_ADDED_AFTER_PHASE_2`` pins it beside
+Phase 2's names, so the registry now holds 50.
 
 Membership is a judgement about the family, not a hard partition, and nothing enforces it
 beyond review — what *is* enforced is that every module is on :data:`BATCHES` and that

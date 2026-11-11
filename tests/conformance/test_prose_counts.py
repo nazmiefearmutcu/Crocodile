@@ -102,20 +102,27 @@ def _backticked(text: str) -> list[str]:
 
 
 def _ported_and_registered() -> tuple[int, int]:
-    """(capabilities the four port batches declared, total registered).
+    """(capabilities the four port batches declared, total Phase 2 shipped).
 
-    The split is what the prose actually claims: the four batch modules ported a set off
-    the legacy surfaces, and ``onchain`` added the two the surface-parity gate found after
+    Phase 2's numbers are history, so they are read off the frozen census
+    ``_REGISTRY_AS_SHIPPED`` rather than off the live registry: ``calendar`` is the first
+    capability declared after Phase 2, and it must not falsify the sentences that describe
+    Phase 2. The split is what the prose actually claims: the four batch modules ported a set
+    off the legacy surfaces, and ``onchain`` added the two the surface-parity gate found after
     they closed. Computed from where each implementation's function lives, so moving a
     declaration between batches moves the number rather than falsifying a sentence.
     """
+    from tests.conformance.test_gates import _REGISTRY_AS_SHIPPED
+
     load_all()
+    missing = sorted(_REGISTRY_AS_SHIPPED - set(REGISTRY))
+    assert not missing, f"Phase 2 capabilities that are no longer registered: {missing}"
     late = {
         name
-        for name, cap in REGISTRY.items()
-        if all(impl.fn.__module__.endswith(".onchain") for impl in cap.impls.values())
+        for name in _REGISTRY_AS_SHIPPED
+        if all(impl.fn.__module__.endswith(".onchain") for impl in REGISTRY[name].impls.values())
     }
-    return len(REGISTRY) - len(late), len(REGISTRY)
+    return len(_REGISTRY_AS_SHIPPED) - len(late), len(_REGISTRY_AS_SHIPPED)
 
 
 # ---------------------------------------------------------------------------
@@ -359,4 +366,74 @@ def test_the_treasury_client_does_not_claim_to_be_outside_the_registry() -> None
     assert "TreasuryProvider" in doc or "_REGISTRY" in doc, (
         "treasury's module docstring should say it is reachable through the provider "
         "registry, since that is the fact its old argument got wrong"
+    )
+
+
+# ---------------------------------------------------------------------------
+# The live registry size and the wire-name counts
+# ---------------------------------------------------------------------------
+
+
+def _flat(text: str) -> str:
+    """``text`` with every run of whitespace collapsed to one space.
+
+    Docstrings wrap, so a sentence may break across lines; the anchors match on the flat form.
+    """
+    return " ".join(text.split())
+
+
+def _wire_counts() -> tuple[int, int]:
+    """(wire names that must name an asset class, all wire names), read off the dispatcher."""
+    from crocodile.surfaces import dispatch as dispatcher
+
+    load_all()
+    names = dispatcher.wire_names()
+    explicit = sum(
+        dispatcher.requires_explicit_asset_class(REGISTRY[name]) for name in names.values()
+    )
+    return explicit, len(names)
+
+
+def test_the_batch_package_states_the_live_registry_size() -> None:
+    """The package docstring names how many capabilities the registry holds right now."""
+    load_all()
+    doc = _flat(_module_docstring(_SRC / "capabilities" / "__init__.py"))
+    assert f"the registry now holds {len(REGISTRY)}" in doc, (
+        f"the registry holds {len(REGISTRY)} capabilities; the package docstring does not say so"
+    )
+
+
+def test_every_capability_added_after_phase_2_is_named_where_its_family_is_described() -> None:
+    """A capability added after Phase 2 is named in the package docstring and in the
+    docstring of the batch module its implementations live in."""
+    from tests.conformance.test_gates import _ADDED_AFTER_PHASE_2
+
+    load_all()
+    package_doc = _flat(_module_docstring(_SRC / "capabilities" / "__init__.py"))
+    for name in _ADDED_AFTER_PHASE_2:
+        assert f"``{name}``" in package_doc, f"{name} is not named in the package docstring"
+        for impl in REGISTRY[name].impls.values():
+            module = impl.fn.__module__
+            path = _SRC.parent / Path(*module.split(".")).with_suffix(".py")
+            family_doc = _flat(_module_docstring(path))
+            assert f"``{name}``" in family_doc, f"{name} is not named in {module}'s docstring"
+
+
+def test_the_dispatcher_counts_the_wire_names_that_need_an_asset_class() -> None:
+    explicit, total = _wire_counts()
+    doc = _flat(
+        _function_docstring(_SRC / "surfaces" / "dispatch.py", "requires_explicit_asset_class")
+    )
+    assert f"{explicit} of the {total} wire names" in doc, (
+        f"the dispatcher has {explicit} of {total} wire names that need --asset-class; "
+        "requires_explicit_asset_class's docstring says otherwise"
+    )
+
+
+def test_the_mcp_projection_counts_the_same_wire_names() -> None:
+    explicit, _ = _wire_counts()
+    doc = _flat(_function_docstring(_SRC / "surfaces" / "mcp.py", "_definition"))
+    assert f"for the {explicit} wire names with two implementations" in doc, (
+        f"the MCP projection requires asset_class on {explicit} wire names; _definition's "
+        "docstring says otherwise"
     )
