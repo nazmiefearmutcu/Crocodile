@@ -364,8 +364,25 @@ def price_leg(catalog: Catalog, symbol: str, start_ns: int, end_ns: int) -> pl.D
     Returns an empty frame with no columns when no channel has anything, which is the
     empty-result contract ``resample_ohlcv``, ``funding_apr`` and both basis functions
     share.
+
+    A listing symbol (``local@MIC``) reads its ``ohlcv`` leg by session date, through the
+    declared source order (``crocodile.equity.universal.order.listing_close_leg``), and each
+    close is stamped at its session's close instant rather than at capture time. That is the
+    ruling: a listing's daily bar belongs to its session, and a backfill captured at one moment
+    would otherwise collapse onto one timestamp. A US bare ticker keeps the capture-time read
+    below, unchanged.
     """
+    # Lazy: the listing branch is the only reader of the universal package, and the symbol
+    # parser is only needed here.
+    from crocodile.core.markets.symbols import is_listing_symbol
+    from crocodile.equity.universal.order import listing_close_leg
+
     for channel, column in _PRICE_CHANNELS:
+        if channel == "ohlcv" and is_listing_symbol(symbol):
+            listing_leg = listing_close_leg(catalog, symbol, start_ns, end_ns)
+            if len(listing_leg) > 0:
+                return listing_leg
+            continue
         raw = catalog.scan(channel, symbol, start_ns, end_ns)
         if len(raw) == 0 or column not in raw.columns:
             continue

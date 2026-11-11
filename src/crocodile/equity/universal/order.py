@@ -542,9 +542,10 @@ def listing_close_leg(catalog: Catalog, symbol: str, start_ns: int, end_ns: int)
     """``[local_ts, price]`` for a listing symbol: one close per session, at the session close.
 
     The ruling is that a listing's ``ohlcv`` leg is selected by session date and stamped at the
-    session's close instant, not at capture time. Prices stay in the stored unit. The window
-    ``[start_ns, end_ns]`` is applied to the stamped instant, as every other ``price_leg`` arm
-    applies it to ``local_ts``.
+    session's close instant, not at capture time. The window ``[start_ns, end_ns]`` therefore
+    selects sessions (the UTC dates it spans); it does not filter the stamps. The last session's
+    close can stamp after ``end_ns`` (at its close, or at the end of its UTC day when the calendar
+    cannot place it). Prices stay in the stored unit.
     """
     # Lazy: the calendar is patched in tests, and the calendar module is cheap to leave unloaded.
     from crocodile.core.markets.calendar import calendar_for
@@ -573,11 +574,7 @@ def listing_close_leg(catalog: Catalog, symbol: str, start_ns: int, end_ns: int)
         schema={"local_ts": pl.Int64, "price": pl.Float64},
     )
     return (
-        leg.filter(
-            pl.col("price").is_not_null()
-            & (pl.col("price") > 0.0)
-            & pl.col("local_ts").is_between(start_ns, end_ns, closed="both")
-        )
+        leg.filter(pl.col("price").is_not_null() & (pl.col("price") > 0.0))
         .unique(subset=["local_ts"], keep="last", maintain_order=False)
         .sort("local_ts")
     )
