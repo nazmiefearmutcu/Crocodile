@@ -62,7 +62,12 @@ from crocodile.core.markets.errors import (
     NoGrammarForMarket,
 )
 from crocodile.core.markets.exchanges import ExchangeRegistry
-from crocodile.core.markets.grammar import AmbiguousSourceSymbol, SuffixGrammar, load_grammar
+from crocodile.core.markets.grammar import (
+    AmbiguousSourceSymbol,
+    SuffixGrammar,
+    UnknownSourceSymbol,
+    load_grammar,
+)
 from crocodile.core.markets.master import ListingMaster
 from crocodile.core.markets.sanctions import allowed_countries, require_not_sanctioned
 from crocodile.core.markets.symbols import US_COUNTRY, listing_symbol, parse_listing_symbol
@@ -692,6 +697,23 @@ def _us_listing(local: str, grammar: SuffixGrammar, catalogue: ExchangeRegistry)
     )
 
 
+def _raw_segment(grammar: SuffixGrammar, raw: str, local: str, mic: str) -> str | None:
+    """The ISO 10383 segment a raw Yahoo spelling names, or None for the MIC's primary spelling.
+
+    The grammar reads ``.KQ`` back to ``XKRX`` alone, so the segment is recovered by writing the
+    spelling again. A raw symbol that no row of the MIC writes back exactly is refused, never
+    rewritten to another spelling.
+    """
+    if grammar.to_source(local, mic) == raw:
+        return None
+    for row in grammar.rows:
+        if row.mic == mic and row.is_segment:
+            segment = row.rule[len("segment:") :]
+            if grammar.to_source(local, mic, segment_mic=segment) == raw:
+                return segment
+    raise UnknownSourceSymbol(SOURCE, raw)
+
+
 def _mic_listing(
     local: str,
     mic: str,
@@ -700,12 +722,16 @@ def _mic_listing(
     *,
     allow: Collection[str],
     master: ListingMaster | None,
+    raw: str | None = None,
 ) -> ChartListing:
     info = catalogue.get(mic)
     require_not_sanctioned(mic, allow=allow)
     symbol = listing_symbol(local, mic)
-    known = master.get(symbol) if master is not None else None
-    segment_mic = known.segment_mic if known is not None else None
+    if raw is not None:
+        segment_mic = _raw_segment(grammar, raw, local, mic)
+    else:
+        known = master.get(symbol) if master is not None else None
+        segment_mic = known.segment_mic if known is not None else None
     return ChartListing(
         symbol=symbol,
         local=local,
@@ -739,7 +765,7 @@ def resolve_listing(
             ):
                 raise
             return _us_listing(raw.replace("-", "."), grammar, catalogue)
-        return _mic_listing(local, mic, grammar, catalogue, allow=allow, master=master)
+        return _mic_listing(local, mic, grammar, catalogue, allow=allow, master=master, raw=raw)
     local, mic_or_none = parse_listing_symbol(symbol)
     if mic_or_none is None:
         return _us_listing(local, grammar, catalogue)

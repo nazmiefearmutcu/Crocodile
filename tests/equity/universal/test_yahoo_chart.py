@@ -24,6 +24,7 @@ from crocodile.core.config import Settings
 from crocodile.core.markets.currency import UnknownCurrencyError, parse_quote_unit
 from crocodile.core.markets.errors import NoGrammarForMarket, SanctionedMarketError
 from crocodile.core.markets.exchanges import ExchangeRegistry
+from crocodile.core.markets.grammar import UnknownSourceSymbol
 from crocodile.core.markets.master import ListingMaster, ListingObservation
 from crocodile.core.markets.usage import UsageClass
 from crocodile.core.ratelimit.token_bucket import TokenBucket
@@ -976,6 +977,19 @@ def test_a_kosdaq_listing_the_master_knows_uses_its_segment_suffix() -> None:
     )
     assert yc.resolve_listing("247540@XKRX", master=master).yahoo_symbol == "247540.KQ"
     assert yc.resolve_listing("247540@XKRX").yahoo_symbol == "247540.KS"
+
+
+def test_a_raw_kosdaq_symbol_keeps_its_kosdaq_spelling() -> None:
+    listing = yc.resolve_listing("yahoo_chart:247540.KQ")
+    assert listing.symbol == "247540@XKRX"
+    assert listing.yahoo_symbol == "247540.KQ"
+    assert yc.resolve_listing("yahoo_chart:247540.KS").yahoo_symbol == "247540.KS"
+    assert yc.resolve_listing("yahoo_chart:005930.KS").yahoo_symbol == "005930.KS"
+
+
+def test_a_raw_kosdaq_symbol_is_not_rewritten_to_the_kospi_spelling() -> None:
+    with pytest.raises(UnknownSourceSymbol):
+        yc.resolve_listing("yahoo_chart:247540.KX")
 
 
 def test_a_sanctioned_market_is_refused_before_any_request(network_forbidden: None) -> None:
