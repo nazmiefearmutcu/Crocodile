@@ -229,11 +229,12 @@ _TIINGO_ASSET_TYPES: Final[Mapping[str, SecurityType]] = {
 }
 """Tiingo's ``assetType`` vocabulary, mapped to ours.
 
-Tiingo publishes three values and only two of them have a member here: its third is
-``Mutual Fund``, which :class:`~crocodile.core.schema.enums.SecurityType` has no member for
-and which is not a listed security. It maps to ``UNKNOWN`` through the fallback rather than
-being invented as a member, because adding an enum member is a change to what the whole
-product believes exists and it would arrive here from one vendor's spelling.
+Tiingo publishes three values and only two of them are mapped here. The third is
+``Mutual Fund``: an unlisted, NAV-priced US open-end fund.
+:class:`~crocodile.core.schema.enums.SecurityType` has a ``FUND`` member since the
+global-equities schema, but it names an *exchange-listed* fund that is not an ETF; borrowing
+it would make the census count unlisted products as listings. So it maps to ``UNKNOWN``
+through the fallback, and the enum is still never widened from one vendor's spelling.
 """
 
 _FIGI_SECURITY_TYPES: Final[Mapping[str, SecurityType]] = {

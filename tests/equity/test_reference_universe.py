@@ -115,7 +115,8 @@ def test_a_tiingo_row_with_no_exchange_is_dropped() -> None:
 
 
 def test_a_tiingo_asset_type_with_no_member_becomes_unknown_rather_than_a_new_member() -> None:
-    """Tiingo's third value is ``Mutual Fund``; the enum is not widened from one vendor."""
+    """Tiingo's ``Mutual Fund`` is an unlisted NAV fund; ``FUND`` names a listed one (spec 3.7),
+    so it stays UNKNOWN and the enum is still not widened from one vendor's spelling."""
     (built,) = reference.instruments_from_tiingo(
         [_tiingo("VFIAX", asset_type="Mutual Fund")], as_of_ns=_AS_OF
     )
@@ -363,6 +364,21 @@ def test_parse_kinds_rejects_a_typo_rather_than_matching_nothing() -> None:
 
 def test_parse_kinds_of_nothing_is_no_filter_rather_than_an_empty_one() -> None:
     assert reference.parse_kinds(()) is None
+
+
+def test_parse_kinds_accepts_the_global_instrument_kinds() -> None:
+    """The seven members the global universe added, under any casing the filter accepts."""
+    assert reference.parse_kinds(
+        ["fund", " INDEX ", "Certificate", "etn", "gdr", "bond", "structured"]
+    ) == {
+        SecurityType.FUND,
+        SecurityType.INDEX,
+        SecurityType.CERTIFICATE,
+        SecurityType.ETN,
+        SecurityType.GDR,
+        SecurityType.BOND,
+        SecurityType.STRUCTURED,
+    }
 
 
 def test_ranking_puts_the_most_traded_first_and_the_unmeasured_last() -> None:

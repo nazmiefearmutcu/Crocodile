@@ -3,7 +3,8 @@
 Crypto and equity arrived with two vocabularies for one set of ideas. These are
 the reconciled forms: :class:`Side` and :class:`OptType` were already common,
 :class:`Tape`, :class:`SecurityType` and :class:`FundPeriod` came from equity,
-and :class:`CorpActionType` and :class:`Channel` are unions of both.
+and :class:`CorpActionType` and :class:`Channel` are unions of both. :class:`PriceAdjustment`
+came with the global-equities schema.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ __all__ = [
     "CorpActionType",
     "FundPeriod",
     "OptType",
+    "PriceAdjustment",
     "SecurityType",
     "Side",
     "Tape",
@@ -75,7 +77,14 @@ class Tape(StrEnum):
 
 
 class SecurityType(StrEnum):
-    """Instrument class of a listed equity security."""
+    """Instrument class of a listed equity-market instrument.
+
+    The first eight members are the US reference vocabulary; ``ETN`` through ``INDEX`` came
+    with the global universe (spec §3.7): exchange-traded notes, global depositary receipts,
+    listed funds that are not ETFs, bonds, certificates, structured products and indices.
+    ``FUND`` names an *exchange-listed* fund. ``UNKNOWN`` is a source saying something this
+    enum does not model, distinct from a ``None`` field, which is a source saying nothing.
+    """
 
     CS = "CS"
     ETF = "ETF"
@@ -85,6 +94,13 @@ class SecurityType(StrEnum):
     WARRANT = "WARRANT"
     UNIT = "UNIT"
     RIGHT = "RIGHT"
+    ETN = "ETN"
+    GDR = "GDR"
+    FUND = "FUND"
+    BOND = "BOND"
+    CERTIFICATE = "CERTIFICATE"
+    STRUCTURED = "STRUCTURED"
+    INDEX = "INDEX"
     UNKNOWN = "unknown"
 
 
@@ -108,14 +124,32 @@ class CorpActionType(StrEnum):
 
 
 class FundPeriod(StrEnum):
-    """Reporting period a fundamental figure covers."""
+    """Reporting period a fundamental figure covers. ``H1``/``H2`` are half-years, which issuers
+    outside the US commonly report (spec §3.7)."""
 
     Q1 = "Q1"
     Q2 = "Q2"
     Q3 = "Q3"
     Q4 = "Q4"
+    H1 = "H1"
+    H2 = "H2"
     FY = "FY"
     TTM = "TTM"
+
+
+class PriceAdjustment(StrEnum):
+    """Which corporate actions a source had already applied to the prices it published.
+
+    Prices are stored as the source published them (spec §3.3, §3.7), so a reader needs the
+    record to say whether a past split or dividend is already baked in; otherwise the CRSP-style
+    calculator in :mod:`crocodile.core.corpactions.calculator` adjusts an adjusted series twice.
+    ``OHLCV.adjustment`` is ``None`` when nobody measured it, which is a different claim from
+    ``NONE``: that one is a measured statement that the prices are as traded.
+    """
+
+    NONE = "none"
+    SPLIT = "split"
+    SPLIT_DIVIDEND = "split_dividend"
 
 
 class Channel(StrEnum):

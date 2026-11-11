@@ -13,6 +13,7 @@ import pytest
 
 from crocodile.core.errors import FatalConnectorError
 from crocodile.core.ratelimit import TokenBucketLimiter
+from crocodile.core.schema.enums import FundPeriod
 from crocodile.core.schema.records import Filing, Fundamental
 from crocodile.equity.providers.sec_edgar import (
     COMPANY_TICKERS_URL,
@@ -542,3 +543,68 @@ async def test_dedup_still_drops_a_restatement_of_the_same_period() -> None:
         facts = await client.get_fundamentals("AAPL", deduplicate=True)
 
     assert [f.val for f in facts] == [1200000.0]
+
+
+async def test_a_half_year_fiscal_period_is_kept_rather_than_dropped() -> None:
+    """H1 and H2 are periods issuers outside the US report; they used to become ``fp=None``.
+
+    An unrecognised period (``M9``) still has to come through as ``None`` rather than be
+    invented, so the test pins both sides of the mapping.
+    """
+    mock_facts = {
+        "cik": 320193,
+        "entityName": "Apple Inc.",
+        "facts": {
+            "ifrs-full": {
+                "Revenue": {
+                    "label": "Revenue",
+                    "description": "Revenue...",
+                    "units": {
+                        "USD": [
+                            {
+                                "val": 10.0,
+                                "end": "2020-06-30",
+                                "fy": 2020,
+                                "fp": "H1",
+                                "form": "6-K",
+                                "filed": "2020-08-01",
+                                "accn": "a",
+                            },
+                            {
+                                "val": 20.0,
+                                "end": "2020-12-31",
+                                "fy": 2020,
+                                "fp": "H2",
+                                "form": "6-K",
+                                "filed": "2021-02-01",
+                                "accn": "b",
+                            },
+                            {
+                                "val": 30.0,
+                                "end": "2020-09-30",
+                                "fy": 2020,
+                                "fp": "M9",
+                                "form": "10-Q",
+                                "filed": "2020-11-01",
+                                "accn": "c",
+                            },
+                        ]
+                    },
+                }
+            }
+        },
+    }
+
+    client = SecEdgarClient()
+    client._ticker_to_cik["AAPL"] = 320193
+    client._cik_to_primary_ticker[320193] = "AAPL"
+
+    with patch.object(client, "fetch_company_facts", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = mock_facts
+        facts = await client.get_fundamentals("AAPL", deduplicate=False)
+
+    assert {f.val: f.fp for f in facts} == {
+        10.0: FundPeriod.H1,
+        20.0: FundPeriod.H2,
+        30.0: None,
+    }

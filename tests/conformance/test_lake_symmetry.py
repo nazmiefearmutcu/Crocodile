@@ -26,8 +26,9 @@ import msgspec.structs
 import polars as pl
 import pytest
 
+from crocodile.core.schema.enums import PriceAdjustment
 from crocodile.core.schema.provenance import provenance_fields
-from crocodile.core.schema.records import Record, _Header
+from crocodile.core.schema.records import OHLCV, Instrument, Record, _Header
 from crocodile.core.store.parquet_sink import _CANONICAL_CHANNEL_EXTRA, ParquetSink
 from crocodile.core.store.rows import _RECORD_BY_CHANNEL, from_row
 
@@ -138,3 +139,59 @@ async def test_every_canonical_channel_survives_a_lake_round_trip(
     (row,) = df.to_dicts()
 
     assert from_row(row) == original
+
+
+async def test_stage_b_columns_are_written_typed_and_read_back(tmp_path: pathlib.Path) -> None:
+    """The Stage-B columns land as typed Parquet columns and read back to the same record.
+
+    ``SPLIT_DIVIDEND`` is deliberately not the first member, so a reader that falls back to
+    the first member instead of the stored value fails here.
+    """
+    bar = OHLCV(
+        **_header_kwargs(),
+        interval="1m",
+        open=1.0,
+        high=2.0,
+        low=0.5,
+        close=1.5,
+        volume=10.0,
+        currency="GBP",
+        price_scale=2,
+        adjustment=PriceAdjustment.SPLIT_DIVIDEND,
+    )
+    sink = ParquetSink(data_dir=tmp_path, max_buffer_rows=1000, flush_interval_seconds=9999)
+    await sink.put(bar)
+    await sink.flush()
+
+    df = pl.read_parquet(str(tmp_path / "**" / "*.parquet"), hive_partitioning=True)
+    assert df.schema["currency"] == pl.String
+    assert df.schema["price_scale"] == pl.Int64
+    assert df.schema["adjustment"] == pl.String
+    (row,) = df.to_dicts()
+    assert from_row(row) == bar
+
+
+async def test_stage_b_instrument_fields_are_written_typed_and_read_back(
+    tmp_path: pathlib.Path,
+) -> None:
+    """All six listing-identity fields, in a sub-lake of their own so the schemas stay apart."""
+    listing = Instrument(
+        **_header_kwargs(),
+        mic="XNAS",
+        segment_mic="XNGS",
+        isin="US0378331005",
+        country="US",
+        currency="USD",
+        price_scale=0,
+    )
+    lake = tmp_path / "i"
+    sink = ParquetSink(data_dir=lake, max_buffer_rows=1000, flush_interval_seconds=9999)
+    await sink.put(listing)
+    await sink.flush()
+
+    df = pl.read_parquet(str(lake / "**" / "*.parquet"), hive_partitioning=True)
+    for name in ("mic", "segment_mic", "isin", "country", "currency"):
+        assert df.schema[name] == pl.String, name
+    assert df.schema["price_scale"] == pl.Int64
+    (row,) = df.to_dicts()
+    assert from_row(row) == listing

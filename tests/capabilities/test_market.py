@@ -30,6 +30,7 @@ from crocodile.core.capability import (
 )
 from crocodile.core.config import Settings
 from crocodile.core.errors import ConfigError
+from crocodile.core.schema.enums import SecurityType
 from crocodile.core.schema.provenance import Provenance, level_for, provenance_fields
 from crocodile.core.schema.records import DepthProfile, OpenInterest, OptionsChain
 from crocodile.core.schema.records import OHLCV, DepthProfile, OpenInterest
@@ -744,6 +745,20 @@ def test_equity_census_stamps_the_snapshot_from_the_clock(
 ) -> None:
     monkeypatch.setattr(market, "now_ns", lambda: _BASE_NS)
     assert market.census_equities(_equity_ctx(), market.CensusParams())["generated_ns"] == _BASE_NS
+
+
+def test_equity_census_reports_every_security_type_even_at_zero(_reference: None) -> None:
+    """A kind with no listings is a zero the census states, not a key it leaves out.
+
+    ``census_equities`` derives its kind keys from :class:`SecurityType`, so a member added to
+    the enum must appear here at zero rather than vanish until a listing of that kind exists.
+    """
+    snapshot = market.census_equities(_equity_ctx(), market.CensusParams())
+    kind_keys = {member.value for member in SecurityType}
+    assert set(snapshot["venues"]["by_kind"]) == kind_keys
+    for row in snapshot["venues"]["rows"]:
+        assert kind_keys <= set(row)
+    assert snapshot["venues"]["by_kind"]["FUND"] == 0
 
 
 # The refusal all three share

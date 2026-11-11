@@ -43,6 +43,33 @@ its fork wrote. Two reasons, in order of force:
    ``provider``/``size``/``tape``/``venue``. A per-channel table keyed on the
    tag alone can only ever be right for one of them.
 
+Nullable widening of the canonical family
+-----------------------------------------
+Ruling (global equities, spec §3.7): adding a trailing nullable field to a canonical
+record, and with it a nullable column to the canonical family's file schema, is not
+the widening the two reasons above forbid. Both reasons are about the *legacy*
+families: a column added to the crypto or equity table would make new parts in a
+renamed-not-rewritten partition disagree with the files beside them, and a table keyed
+on ``channel`` cannot serve two structs. Neither applies to the canonical family. Its
+schema is derived from the structs (``_build_canonical_schema``), every Parquet column
+is nullable, the catalog reads every group with ``union_by_name`` and the compactor
+concatenates ``diagonal_relaxed``, so a pre-widening canonical part beside a
+post-widening one reads NULL for the new columns on the old rows, and
+``rows.from_row`` leaves an absent column at the field's ``None`` default. The two
+legacy tables below stay frozen; nothing writes legacy-family rows any more.
+
+NULL means "the source did not say": unknown, never USD and never scale 0. The fields
+this ruling admitted are ``currency``/``price_scale`` on ``OHLCV``, ``Trade``, ``Quote``
+and ``CorporateAction``, ``adjustment`` on ``OHLCV``, and ``mic``/``segment_mic``/
+``isin``/``country``/``currency``/``price_scale`` on ``Instrument``.
+``tests/store/test_stage_b_mixed_partitions.py`` reads an old part and a new part in
+one query and pins the NULLs.
+
+Cost if wrong: a lake written by 0.3.x reads these columns as NULL through ``from_row``
+always, and through SQL whenever the query also covers a post-widening part. SQL over a
+lake, or a date range, holding *no* post-widening part has no such column at all and
+fails with a binder error naming it rather than inventing a value.
+
 The family is read off the row's own fields, reusing the asymmetry
 ``crocodile.core.store.rows.to_row`` already depends on: only equity records
 name their origin ``provider``, only crypto records name it ``exchange``, and
@@ -547,6 +574,9 @@ _EQUITY_CHANNEL_EXTRA: dict[str, dict[str, Any]] = {
 # copied wrong there is a lake that no longer reads as one schema. The canonical
 # lake has no such files yet, and its structs are the thing this whole merge is
 # still moving surfaces onto. So this family's schema is read off the structs.
+# It is also what makes widening this family a one-place change: a trailing nullable record
+# field becomes a nullable column here in the same commit, by construction (see the module
+# docstring's "Nullable widening of the canonical family" ruling).
 #
 # The point is not brevity. This sink *refuses* a row carrying a field its
 # channel schema does not declare, which means a field added to a record and

@@ -24,6 +24,7 @@ from crocodile.core.schema.enums import (
     CorpActionType,
     FundPeriod,
     OptType,
+    PriceAdjustment,
     SecurityType,
     Side,
     Tape,
@@ -101,6 +102,18 @@ class Trade(_Header, frozen=True, kw_only=True, tag=Channel.TRADE.value, tag_fie
     conditions: list[str] | None = None
     tape: Tape | None = None
     venue: str | None = None
+    currency: str | None = None
+    """ISO 4217 code of the unit ``price`` is stated in, or ``None`` if the source did not say.
+
+    ``None`` means unknown and is never read as USD. Prices are stored in the unit the source
+    published; see ``price_scale``.
+    """
+    price_scale: int | None = None
+    """Power of ten between the stored price and one unit of ``currency``: major-unit value =
+    stored value / 10**price_scale. ``0`` for a major-unit quote, ``2`` for a listing quoted in
+    pence (GBX/GBp), cents (ZAc) or agorot (ILA). ``None`` when the source did not say. A query
+    that ignores it reads a minor-unit listing 100 times too high.
+    """
 
 
 class BookSnapshot(
@@ -304,6 +317,26 @@ class OHLCV(_Header, frozen=True, kw_only=True, tag=Channel.OHLCV.value, tag_fie
     and ``None`` says "not reported" where ``0.0`` would be a false price.
     """
 
+    currency: str | None = None
+    """ISO 4217 code of the unit ``open``, ``high``, ``low``, ``close`` and ``vwap`` are stated
+    in, or ``None`` if the source did not say.
+
+    ``None`` means unknown and is never read as USD. Prices are stored in the unit the source
+    published; see ``price_scale``.
+    """
+    price_scale: int | None = None
+    """Power of ten between the stored price and one unit of ``currency``: major-unit value =
+    stored value / 10**price_scale. ``0`` for a major-unit quote, ``2`` for a listing quoted in
+    pence (GBX/GBp), cents (ZAc) or agorot (ILA). ``None`` when the source did not say. A query
+    that ignores it reads a minor-unit listing 100 times too high.
+    """
+    adjustment: PriceAdjustment | None = None
+    """Which corporate actions the source had already applied to these prices (see
+    :class:`PriceAdjustment`). ``None`` means nobody measured it, which is every source until a
+    live check settles it (spec §3.10a). Dividend adjustment on read is the calculator's job,
+    from stored actions, not this field's.
+    """
+
 
 class Quote(_Header, frozen=True, kw_only=True, tag=Channel.QUOTE.value, tag_field="channel"):
     """A top-of-book quote as an equity feed publishes it.
@@ -321,6 +354,19 @@ class Quote(_Header, frozen=True, kw_only=True, tag=Channel.QUOTE.value, tag_fie
     is_consolidated: bool = False
     conditions: list[str] | None = None
     tape: Tape | None = None
+    currency: str | None = None
+    """ISO 4217 code of the unit ``bid_px`` and ``ask_px`` are stated in, or ``None`` if the
+    source did not say.
+
+    ``None`` means unknown and is never read as USD. Prices are stored in the unit the source
+    published; see ``price_scale``.
+    """
+    price_scale: int | None = None
+    """Power of ten between the stored price and one unit of ``currency``: major-unit value =
+    stored value / 10**price_scale. ``0`` for a major-unit quote, ``2`` for a listing quoted in
+    pence (GBX/GBp), cents (ZAc) or agorot (ILA). ``None`` when the source did not say. A query
+    that ignores it reads a minor-unit listing 100 times too high.
+    """
 
 
 class DepthProfile(
@@ -421,6 +467,36 @@ class Instrument(
     shares_outstanding: int | None = None
     listing_date: str | None = None
     status: str | None = None
+    mic: str | None = None
+    """Operating MIC (ISO 10383) of the market this listing trades on, e.g. ``XIST``.
+
+    The listing grain is the operating MIC (spec §3.4); a segment MIC goes in ``segment_mic``.
+    Distinct from ``exchange``, the free-text venue label the source printed.
+    """
+    segment_mic: str | None = None
+    """The segment MIC the source named for this listing (e.g. ``XNGS`` under ``XNAS``), or
+    ``None``."""
+    isin: str | None = None
+    """ISIN of the instrument. One ISIN can have many listings, and its prefix is the country of
+    issue rather than of listing, so it never identifies a listing on its own.
+    """
+    country: str | None = None
+    """ISO 3166-1 alpha-2 country of the listing's market (the operating MIC's country).
+
+    This is not the issuer's country of incorporation and not the ISIN prefix.
+    """
+    currency: str | None = None
+    """ISO 4217 trading currency of the listing as observed, or ``None``.
+
+    It is kept on the snapshot, not only on the listing master, because a market's currency
+    changes (Croatia 2023, Bulgaria 2026). ``None`` is never read as USD.
+    """
+    price_scale: int | None = None
+    """Power of ten between the stored price and one unit of ``currency``: major-unit value =
+    stored value / 10**price_scale. ``0`` for a major-unit quote, ``2`` for a listing quoted in
+    pence (GBX/GBp), cents (ZAc) or agorot (ILA). ``None`` when the source did not say. A query
+    that ignores it reads a minor-unit listing 100 times too high.
+    """
 
 
 class CorporateAction(
@@ -429,6 +505,17 @@ class CorporateAction(
     ex_date: str  # YYYY-MM-DD
     type: CorpActionType
     value: float
+    currency: str | None = None
+    """ISO 4217 code of ``value`` when it is an amount of money (a cash dividend), or ``None``.
+
+    Always ``None`` for a split, whose ``value`` is a ratio. Never read as USD.
+    """
+    price_scale: int | None = None
+    """Power of ten between the stored price and one unit of ``currency``: major-unit value =
+    stored value / 10**price_scale. ``0`` for a major-unit quote, ``2`` for a listing quoted in
+    pence (GBX/GBp), cents (ZAc) or agorot (ILA). ``None`` when the source did not say. A query
+    that ignores it reads a minor-unit listing 100 times too high.
+    """
 
 
 class Fundamental(
