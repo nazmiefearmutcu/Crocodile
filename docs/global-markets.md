@@ -4,11 +4,11 @@ Generated from `src/crocodile/core/markets/data/exchanges.csv`. That file is pro
 
 Crocodile 0.3.3 knows **172 operating exchanges in 129 countries and territories**. For each one it knows the ISO 10383 operating MIC, country, time zone, trading currency, quote scale, weekend and trading calendar. Market sanctions are also recorded.
 
-**What this release does not do yet:** it does not collect prices from these exchanges. 0.3.3 ships the market reference layer (`crocodile.core.markets`). Through it, listing symbols such as `THYAO@XIST`, calendars and currency handling are the same everywhere. The universal collectors (Yahoo chart history, TradingView EOD snapshots, official listing directories) are the next package and build on this layer. Existing US equity and crypto collection is unchanged.
+**Prices:** this page describes 0.3.3, which ships the market reference layer (`crocodile.core.markets`) and no price collection from these exchanges. The universal collectors of the unreleased layer (Yahoo chart history, TradingView EOD snapshots, official listing directories; see README, "Global equities") collect end-of-day prices from them. Through the reference layer, listing symbols such as `THYAO@XIST`, calendars and currency handling are the same everywhere. Existing US equity and crypto collection is unchanged.
 
 ## Summary
 
-- Library trading calendars (`exchange_calendars` 4.13.2, holidays known): **68** exchanges. Four of them reuse a calendar they share with a sibling venue: Shenzhen and Beijing use Shanghai, CSE uses Toronto and NGM uses Stockholm.
+- Library trading calendars (`exchange_calendars` 4.13.2, holidays known): **68** exchanges. Six of them reuse another venue's calendar: Shenzhen and Beijing use Shanghai, CSE and TSX Venture use Toronto, NASDAQ uses NYSE and NGM uses Stockholm.
 - Weekday-fallback calendars (weekend known, holidays unknown): **104** exchanges. On these, a missing weekday bar is recorded as `no_data`, not as a gap.
 - Weekends taken from evidence (library, primary or secondary source): **91**. The other **81** assume Saturday-Sunday without a source.
 - Research access tiers: A 4 · B 50 · C 10 · D 108.
