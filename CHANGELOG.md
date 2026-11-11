@@ -4,7 +4,7 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 
 ---
 
-## [0.3.4] - 2026-11-12
+## [0.4.0] - 2026-11-12
 
 ### Added
 
@@ -19,6 +19,7 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 
 ### Changed
 
+- **The deprecated names are gone (breaking).** The `crypcodile` and `stockodile` import packages and console scripts, deprecated since 0.3.0, are removed. Import from `crocodile` and run `crocodile`. Settings spelled `CRYPCODILE_*` or `STOCKODILE_*` are no longer read; spell them `CROCODILE_*`. Messages that named the old products (the `[ml]` install hint, the market-listing hint and the census page) now say Crocodile.
 - **Record schema, additive.** Fifteen new nullable fields: `OHLCV.currency`, `OHLCV.price_scale`, `OHLCV.adjustment`, `Trade.currency`, `Trade.price_scale`, `Quote.currency`, `Quote.price_scale`, `CorporateAction.currency`, `CorporateAction.price_scale`, `Instrument.mic`, `Instrument.segment_mic`, `Instrument.isin`, `Instrument.country`, `Instrument.currency` and `Instrument.price_scale`. The Parquet family schemas widen in step. A record whose currency disagrees with its listing's (`check_currency_consistent`) goes to the dead-letter queue, not the lake.
 - **Enum additions.** `PriceAdjustment` is new, with `NONE`, `SPLIT` and `SPLIT_DIVIDEND`. `SecurityType` gains `ETN`, `GDR`, `FUND`, `BOND`, `CERTIFICATE`, `STRUCTURED` and `INDEX`, and `FundPeriod` gains `H1` and `H2`.
 - **`SecurityMaster` holds US listings only.** Tiingo rows labelled with a non-US exchange are skipped and counted in the log. An upsert that would move a ticker to another exchange raises `ListingConflictError` instead of overwriting.
@@ -59,6 +60,7 @@ All notable changes to the **Crocodile** project — published as **Crypcodile**
 - Eight Yahoo exchange names are not in the evidence table (LSE, SAO, VSE, STU, NGM, NCM, NYQ and PCX). Their bars are still written; the names are logged and not mapped.
 - Most library calendars have no fixed end date. For those, `calendar_for` answers with the weekday fallback for dates more than about one year after the process imports the library, and `quality_for(date)` reports the degradation per date. A process that runs longer loses holiday knowledge for those MICs.
 - Daily reads may mix split-adjusted (Yahoo) and unadjusted (TradingView) rows for one listing when Yahoo lacks a session that TradingView has. A split inside such a series can then show as a level break of ten times or more. This release does not refuse such a read.
+- Upgrading from 0.3.x: replace `import crypcodile` / `import stockodile` with `crocodile` imports, the `crypcodile` / `stockodile` commands with `crocodile`, and rename any `CRYPCODILE_*` or `STOCKODILE_*` setting to `CROCODILE_*`; the old spellings are now ignored, not refused. Lakes are unaffected: readers still accept the pre-0.3 `exchange=` and `provider=` partition keys, and `core.store.migrate.migrate_lake` renames them. `CrypcodileClient`, `StockodileClient` and the `STOCKODILE_PROXIES` / `STOCKODILE_API_KEYS` proxy and key-pool settings keep their names.
 - MSN Money stays US-only, and Stooq is not part of the universal layer.
 - Verified on Windows with UTF-8 mode: 6,144 tests in 319 files, with no new failure against the pre-branch baseline. Three conformance checks need `.venv/bin/python`, and the every-capability surface sweep cannot run on Windows.
 

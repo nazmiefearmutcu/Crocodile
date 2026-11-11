@@ -1,6 +1,6 @@
-# Crocodile 0.3.4
+# Crocodile 0.4.0
 
-Crocodile 0.3.4 collects equity prices beyond the United States. It builds on the 0.3.3 market reference layer: every listing has one symbol, `SYMBOL@MIC` (`THYAO@XIST`), one currency and one exchange calendar.
+Crocodile 0.4.0 collects equity prices beyond the United States, and it removes the names that 0.3.x kept alive for one minor version. It builds on the 0.3.3 market reference layer: every listing has one symbol, `SYMBOL@MIC` (`THYAO@XIST`), one currency and one exchange calendar.
 
 ## What it collects
 
@@ -14,6 +14,12 @@ Crocodile 0.3.4 collects equity prices beyond the United States. It builds on th
   - A new `calendar` capability returns exchange sessions.
 
 Prices keep the unit the exchange quotes in. A row with `price_scale = 2` (pence, ZAc, ILA) holds 100 times the major unit. Records gain nullable `currency`, `price_scale` and `adjustment` fields. Lakes written by 0.3.x read them as `NULL`, which means unknown, never USD.
+
+## Breaking changes
+
+- **`crypcodile` and `stockodile` are gone.** The import packages and console scripts, deprecated since 0.3.0, are removed. Import from `crocodile`, and run `crocodile`.
+- **Only `CROCODILE_*` settings are read.** A `CRYPCODILE_*` or `STOCKODILE_*` setting is now ignored.
+- **What does not change.** Lakes are unaffected. Readers still accept the pre-0.3 `exchange=` and `provider=` partition keys, and `migrate_lake` renames them. `CrypcodileClient`, `StockodileClient` and the `STOCKODILE_PROXIES` and `STOCKODILE_API_KEYS` settings keep their names.
 
 ## Fixed
 
