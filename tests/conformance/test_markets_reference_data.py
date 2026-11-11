@@ -134,6 +134,9 @@ def test_every_data_file_matches_its_manifest_sha256() -> None:
     files = _manifest()["files"]
     assert set(files) == {
         "exchanges.csv",
+        "grammar_google_finance.csv",
+        "grammar_tradingview.csv",
+        "grammar_yahoo_chart.csv",
         "iso10383_mic.csv",
         "iso4217.csv",
         "sanctions.csv",
@@ -364,6 +367,9 @@ def test_every_manifest_entry_records_hash_rows_date_and_licence() -> None:
     assert _manifest()["as_of"] == "2026-11-08"
     expected_rows = {
         "exchanges.csv": 172,
+        "grammar_google_finance.csv": 3,
+        "grammar_tradingview.csv": 13,
+        "grammar_yahoo_chart.csv": 55,
         "iso10383_mic.csv": 2889,
         "iso4217.csv": 165,
         "sanctions.csv": 5,

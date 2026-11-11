@@ -1,16 +1,19 @@
 """Deterministic generator for the packaged core/markets reference data.
 
-Builds three generated files in ``src/crocodile/core/markets/data``:
+Builds the generated files in ``src/crocodile/core/markets/data``:
 
 * ``iso4217.csv``   derived from the SIX ISO 4217 list one XML (pinned copy);
 * ``exchanges.csv`` derived from the research market matrix, the ISO 10383
   snapshot, ``sanctions.csv`` and the evidence-tagged ``curation.csv``;
+* ``grammar_yahoo_chart.csv`` and ``grammar_google_finance.csv`` the symbol spellings of
+  the two suffix sources, derived from the same matrix (pure builders, see below);
 * ``MANIFEST.json`` the hashes, row counts, sources and licence notes of every
   packaged data file.
 
-``iso10383_mic.csv`` and ``sanctions.csv`` are inputs, not outputs: the first is
-the verbatim ISO file and the second is hand-written. The script checks their
-hashes but never rewrites them.
+``iso10383_mic.csv``, ``sanctions.csv`` and ``grammar_tradingview.csv`` are inputs, not
+outputs: the first is the verbatim ISO file, the second is hand-written and the third is
+curated against committed probe responses. The script checks or hashes them but never
+rewrites them.
 
 Usage, from the repository root, with the project interpreter (``exchange-calendars``
 is a base dependency since task 03; running the script never modifies the environment)::
@@ -38,6 +41,8 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 import zoneinfo
+from collections import Counter
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass
 from datetime import date, time
 from pathlib import Path
@@ -52,6 +57,7 @@ ISO_XML_PATH = REF_DIR / "iso4217_list_one.xml"
 CURATION_PATH = REF_DIR / "curation.csv"
 MIC_PATH = DATA_DIR / "iso10383_mic.csv"
 SANCTIONS_PATH = DATA_DIR / "sanctions.csv"
+TRADINGVIEW_GRAMMAR_PATH = DATA_DIR / "grammar_tradingview.csv"
 
 AS_OF = "2026-11-08"
 RETRIEVED = "2026-11-08"
@@ -79,6 +85,32 @@ EXCHANGES_LICENSE = (
     "from exchange_calendars (Apache-2.0)."
 )
 SANCTIONS_LICENSE = "Curated from public sanctions programme pages; not legal advice."
+GRAMMAR_DERIVED_LICENSE = (
+    "Derived from the Crocodile research matrix (this repository, Apache-2.0); symbol "
+    "spellings observed on Yahoo/Google pages, whose terms restrict automated use (spec "
+    "3.10a); not reviewed further here."
+)
+TRADINGVIEW_GRAMMAR_LICENSE = (
+    "Exchange codes observed in TradingView scanner responses; TradingView terms not read "
+    "(grey source, spec 0); codes are identifiers, no market data is shipped."
+)
+TRADINGVIEW_GRAMMAR_SOURCE = (
+    "curated from tests/core/markets/fixtures/tradingview_probe/*.json "
+    "(scanner responses 2026-11-08)"
+)
+YAHOO_GRAMMAR_NOTES = (
+    "Rule: one row per suffix in symbol_format whose example the matrix records with an HTTP "
+    "200 status (verified or status_only); listed and failed rows are skipped, US rows are "
+    "unsuffixed with the us_class_dash rule, and .KQ is the segment XKOS of XKRX."
+)
+GOOGLE_GRAMMAR_NOTES = (
+    "Rule: the google_finance_code the matrix records with HTTP 200 for each market, plus the "
+    "NASDAQ and NYSE connector rows copied from the existing Google Finance connector, which "
+    "were not re-probed."
+)
+TRADINGVIEW_GRAMMAR_NOTES = (
+    "HSTC's only measured code is UPCOM (segment XHNX); task 11 extends this table."
+)
 
 MIC_HEADER = (
     "MIC",
@@ -116,6 +148,25 @@ EXCHANGE_COLUMNS = (
 )
 SANCTIONS_HEADER = ("country", "source", "note")
 CURATION_HEADER = ("mic", "field", "value", "evidence", "source", "note")
+YAHOO_GRAMMAR_HEADER = ("mic", "suffix", "rule", "sample_local", "evidence")
+GOOGLE_GRAMMAR_HEADER = ("mic", "google_code", "sample_local", "evidence")
+TRADINGVIEW_GRAMMAR_HEADER = ("tv_code", "mic", "primary", "market", "sample_local", "evidence")
+
+EXPECTED_YAHOO_GRAMMAR_ROWS = 55
+EXPECTED_GOOGLE_GRAMMAR_ROWS = 3
+EXPECTED_TRADINGVIEW_GRAMMAR_ROWS = 13
+YAHOO_SAMPLE_STATUSES = frozenset({"verified", "status_only"})
+YAHOO_SEGMENT_SUFFIXES: dict[str, str] = {".KQ": "XKOS"}
+US_COUNTRY = "US"
+US_CLASS_RULE = "us_class_dash"
+GOOGLE_CODE_RE = re.compile(r"(?P<local>[^:\s]+):(?P<code>[A-Z0-9]+) \(HTTP 200\)")
+# Hard-coded candidates of the existing connector, src/crocodile/equity/providers/
+# google_finance/connector.py:50-58 (the :NASDAQ and :NYSE candidates), and the IBM:NYSE
+# expectation in tests/equity/providers/test_google_finance.py:375.
+GOOGLE_CONNECTOR_ROWS: tuple[tuple[str, str, str], ...] = (
+    ("XNAS", "NASDAQ", "AAPL"),
+    ("XNYS", "NYSE", "IBM"),
+)
 
 WEEKDAY_TOKENS = ("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
 DEFAULT_WEEKEND = frozenset({5, 6})
@@ -544,6 +595,151 @@ def _csv_bytes(
     return buffer.getvalue().encode("utf-8")
 
 
+def grammar_yahoo_chart_rows(
+    matrix: Mapping[str, Any],
+    exchange_mics: Collection[str],
+    skipped: list[str] | None = None,
+) -> list[dict[str, str]]:
+    """Yahoo chart spellings: one row per suffix whose example the matrix recorded with HTTP 200.
+
+    Pure and deterministic. ``skipped`` collects a short label for every market or suffix left
+    out, so the caller can report them; ``listed`` and ``failed`` rows are skipped on purpose.
+    """
+    if matrix["meta"]["as_of"] != AS_OF:
+        raise fail("market matrix as_of differs from AS_OF")
+    rows: list[dict[str, str]] = []
+    for market in matrix["markets"]:
+        mic = market["mic_operating"]
+        aggregator = market["best_keyless_aggregator"]
+        if not mic or not aggregator or not str(aggregator["source"]).startswith("yahoo_chart"):
+            continue
+        status = aggregator["status"]
+        example = aggregator.get("example") or ""
+        if status not in YAHOO_SAMPLE_STATUSES or not example or mic not in exchange_mics:
+            if skipped is not None:
+                skipped.append(f"{mic}({status})")
+            continue
+        evidence = f"{status}:{AS_OF}"
+        symbol_format = aggregator["symbol_format"]
+        if symbol_format == "<ticker>":
+            if market["iso2"] != US_COUNTRY:
+                raise fail(f"{mic} has a ticker symbol format but country {market['iso2']}")
+            rows.append(
+                {
+                    "mic": mic,
+                    "suffix": "",
+                    "rule": US_CLASS_RULE,
+                    "sample_local": example,
+                    "evidence": evidence,
+                }
+            )
+            continue
+        samples = [piece.strip() for piece in example.split(",")]
+        for suffix in re.findall(r"\.[A-Z0-9]+", symbol_format):
+            sample = next((text for text in samples if text.endswith(suffix)), None)
+            if sample is None or sample == suffix:
+                if skipped is not None:
+                    skipped.append(f"{mic}{suffix}(no sample)")
+                continue
+            segment = YAHOO_SEGMENT_SUFFIXES.get(suffix)
+            rows.append(
+                {
+                    "mic": mic,
+                    "suffix": suffix,
+                    "rule": f"segment:{segment}" if segment else "none",
+                    "sample_local": sample[: -len(suffix)],
+                    "evidence": evidence,
+                }
+            )
+    rows.sort(key=lambda row: (row["mic"], row["suffix"]))
+    return rows
+
+
+def grammar_google_finance_rows(
+    matrix: Mapping[str, Any],
+    exchange_mics: Collection[str],
+) -> list[dict[str, str]]:
+    """Google Finance spellings: the matrix's HTTP 200 codes plus the connector's US candidates."""
+    rows: list[dict[str, str]] = []
+    for market in matrix["markets"]:
+        text = market["google_finance_code"]
+        if text is None:
+            continue
+        mic = market["mic_operating"]
+        match = GOOGLE_CODE_RE.fullmatch(text)
+        if not mic or match is None:
+            raise fail(f"google_finance_code {text!r} for {mic} is not 'LOCAL:CODE (HTTP 200)'")
+        rows.append(
+            {
+                "mic": mic,
+                "google_code": match.group("code"),
+                "sample_local": match.group("local"),
+                "evidence": f"verified:{AS_OF}",
+            }
+        )
+    for mic, code, local in GOOGLE_CONNECTOR_ROWS:
+        rows.append(
+            {
+                "mic": mic,
+                "google_code": code,
+                "sample_local": local,
+                "evidence": f"connector:{AS_OF}",
+            }
+        )
+    kept = [row for row in rows if row["mic"] in exchange_mics]
+    kept.sort(key=lambda row: row["mic"])
+    return kept
+
+
+def load_tradingview_grammar(
+    data: bytes,
+    exchange_mics: Collection[str],
+) -> list[dict[str, str]]:
+    """Read the curated TradingView table. It is hashed into MANIFEST, never regenerated."""
+    text = decode_utf8(data, TRADINGVIEW_GRAMMAR_PATH.name)
+    reader = csv.DictReader(io.StringIO(text, newline=""))
+    if tuple(reader.fieldnames or ()) != TRADINGVIEW_GRAMMAR_HEADER:
+        raise fail("grammar_tradingview.csv header differs from the documented columns")
+    rows = [dict(row) for row in reader]
+    codes = [row["tv_code"] for row in rows]
+    if codes != sorted(codes) or len(set(codes)) != len(codes):
+        raise fail("grammar_tradingview.csv must hold unique codes in sorted order")
+    for row in rows:
+        if row["mic"] not in exchange_mics:
+            raise fail(f"grammar_tradingview.csv names MIC {row['mic']} outside exchanges.csv")
+        if row["primary"] not in {"0", "1"}:
+            raise fail(f"grammar_tradingview.csv primary {row['primary']!r} is not 1 or 0")
+    primaries = Counter(row["mic"] for row in rows if row["primary"] == "1")
+    if set(primaries) != {row["mic"] for row in rows} or set(primaries.values()) != {1}:
+        raise fail("grammar_tradingview.csv needs exactly one primary code per MIC")
+    return rows
+
+
+def check_grammar_shape(
+    yahoo_rows: list[dict[str, str]],
+    google_rows: list[dict[str, str]],
+    tradingview_rows: list[dict[str, str]],
+    snapshot: Mapping[str, Mapping[str, str]],
+) -> None:
+    """Row counts of the grammar tables, and every segment rule names a segment of its MIC."""
+    if len(yahoo_rows) != EXPECTED_YAHOO_GRAMMAR_ROWS:
+        raise fail(f"{len(yahoo_rows)} Yahoo grammar rows, expected {EXPECTED_YAHOO_GRAMMAR_ROWS}")
+    if len(google_rows) != EXPECTED_GOOGLE_GRAMMAR_ROWS:
+        raise fail(
+            f"{len(google_rows)} Google grammar rows, expected {EXPECTED_GOOGLE_GRAMMAR_ROWS}"
+        )
+    if len(tradingview_rows) != EXPECTED_TRADINGVIEW_GRAMMAR_ROWS:
+        raise fail(
+            f"{len(tradingview_rows)} TradingView grammar rows, "
+            f"expected {EXPECTED_TRADINGVIEW_GRAMMAR_ROWS}"
+        )
+    for row in yahoo_rows:
+        if row["rule"].startswith("segment:"):
+            segment = row["rule"].split(":", 1)[1]
+            if snapshot.get(segment, {}).get("OPERATING MIC") != row["mic"]:
+                raise fail(f"{segment} is not a segment of {row['mic']} in the ISO snapshot")
+
+
 def build_outputs(xc: ModuleType) -> dict[str, bytes]:
     """Build every generated file, in memory, from the pinned inputs."""
     mic_bytes = check_input_hash(MIC_PATH, MIC_SHA256)
@@ -556,14 +752,25 @@ def build_outputs(xc: ModuleType) -> dict[str, bytes]:
     currency_rows, excluded_na, kept_funds = load_currencies(xml_bytes)
     currencies = frozenset(code for code, _, _ in currency_rows)
     snapshot = load_mic_snapshot(mic_bytes)
-    _, operating, without_mic = load_matrix(matrix_bytes)
+    matrix, operating, without_mic = load_matrix(matrix_bytes)
     sanctions = load_sanctions(sanctions_bytes)
     operating_mics = frozenset(row["mic_operating"] for row in operating)
     curation = load_curation(curation_bytes, operating_mics, currencies, xc)
     exchange_rows = build_exchange_rows(operating, snapshot, curation, currencies, sanctions, xc)
 
+    exchange_mics = frozenset(row["mic"] for row in exchange_rows)
+    skipped: list[str] = []
+    yahoo_rows = grammar_yahoo_chart_rows(matrix, exchange_mics, skipped)
+    print("yahoo_chart rows skipped (listed, failed or no sample): " + ", ".join(skipped))
+    google_rows = grammar_google_finance_rows(matrix, exchange_mics)
+    tradingview_bytes = TRADINGVIEW_GRAMMAR_PATH.read_bytes()
+    tradingview_rows = load_tradingview_grammar(tradingview_bytes, exchange_mics)
+    check_grammar_shape(yahoo_rows, google_rows, tradingview_rows, snapshot)
+
     iso4217_bytes = _csv_bytes(ISO4217_HEADER, [(c, m, n) for c, m, n in currency_rows])
     exchanges_bytes = _csv_bytes(EXCHANGE_COLUMNS, exchange_rows)
+    yahoo_bytes = _csv_bytes(YAHOO_GRAMMAR_HEADER, yahoo_rows)
+    google_bytes = _csv_bytes(GOOGLE_GRAMMAR_HEADER, google_rows)
     sanctions_sha = sha256_hex(sanctions_bytes)
     manifest = _manifest(
         xc=xc,
@@ -574,6 +781,9 @@ def build_outputs(xc: ModuleType) -> dict[str, bytes]:
         generated={
             "exchanges.csv": (exchanges_bytes, len(exchange_rows)),
             "iso4217.csv": (iso4217_bytes, len(currency_rows)),
+            "grammar_yahoo_chart.csv": (yahoo_bytes, len(yahoo_rows)),
+            "grammar_google_finance.csv": (google_bytes, len(google_rows)),
+            "grammar_tradingview.csv": (tradingview_bytes, len(tradingview_rows)),
         },
         mic_sha=sha256_hex(mic_bytes),
         sanctions_sha=sanctions_sha,
@@ -585,6 +795,8 @@ def build_outputs(xc: ModuleType) -> dict[str, bytes]:
     return {
         "iso4217.csv": iso4217_bytes,
         "exchanges.csv": exchanges_bytes,
+        "grammar_yahoo_chart.csv": yahoo_bytes,
+        "grammar_google_finance.csv": google_bytes,
         "MANIFEST.json": manifest_bytes,
     }
 
@@ -603,6 +815,9 @@ def _manifest(
 ) -> dict[str, Any]:
     exchanges_bytes, exchange_count = generated["exchanges.csv"]
     iso_bytes, iso_count = generated["iso4217.csv"]
+    yahoo_bytes, yahoo_count = generated["grammar_yahoo_chart.csv"]
+    google_bytes, google_count = generated["grammar_google_finance.csv"]
+    tradingview_bytes, tradingview_count = generated["grammar_tradingview.csv"]
     return {
         "as_of": AS_OF,
         "generator": "scripts/build_markets_reference.py",
@@ -627,6 +842,32 @@ def _manifest(
                     "SAT,SUN with weekend:unverified. Sanctioned rows follow sanctions.csv "
                     "(default-closed). Quote scale 2 only for XJSE, XLON and XTAE."
                 ),
+            },
+            "grammar_google_finance.csv": {
+                "sha256": sha256_hex(google_bytes),
+                "rows": google_count,
+                "retrieved": RETRIEVED,
+                "source": MATRIX_REL,
+                "source_sha256_lf": matrix_lf_sha,
+                "license": GRAMMAR_DERIVED_LICENSE,
+                "notes": GOOGLE_GRAMMAR_NOTES,
+            },
+            "grammar_tradingview.csv": {
+                "sha256": sha256_hex(tradingview_bytes),
+                "rows": tradingview_count,
+                "retrieved": RETRIEVED,
+                "source": TRADINGVIEW_GRAMMAR_SOURCE,
+                "license": TRADINGVIEW_GRAMMAR_LICENSE,
+                "notes": TRADINGVIEW_GRAMMAR_NOTES,
+            },
+            "grammar_yahoo_chart.csv": {
+                "sha256": sha256_hex(yahoo_bytes),
+                "rows": yahoo_count,
+                "retrieved": RETRIEVED,
+                "source": MATRIX_REL,
+                "source_sha256_lf": matrix_lf_sha,
+                "license": GRAMMAR_DERIVED_LICENSE,
+                "notes": YAHOO_GRAMMAR_NOTES,
             },
             "iso10383_mic.csv": {
                 "sha256": mic_sha,

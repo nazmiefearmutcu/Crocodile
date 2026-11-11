@@ -19,6 +19,32 @@
       "source": "docs/superpowers/research/data/market-matrix-2026-11-08.json",
       "source_sha256_lf": "75d543d9f0165aed1194640aa92a27e8ffe56243a8c1b26592433064696078b8"
     },
+    "grammar_google_finance.csv": {
+      "license": "Derived from the Crocodile research matrix (this repository, Apache-2.0); symbol spellings observed on Yahoo/Google pages, whose terms restrict automated use (spec 3.10a); not reviewed further here.",
+      "notes": "Rule: the google_finance_code the matrix records with HTTP 200 for each market, plus the NASDAQ and NYSE connector rows copied from the existing Google Finance connector, which were not re-probed.",
+      "retrieved": "2026-11-08",
+      "rows": 3,
+      "sha256": "0ff3d5ee49392126f3b926c9b874ab3d3b1baf0c02d7ae12593939f0130c88ab",
+      "source": "docs/superpowers/research/data/market-matrix-2026-11-08.json",
+      "source_sha256_lf": "75d543d9f0165aed1194640aa92a27e8ffe56243a8c1b26592433064696078b8"
+    },
+    "grammar_tradingview.csv": {
+      "license": "Exchange codes observed in TradingView scanner responses; TradingView terms not read (grey source, spec 0); codes are identifiers, no market data is shipped.",
+      "notes": "HSTC's only measured code is UPCOM (segment XHNX); task 11 extends this table.",
+      "retrieved": "2026-11-08",
+      "rows": 13,
+      "sha256": "d0eb029b9f95601a61317f29c4ee7b102d52522767dbd5af7a8e63d7fad1fbf5",
+      "source": "curated from tests/core/markets/fixtures/tradingview_probe/*.json (scanner responses 2026-11-08)"
+    },
+    "grammar_yahoo_chart.csv": {
+      "license": "Derived from the Crocodile research matrix (this repository, Apache-2.0); symbol spellings observed on Yahoo/Google pages, whose terms restrict automated use (spec 3.10a); not reviewed further here.",
+      "notes": "Rule: one row per suffix in symbol_format whose example the matrix records with an HTTP 200 status (verified or status_only); listed and failed rows are skipped, US rows are unsuffixed with the us_class_dash rule, and .KQ is the segment XKOS of XKRX.",
+      "retrieved": "2026-11-08",
+      "rows": 55,
+      "sha256": "7f776719fc24249742a1ad34dae8f1c3619f55a5df67044d008a71891d502d9d",
+      "source": "docs/superpowers/research/data/market-matrix-2026-11-08.json",
+      "source_sha256_lf": "75d543d9f0165aed1194640aa92a27e8ffe56243a8c1b26592433064696078b8"
+    },
     "iso10383_mic.csv": {
       "last_update": "2026-10-26",
       "license": "Freely published by the ISO 10383 registration authority on iso20022.org; shipped unmodified with attribution; publisher terms not reviewed in this task.",
