@@ -25,7 +25,7 @@ from crocodile.core.markets.errors import (
 from crocodile.core.markets.exchanges import ExchangeRegistry
 from crocodile.core.markets.master import ListingMaster, ListingStatus
 from crocodile.core.markets.symbols import listing_symbol
-from crocodile.core.schema.records import OHLCV, CorporateAction
+from crocodile.core.schema.records import OHLCV, CorporateAction, Record
 from crocodile.equity.providers.base import TransientProviderError, UnsupportedMarketError
 from crocodile.equity.universal.base import (
     SourceUnservableError,
@@ -393,6 +393,59 @@ async def test_a_master_failure_is_isolated_to_its_unit(
         assert [o.status for o in report.market_outcomes("XNAS")] == [OutcomeStatus.OK]
     finally:
         await orch.aclose()
+
+
+async def test_a_sink_failure_is_isolated_to_its_unit(tmp_path: Path) -> None:
+    class _FailingSink(RecordingSink):
+        """A sink whose ``put`` raises ``OSError`` for one symbol and keeps every other record."""
+
+        async def put(self, record: Record) -> None:
+            if record.symbol == "THYAO@XIST":
+                raise OSError("disk full")
+            await super().put(record)
+
+    turkey = make_observation(
+        "tradingview", "BIST:THYAO", "XIST", "THYAO", currency="TRY", price_scale=0
+    )
+    global_ = make_observation(
+        "tradingview", "NASDAQ:AAPL", "XNAS", "AAPL", currency="USD", price_scale=0
+    )
+    universe = _universe_source(
+        "tradingview",
+        {"turkey": frozenset({"XIST"}), "global": frozenset({"XNAS"})},
+        snapshots={
+            "turkey": make_snapshot(
+                "tradingview",
+                [turkey],
+                [instrument("tradingview", "THYAO@XIST", "XIST", name="Turkiye Petrol")],
+            ),
+            "global": make_snapshot(
+                "tradingview",
+                [global_],
+                [instrument("tradingview", "AAPL", "XNAS", name="Apple")],
+            ),
+        },
+    )
+    master = ListingMaster.for_data_dir(tmp_path)
+    sink = _FailingSink()
+    orch = make_orchestrator(
+        tmp_path,
+        SourceBindings(universe={"tradingview": universe}),
+        master=master,
+        sink=sink,
+    )
+    try:
+        report = await orch.sync_universe(Scope(all_markets=True), sources=("tradingview",))
+    finally:
+        await orch.aclose()
+
+    assert isinstance(report, RunReport)
+    (xist,) = report.market_outcomes("XIST")
+    assert xist.status is OutcomeStatus.FAILED
+    assert xist.source == "tradingview"
+    assert xist.reason is not None and xist.reason.startswith("OSError")
+    assert [o.status for o in report.market_outcomes("XNAS")] == [OutcomeStatus.OK]
+    assert [item.symbol for item in sink.records] == ["AAPL"]
 
 
 async def test_directories_are_applied_before_tradingview(tmp_path: Path) -> None:
