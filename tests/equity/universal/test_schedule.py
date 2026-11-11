@@ -299,6 +299,61 @@ async def test_repeated_no_bars_ticks_retry_without_resnapshot_until_a_gap(
     assert len(snapshot.calls) == 1
 
 
+async def test_a_repeatedly_unservable_session_becomes_a_gap_after_max_failures(
+    tmp_path: Path,
+) -> None:
+    """Three failed attempts at one session: each tick below the threshold records the count,
+    and the third failure becomes the gap entry and clears the failure record."""
+    snapshot = _turkey()
+    snapshot.errors["turkey"] = SourceUnservableError(
+        "tradingview", UnservableReason.BOT_CHALLENGE, "recorded wall"
+    )
+    first = calendar_for("XIST").session_close_utc(WEDNESDAY) + datetime.timedelta(hours=1)
+    clock = [first]
+    orch = make_orchestrator(
+        tmp_path,
+        _bindings(snapshot),
+        master=_xist_master(tmp_path),
+        clock=lambda: clock[0],
+    )
+    try:
+        schedule = build_eod_schedule(
+            orch,
+            Scope(mic="XIST"),
+            state_store=InMemoryStateStore(),
+            max_failures=3,
+            retry_cooldown=RETRY_COOLDOWN,
+        )
+        store = schedule.coordinator.state_store
+        task = eod_task_name("XIST")
+
+        await schedule.coordinator.check_and_run_once(current_time=first)
+        failure = store.get_failure(task, WEDNESDAY)
+        assert failure is not None
+        assert failure.count == 1
+        assert schedule.coordinator.gaps(task) == []
+
+        second_attempt = first + RETRY_COOLDOWN + datetime.timedelta(seconds=1)
+        clock[0] = second_attempt
+        await schedule.coordinator.check_and_run_once(current_time=second_attempt)
+        failure = store.get_failure(task, WEDNESDAY)
+        assert failure is not None
+        assert failure.count == 2
+        assert schedule.coordinator.gaps(task) == []
+
+        third_attempt = second_attempt + RETRY_COOLDOWN + datetime.timedelta(seconds=1)
+        clock[0] = third_attempt
+        await schedule.coordinator.check_and_run_once(current_time=third_attempt)
+    finally:
+        await orch.aclose()
+
+    (entry,) = schedule.coordinator.gaps(task)
+    assert entry.kind == "gap"
+    assert entry.logical_date == WEDNESDAY
+    assert entry.failures == 3
+    assert store.get_failure(task, WEDNESDAY) is None
+
+
 def test_eod_collection_error_names_the_market_and_reason() -> None:
     error = EodCollectionError("XIST", "no bars for the session")
     assert str(error) == "EOD collection for XIST failed: no bars for the session"
