@@ -194,7 +194,8 @@ def make_provider(
     provider:
         Lowercase provider name. Valid values: ``alpaca``, ``finnhub``,
         ``finra``, ``google_finance``, ``msn_money``, ``sec_edgar``, ``stooq``,
-        ``tiingo``, ``treasury``, ``yahoo``, ``yahoo_chart`` — ``_REGISTRY`` below spelled out, with
+        ``tiingo``, ``treasury``, ``yahoo``,
+        ``yahoo_chart`` \u2014 ``_REGISTRY`` below spelled out, with
         ``tests/conformance/test_prose_counts.py`` asserting the two agree.
 
         The last four arrived when the argument for keeping them out was measured and
