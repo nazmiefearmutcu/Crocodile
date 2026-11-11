@@ -1,0 +1,45 @@
+{
+ "_synthetic": "constructed for tests; not a recorded TradingView response",
+ "data": [
+  {
+   "d": [
+    "THYAO",
+    "BIST",
+    "TRY",
+    300.0,
+    305.5,
+    298.25,
+    303.0,
+    1200000
+   ],
+   "s": "BIST:THYAO"
+  },
+  {
+   "d": [
+    "AKGRT",
+    "BIST",
+    "TRY",
+    10.5,
+    10.8,
+    10.4,
+    10.7,
+    5000000
+   ],
+   "s": "BIST:AKGRT"
+  },
+  {
+   "d": [
+    "GLDTR",
+    "BIST",
+    "TRY",
+    42.0,
+    42.5,
+    41.9,
+    42.2,
+    800000
+   ],
+   "s": "BIST:GLDTR"
+  }
+ ],
+ "totalCount": 3
+}

@@ -207,6 +207,7 @@ def test_the_factory_hands_settings_only_to_the_connectors_that_asked_for_them()
     assert {name for name, cls in _REGISTRY.items() if cls.wants_settings} == {
         "sec_edgar",
         "tiingo",
+        "tradingview",
         "yahoo_chart",
     }
     provider = make_provider(

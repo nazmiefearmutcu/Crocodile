@@ -816,6 +816,15 @@ DERIVES_RECORDS: dict[str, str] = {
         "and it is exactly the kind of module that rule was blind to when `google_finance` "
         "put a synthesiser in `providers/`."
     ),
+    "equity/universal/tradingview.py": (
+        "Builds daily OHLCV bars out of TradingView scanner rows that carry no date. The "
+        "session a bar belongs to is attributed here, from the exchange calendar and, where "
+        "TradingView publishes one, the row's own stamp, so a silent record would claim the "
+        "source dated it; session_snapshot says otherwise. The Instrument snapshots the same "
+        "module builds are TradingView's own reference rows and carry an explicit native "
+        "tail. Voluntary under the discovery rule below, like equity/reference/universe.py, "
+        "and for the same reason: this is the shape that rule cannot see."
+    ),
 }
 """Modules that build records out of other records, and why each one counts as derived.
 

@@ -1,0 +1,19 @@
+{
+ "_captured_at": "2026-11-05T16:00:00Z",
+ "_synthetic": "constructed for tests; not a recorded TradingView response",
+ "columns": [
+  "name",
+  "exchange",
+  "currency",
+  "open",
+  "high",
+  "low",
+  "close",
+  "volume"
+ ],
+ "market": "turkey",
+ "range": [
+  0,
+  1000
+ ]
+}

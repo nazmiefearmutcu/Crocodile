@@ -17,6 +17,7 @@ from crocodile.equity.providers.tiingo.connector import TiingoProvider
 from crocodile.equity.providers.treasury.connector import TreasuryProvider
 from crocodile.equity.providers.yahoo.connector import YahooProvider
 from crocodile.equity.reference.registry import InstrumentRegistry
+from crocodile.equity.universal.tradingview import TradingViewProvider
 from crocodile.equity.universal.yahoo_chart import YahooChartProvider
 
 if TYPE_CHECKING:
@@ -32,6 +33,7 @@ _REGISTRY: dict[str, type[Provider]] = {
     "sec_edgar": SecEdgarProvider,
     "tiingo": TiingoProvider,
     "treasury": TreasuryProvider,
+    "tradingview": TradingViewProvider,
     "yahoo": YahooProvider,
     "yahoo_chart": YahooChartProvider,
 }
@@ -195,7 +197,7 @@ def make_provider(
         Lowercase provider name. Valid values: ``alpaca``, ``finnhub``,
         ``finra``, ``google_finance``, ``msn_money``, ``sec_edgar``, ``stooq``,
         ``tiingo``, ``treasury``, ``yahoo``,
-        ``yahoo_chart`` \u2014 ``_REGISTRY`` below spelled out, with
+        ``yahoo_chart``, ``tradingview`` \u2014 ``_REGISTRY`` below spelled out, with
         ``tests/conformance/test_prose_counts.py`` asserting the two agree.
 
         The last four arrived when the argument for keeping them out was measured and
