@@ -226,6 +226,79 @@ async def test_a_session_without_bars_becomes_a_gap_on_a_library_calendar(tmp_pa
     assert len(snapshot.calls) == 1
 
 
+RETRY_COOLDOWN = datetime.timedelta(minutes=5)
+
+
+@pytest.mark.parametrize("market", ["library", "weekday_fallback"])
+async def test_repeated_no_bars_ticks_retry_without_resnapshot_until_a_gap(
+    tmp_path: Path, market: str
+) -> None:
+    """Three failed attempts at one session: cool-down holds the retry back, the retries answer
+    from the store without re-snapshotting, and the third failure becomes the gap entry."""
+    if market == "library":
+        mic = "XIST"
+        master = _xist_master(tmp_path)
+        snapshot = _turkey()
+        expected_kind = "gap"
+    else:
+        mic = _weekday_fallback_mic()
+        master = ListingMaster.for_data_dir(tmp_path)
+        snapshot = FakeSnapshotSource(_snapshot_name(mic), units={"unit": frozenset({mic})})
+        expected_kind = "no_data"
+    first = calendar_for(mic).session_close_utc(WEDNESDAY) + datetime.timedelta(hours=1)
+    clock = [first]
+    orch = make_orchestrator(
+        tmp_path,
+        _bindings(snapshot),
+        master=master,
+        clock=lambda: clock[0],
+    )
+    try:
+        schedule = build_eod_schedule(
+            orch,
+            Scope(mic=mic),
+            state_store=InMemoryStateStore(),
+            max_failures=3,
+            retry_cooldown=RETRY_COOLDOWN,
+        )
+        store = schedule.coordinator.state_store
+        task = eod_task_name(mic)
+
+        await schedule.coordinator.check_and_run_once(current_time=first)
+        failure = store.get_failure(task, WEDNESDAY)
+        assert failure is not None
+        assert failure.count == 1
+        assert schedule.coordinator.gaps(task) == []
+
+        inside_cooldown = first + datetime.timedelta(minutes=1)
+        clock[0] = inside_cooldown
+        await schedule.coordinator.check_and_run_once(current_time=inside_cooldown)
+        failure = store.get_failure(task, WEDNESDAY)
+        assert failure is not None
+        assert failure.count == 1
+
+        second_attempt = first + RETRY_COOLDOWN + datetime.timedelta(seconds=1)
+        clock[0] = second_attempt
+        await schedule.coordinator.check_and_run_once(current_time=second_attempt)
+        failure = store.get_failure(task, WEDNESDAY)
+        assert failure is not None
+        assert failure.count == 2
+        assert schedule.coordinator.gaps(task) == []
+
+        third_attempt = second_attempt + RETRY_COOLDOWN + datetime.timedelta(seconds=1)
+        clock[0] = third_attempt
+        await schedule.coordinator.check_and_run_once(current_time=third_attempt)
+    finally:
+        await orch.aclose()
+
+    (entry,) = schedule.coordinator.gaps(task)
+    assert entry.kind == expected_kind
+    assert entry.logical_date == WEDNESDAY
+    assert entry.failures == 3
+    assert store.get_failure(task, WEDNESDAY) is None
+    assert len(snapshot.calls) == 1
+
+
 def test_eod_collection_error_names_the_market_and_reason() -> None:
     error = EodCollectionError("XIST", "no bars for the session")
     assert str(error) == "EOD collection for XIST failed: no bars for the session"
