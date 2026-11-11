@@ -1,0 +1,53 @@
+ACT Symbol|Security Name|Exchange|CQS Symbol|ETF|Round Lot Size|Test Issue|NASDAQ Symbol
+A|Agilent Technologies, Inc. Common Stock|N|A|N|100|N|A
+AA|Alcoa Corporation Common Stock |N|AA|N|100|N|AA
+AAA|Alternative Access First Priority CLO Bond ETF|P|AAA|Y|100|N|AAA
+AAAA|Amplius Aggressive Asset Allocation ETF|Z|AAAA|Y|100|N|AAAA
+AAAB|Corgi FTSE Aaa-A Intermediate Corporate Bond ETF|Z|AAAB|Y|100|N|AAAB
+AAAC|Columbia AAA CLO ETF|P|AAAC|Y|100|N|AAAC
+AAAD|PGIM AAA CLO Aggregate Duration ETF|P|AAAD|Y|100|N|AAAD
+AAAU|Goldman Sachs Physical Gold ETF Shares|Z|AAAU|Y|100|N|AAAU
+AAC|Ares Acquisition Corporation III Class A Ordinary Shares|N|AAC|N|100|N|AAC
+AAC.U|Ares Acquisition Corporation III Units, each consisting of one Class A ordinary share and one-tenth of one redeemable warrant|N|AAC.U|N|100|N|AAC=
+AAC.W|Ares Acquisition Corporation III Redeemable warrants, each whole warrant exercisable for one Class A ordinary share at an exercise price of $11.50|N|AAC.WS|N|100|N|AAC+
+AADX|Applied Aerospace & Defense, Inc. Common Stock|N|AADX|N|100|N|AADX
+AAMI|Acadian Asset Management Inc. Common Stock|N|AAMI|N|100|N|AAMI
+AAOG|Leverage Shares 2X Long AAOI Daily ETF|Z|AAOG|Y|100|N|AAOG
+AAOX|Tradr 2X Long AAOI Daily ETF|Z|AAOX|Y|100|N|AAOX
+AAOZ|Tradr 2X Short AAOI Daily ETF|Z|AAOZ|Y|100|N|AAOZ
+AAP|Advance Auto Parts Inc.|N|AAP|N|100|N|AAP
+AAPE|Leverage Shares 2X Long AAPL Daily ETF|Z|AAPE|Y|100|N|AAPE
+AAPR|Innovator Equity Defined Protection ETF - 2 Yr to April 2028|Z|AAPR|Y|100|N|AAPR
+AAPW|Roundhill AAPL WeeklyPay ETF|Z|AAPW|Y|100|N|AAPW
+AAPX|T-Rex 2X Long Apple Daily Target ETF|Z|AAPX|Y|100|N|AAPX
+AAPY|Kurv Yield Premium Strategy Apple (AAPL) ETF|Z|AAPY|Y|100|N|AAPY
+AAT|American Assets Trust, Inc. Common Stock|N|AAT|N|100|N|AAT
+AAUA|Alpha Architect US Equity 3 ETF|Z|AAUA|Y|100|N|AAUA
+AAUC|Allied Gold Corporation Common Shares|N|AAUC|N|100|N|AAUC
+AB|AllianceBernstein Holding L.P.  Units|N|AB|N|100|N|AB
+ABBV|AbbVie Inc. Common Stock|N|ABBV|N|40|N|ABBV
+ABCB|Ameris Bancorp Common Stock|N|ABCB|N|100|N|ABCB
+ABEQ|Absolute Select Value ETF|P|ABEQ|Y|100|N|ABEQ
+ABEV|Ambev S.A. American Depositary Shares (Each representing 1 Common Share)|N|ABEV|N|100|N|ABEV
+ABFL|Abacus FCF Leaders ETF|Z|ABFL|Y|100|N|ABFL
+ABG|Asbury Automotive Group Inc Common Stock|N|ABG|N|100|N|ABG
+ABLD|Abacus FCF Real Assets Leaders ETF|Z|ABLD|Y|100|N|ABLD
+ABLG|Abacus FCF International Leaders ETF|Z|ABLG|Y|100|N|ABLG
+ABLS|Abacus FCF Small Cap Leaders ETF|Z|ABLS|Y|100|N|ABLS
+ABM|ABM Industries Incorporated Common Stock|N|ABM|N|100|N|ABM
+ABND|American Century Core Plus Income ETF|P|ABND|Y|100|N|ABND
+ABOT|Abacus FCF Innovation Leaders ETF|Z|ABOT|Y|100|N|ABOT
+ABR|Arbor Realty Trust Common Stock|N|ABR|N|100|N|ABR
+ABR$D|Arbor Realty Trust 6.375% Series D Cumulative Redeemable Preferred Stock, Liquidation Preference $25.00 per Share|N|ABRpD|N|100|N|ABR-D
+ATEST|Tick Pilot Test Control Common Stock|A|ATEST|N|100|Y|ATEST
+BRK.A|Berkshire Hathaway Inc. Common Stock|N|BRK.A|N|1|N|BRK.A
+BRK.B|Berkshire Hathaway Inc. New Common Stock|N|BRK.B|N|40|N|BRK.B
+CECO|CECO Environmental Corp. Common Stock|F|CECO|N|100|N|CECO
+ET$I|Energy Transfer L.P. Series I Fixed Rate Perpetual Preferred Units|F|ETpI|N|100|N|ET-I
+IBOC|International Bancshares Corporation Common Stock|F|IBOC|N|100|N|IBOC
+MTEST|NYSE Texas, Inc. TEST Common Stock|M|MTEST|N|100|Y|MTEST
+ZBZX|BATS BZX Exchange test issue|Z|ZBZX|N|100|Y|ZBZX
+ZEXIT|IEX Test Company Test Symbol Two for IEX|V|ZEXIT|N|100|Y|ZEXIT
+ZVV|NYSE ARCA test stock|P|ZVV|N|100|Y|ZVV
+ZZZTA|TXSE Test Stk 1 Common Stock|F|ZZZTA|N|10|Y|ZZZTA
+File Creation Time: 1106202621:31||||||

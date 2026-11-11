@@ -204,10 +204,15 @@ def test_the_factory_hands_settings_only_to_the_connectors_that_asked_for_them()
     from crocodile.equity.providers.factory import _REGISTRY
 
     # yahoo_chart asks for Settings because the sanctions opt-in (spec 5) is read from them.
+    # The four listing directories ask too: the same opt-in and the lake path for run().
     assert {name for name, cls in _REGISTRY.items() if cls.wants_settings} == {
+        "asx",
+        "nasdaqtrader",
+        "nse_india",
         "sec_edgar",
         "tiingo",
         "tradingview",
+        "twse",
         "yahoo_chart",
     }
     provider = make_provider(
