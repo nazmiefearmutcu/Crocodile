@@ -6,7 +6,7 @@ import random
 import threading
 import time
 from collections.abc import Callable, Mapping
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any, Self
 
 import pandas as pd
@@ -16,6 +16,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from yfinance.exceptions import YFRateLimitError
 
+from crocodile.core.markets.currency import UnknownCurrencyError, require_currency
 from crocodile.core.ratelimit.token_bucket import TokenBucket
 from crocodile.core.schema.enums import AssetClass, CorpActionType, FundPeriod, OptType
 from crocodile.core.schema.records import (
@@ -261,6 +262,132 @@ def _intraday_records(
         records.append(bar)
 
     return records
+
+
+def _session_day(stamp: Any) -> date:
+    """The exchange-local session date a daily row's index entry names.
+
+    yfinance localises daily history to exchange-local midnight (1.5.2:
+    scrapers/history.py:421, `pd.to_datetime(quotes.index.date).tz_localize(tz_exchange, ...)`),
+    so the calendar date in the index's *own* zone is the session date. Converting to UTC first
+    moved every listing east of UTC to the previous day. A naive stamp is already a date.
+    Accepts a Timestamp/datetime, or anything `pd.to_datetime` reads (string index).
+    """
+    return pd.to_datetime(stamp).date()
+
+
+def _utc_midnight_ns(day: date) -> int:
+    """00:00 UTC on `day`, in epoch nanoseconds.
+
+    The ruling, extended from `_expiry_to_ns`: a daily bar's `source_ts` is UTC midnight of the
+    exchange-local session date. That is the only instant from which the date comes back by the
+    UTC truncation the lake partitions with, and it is what stooq already writes.
+    """
+    return int(datetime(day.year, day.month, day.day, tzinfo=UTC).timestamp()) * 1_000_000_000
+
+
+def _daily_records(df: pd.DataFrame, symbol: str, local_ts: int) -> list[Record]:
+    """Convert one fetched daily frame (bars plus inline Dividends / Stock Splits) to records.
+
+    Pure: no clock, no session. The body of the old loop with exactly one behavioural change.
+    `source_ts = _utc_midnight_ns(day)` and `date_str = day.isoformat()` with
+    `day = _session_day(idx)`, used for the bar, for the dividend's and the split's `ex_date`,
+    and for their `source_ts`.
+    """
+    records: list[Record] = []
+    for idx, row in df.iterrows():
+        day = _session_day(idx)
+        source_ts = _utc_midnight_ns(day)
+        date_str = day.isoformat()
+
+        open_val = _clean_float(row.get("Open"))
+        high_val = _clean_float(row.get("High"))
+        low_val = _clean_float(row.get("Low"))
+        close_val = _clean_float(row.get("Close"))
+        volume_val = _clean_float(row.get("Volume"))
+
+        if (
+            open_val is None
+            or high_val is None
+            or low_val is None
+            or close_val is None
+            or volume_val is None
+        ):
+            logger.warning(
+                "Skipping bar with missing price/volume for %s on %s",
+                symbol,
+                date_str,
+            )
+            continue
+
+        # Map the OHLCV record
+        bar = OHLCV(
+            source="yahoo",
+            symbol=symbol,
+            symbol_raw=symbol,
+            source_ts=source_ts,
+            local_ts=local_ts,
+            interval="1d",
+            open=open_val,
+            high=high_val,
+            low=low_val,
+            close=close_val,
+            volume=volume_val,
+            vwap=None,
+            num_trades=None,
+            asset_class=AssetClass.EQUITY,
+        )
+        records.append(bar)
+
+        # Map dividends
+        if "Dividends" in row:
+            div_val = _clean_float(row.get("Dividends"))
+            if div_val is not None and div_val > 0.0:
+                div = CorporateAction(
+                    source="yahoo",
+                    symbol=symbol,
+                    symbol_raw=symbol,
+                    source_ts=source_ts,
+                    local_ts=local_ts,
+                    ex_date=date_str,
+                    type=CorpActionType.DIVIDEND_CASH,
+                    value=div_val,
+                    asset_class=AssetClass.EQUITY,
+                )
+                records.append(div)
+
+        # Map stock splits
+        if "Stock Splits" in row:
+            split_val = _clean_float(row.get("Stock Splits"))
+            if split_val is not None and split_val > 0.0:
+                split = CorporateAction(
+                    source="yahoo",
+                    symbol=symbol,
+                    symbol_raw=symbol,
+                    source_ts=source_ts,
+                    local_ts=local_ts,
+                    ex_date=date_str,
+                    type=CorpActionType.SPLIT,
+                    value=split_val,
+                    asset_class=AssetClass.EQUITY,
+                )
+                records.append(split)
+
+    return records
+
+
+def _financial_currency(info: object) -> str | None:
+    """Yahoo's `financialCurrency` (the currency the statements are reported in), or None.
+
+    None when `info` is not a Mapping, or the key is missing, None or blank. A present value is
+    validated with `require_currency` (UnknownCurrencyError propagates) and returned stripped.
+    """
+    if not isinstance(info, Mapping):
+        return None
+    raw = info.get("financialCurrency")
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    return require_currency(raw.strip())
 
 
 class YahooClient:
@@ -532,99 +659,7 @@ class YahooClient:
                 )
             return []
 
-        records: list[Record] = []
-        local_ts = time.time_ns()
-
-        for idx, row in df.iterrows():
-            # Index is typically a DatetimeIndex
-            if not isinstance(idx, datetime):
-                # Fallback conversion
-                ts_val = pd.to_datetime(idx)
-            else:
-                ts_val = idx
-
-            # Convert to UTC epoch nanoseconds
-            if ts_val.tzinfo is None:
-                ts_val = ts_val.tz_localize("UTC")
-            else:
-                ts_val = ts_val.tz_convert("UTC")
-            source_ts = int(ts_val.timestamp() * 1e9)
-            date_str = ts_val.strftime("%Y-%m-%d")
-
-            open_val = _clean_float(row.get("Open"))
-            high_val = _clean_float(row.get("High"))
-            low_val = _clean_float(row.get("Low"))
-            close_val = _clean_float(row.get("Close"))
-            volume_val = _clean_float(row.get("Volume"))
-
-            if (
-                open_val is None
-                or high_val is None
-                or low_val is None
-                or close_val is None
-                or volume_val is None
-            ):
-                logger.warning(
-                    "Skipping bar with missing price/volume for %s on %s",
-                    symbol,
-                    date_str,
-                )
-                continue
-
-            # Map the OHLCV record
-            bar = OHLCV(
-                source="yahoo",
-                symbol=symbol,
-                symbol_raw=symbol,
-                source_ts=source_ts,
-                local_ts=local_ts,
-                interval="1d",
-                open=open_val,
-                high=high_val,
-                low=low_val,
-                close=close_val,
-                volume=volume_val,
-                vwap=None,
-                num_trades=None,
-                asset_class=AssetClass.EQUITY,
-            )
-            records.append(bar)
-
-            # Map dividends
-            if "Dividends" in row:
-                div_val = _clean_float(row.get("Dividends"))
-                if div_val is not None and div_val > 0.0:
-                    div = CorporateAction(
-                        source="yahoo",
-                        symbol=symbol,
-                        symbol_raw=symbol,
-                        source_ts=source_ts,
-                        local_ts=local_ts,
-                        ex_date=date_str,
-                        type=CorpActionType.DIVIDEND_CASH,
-                        value=div_val,
-                        asset_class=AssetClass.EQUITY,
-                    )
-                    records.append(div)
-
-            # Map stock splits
-            if "Stock Splits" in row:
-                split_val = _clean_float(row.get("Stock Splits"))
-                if split_val is not None and split_val > 0.0:
-                    split = CorporateAction(
-                        source="yahoo",
-                        symbol=symbol,
-                        symbol_raw=symbol,
-                        source_ts=source_ts,
-                        local_ts=local_ts,
-                        ex_date=date_str,
-                        type=CorpActionType.SPLIT,
-                        value=split_val,
-                        asset_class=AssetClass.EQUITY,
-                    )
-                    records.append(split)
-
-        return records
+        return await asyncio.to_thread(_daily_records, df, symbol, time.time_ns())
 
     async def fetch_intraday_bars(
         self,
