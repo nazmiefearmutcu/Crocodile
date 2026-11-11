@@ -1570,6 +1570,10 @@ class UniversalOrchestrator:
                 )
             )
             return
+        if failures:
+            # A partly failed batch writes no marker: the failed listings are fetched again by
+            # the next call for this session, as they would be after a fully failed batch.
+            return
         try:
             self._state.record_eod(
                 source=hist.name,

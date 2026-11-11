@@ -992,3 +992,55 @@ async def test_an_intraday_outcome_write_error_is_classified_and_the_other_listi
     assert by_symbol["THYAO@XIST"].reason.startswith("OSError")
     assert by_symbol["GARAN@XIST"].status is OutcomeStatus.OK
     assert report.records_written == 1
+
+
+async def test_a_partly_failed_history_batch_writes_no_marker_and_the_next_call_fetches_again(
+    tmp_path: Path,
+) -> None:
+    master = _thyao_master(tmp_path, "ASELS")
+    flaky = FakeHistorySource(
+        "yahoo_chart",
+        bars={
+            "ASELS@XIST": [(TURKEY_SESSION, 10.0)],
+            "THYAO@XIST": [(TURKEY_SESSION, 300.0)],
+        },
+        raises={"THYAO@XIST": TransientProviderError("busy")},
+    )
+    orch = make_orchestrator(tmp_path, _bindings(history=(flaky,)), master=master, sleep=_no_sleep)
+    try:
+        report = await orch.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await orch.aclose()
+
+    assert {symbol for symbol, _channel, _start, _end in flaky.calls} == {
+        "ASELS@XIST",
+        "THYAO@XIST",
+    }
+    failed = [o for o in report.outcomes if o.status is OutcomeStatus.TRANSIENT_ERROR]
+    assert [o.subject for o in failed] == ["THYAO@XIST"]
+    assert UniversalState.at(tmp_path).eod_marker("yahoo_chart", "XIST") is None
+
+    healed = FakeHistorySource(
+        "yahoo_chart",
+        bars={
+            "ASELS@XIST": [(TURKEY_SESSION, 10.0)],
+            "THYAO@XIST": [(TURKEY_SESSION, 300.0)],
+        },
+    )
+    retry = make_orchestrator(
+        tmp_path,
+        _bindings(history=(healed,)),
+        master=ListingMaster.for_data_dir(tmp_path),
+        sleep=_no_sleep,
+    )
+    try:
+        await retry.collect_eod(Scope(mic="XIST"), FIXED_NOW)
+    finally:
+        await retry.aclose()
+
+    assert ("THYAO@XIST", "ohlcv") in {
+        (symbol, channel) for symbol, channel, _s, _e in healed.calls
+    }
+    marker = UniversalState.at(tmp_path).eod_marker("yahoo_chart", "XIST")
+    assert marker is not None
+    assert (marker.session, marker.status) == (TURKEY_SESSION, "ok")
