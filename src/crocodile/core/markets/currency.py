@@ -26,19 +26,25 @@ import re
 from collections.abc import Mapping
 from decimal import Decimal, InvalidOperation
 from types import MappingProxyType
-from typing import Final
+from typing import Final, Protocol
 
 import msgspec
 
 from crocodile.core.markets._data import read_csv
-from crocodile.core.markets.errors import ReferenceDataError, UnknownCurrencyError
+from crocodile.core.markets.errors import (
+    CurrencyMismatchError,
+    ReferenceDataError,
+    UnknownCurrencyError,
+)
 
 __all__ = [
     "ISO4217_COLUMNS",
     "ISO4217_FILE",
     "MINOR_UNIT_QUOTES",
     "Currency",
+    "ListingUnit",
     "QuoteUnit",
+    "check_currency_consistent",
     "currencies",
     "minor_unit",
     "parse_quote_unit",
@@ -158,3 +164,62 @@ def to_major(value: Decimal | int | float | str, price_scale: int) -> Decimal:
     if not isinstance(exponent, int):
         raise ValueError(f"price {value!r} is not finite")
     return Decimal((sign, digits, exponent - price_scale))
+
+
+class ListingUnit(Protocol):
+    """What :func:`check_currency_consistent` reads off a listing.
+
+    Structural, so ``master.Listing`` (spec §3.6) satisfies it without this module importing the
+    listing master, and a test can pass any frozen dataclass with the two attributes. Read-only
+    properties rather than plain attributes, so frozen dataclasses and frozen msgspec structs
+    match under mypy strict.
+    """
+
+    @property
+    def currency(self) -> str | None: ...
+
+    @property
+    def price_scale(self) -> int | None: ...
+
+
+def check_currency_consistent(
+    record_currency: str | None,
+    record_scale: int | None,
+    listing: ListingUnit,
+) -> None:
+    """Refuse a record whose stated unit contradicts its listing's.
+
+    Each dimension is compared only when both sides state it. ``None`` on either side means
+    unknown: it is never a mismatch, and it is never read as USD or as scale 0. Codes are
+    compared exactly, because ISO 4217 codes are upper case and normalising ``"gbp"`` here would
+    hide the defect that produced it. Minor-unit spellings (``GBp``, ``ZAc``, ``ILA``) must have
+    gone through ``parse_quote_unit`` before a record is built.
+
+    Call it as ``check_currency_consistent(record.currency, record.price_scale, listing)``.
+
+    Raises:
+        CurrencyMismatchError: if both sides state a currency and they differ, or both state a
+            price scale and they differ. The message names both values and, when the listing
+            object has a ``symbol`` attribute, that symbol. The caller writes the record to its
+            dead-letter queue instead of the sink.
+    """
+    listing_currency = listing.currency
+    listing_scale = listing.price_scale
+    currency_differs = (
+        record_currency is not None
+        and listing_currency is not None
+        and record_currency != listing_currency
+    )
+    scale_differs = (
+        record_scale is not None and listing_scale is not None and record_scale != listing_scale
+    )
+    if not (currency_differs or scale_differs):
+        return
+    symbol = getattr(listing, "symbol", None)
+    raise CurrencyMismatchError(
+        record_currency,
+        record_scale,
+        listing_currency,
+        listing_scale,
+        None if symbol is None else str(symbol),
+    )

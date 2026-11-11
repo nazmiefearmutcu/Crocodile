@@ -17,6 +17,7 @@ import pytest
 from crocodile.core.errors import CrocodileError, StoreError
 from crocodile.core.markets.errors import (
     CalendarRangeError,
+    CurrencyMismatchError,
     ExpiredMarketError,
     InvalidSymbolError,
     ListingConflictError,
@@ -43,6 +44,7 @@ ALL_ERRORS: tuple[type[MarketError], ...] = (
     CalendarRangeError,
     InvalidSymbolError,
     NotASessionError,
+    CurrencyMismatchError,
 )
 
 ONE_OF_EACH: tuple[MarketError, ...] = (
@@ -57,6 +59,7 @@ ONE_OF_EACH: tuple[MarketError, ...] = (
     CalendarRangeError("XIST", date(2030, 1, 1), date(2013, 1, 1), date(2026, 12, 31)),
     InvalidSymbolError("AAPL US", "contains a space"),
     NotASessionError("XIST", date(2026, 11, 8)),
+    CurrencyMismatchError("EUR", 0, "BGN", 2, "SOFIX@XBUL"),
 )
 
 
@@ -66,10 +69,10 @@ def test_every_market_error_descends_from_market_error_and_the_root() -> None:
         assert issubclass(cls, CrocodileError), cls
 
 
-def test_there_are_exactly_eleven_market_error_classes() -> None:
+def test_there_are_exactly_twelve_market_error_classes() -> None:
     from crocodile.core.markets import errors
 
-    assert len(ALL_ERRORS) == 11
+    assert len(ALL_ERRORS) == 12
     assert errors.__all__ == sorted(errors.__all__)
     assert set(errors.__all__) == {cls.__name__ for cls in ALL_ERRORS}
 
@@ -84,7 +87,13 @@ def test_listing_conflict_error_is_also_a_store_error() -> None:
 def test_lookup_and_value_errors_keep_their_builtin_bases() -> None:
     for cls in (UnknownMarketError, ExpiredMarketError, NoGrammarForMarket):
         assert issubclass(cls, LookupError), cls
-    for cls in (UnknownCurrencyError, CalendarRangeError, InvalidSymbolError, NotASessionError):
+    for cls in (
+        UnknownCurrencyError,
+        CalendarRangeError,
+        InvalidSymbolError,
+        NotASessionError,
+        CurrencyMismatchError,
+    ):
         assert issubclass(cls, ValueError), cls
 
 
@@ -120,6 +129,9 @@ def test_messages_name_their_subject() -> None:
     for fragment in ("XTUR", "MIC TO USE IS XIST", "use XIST"):
         assert fragment in expired, fragment
     assert "GBp" in str(UnknownCurrencyError("GBp"))
+    mismatch = str(CurrencyMismatchError("EUR", 0, "BGN", 2, "SOFIX@XBUL"))
+    for fragment in ("EUR", "BGN", "SOFIX@XBUL"):
+        assert fragment in mismatch, fragment
     no_grammar = str(NoGrammarForMarket("yahoo_chart", "XIST"))
     assert "yahoo_chart" in no_grammar
     assert "XIST" in no_grammar

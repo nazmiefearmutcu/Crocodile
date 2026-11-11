@@ -20,6 +20,7 @@ from crocodile.core.errors import CrocodileError, StoreError
 
 __all__ = [
     "CalendarRangeError",
+    "CurrencyMismatchError",
     "ExpiredMarketError",
     "InvalidSymbolError",
     "ListingConflictError",
@@ -177,6 +178,51 @@ class CalendarRangeError(MarketError, ValueError):
         return (
             f"{self.mic}: {self.requested.isoformat()} is outside the calendar bounds "
             f"[{first}, {last}]"
+        )
+
+
+class CurrencyMismatchError(MarketError, ValueError):
+    """A record states a currency or price scale its listing contradicts (spec §3.7, §5).
+
+    A ``ValueError`` so the existing dead-letter paths treat it as a bad record rather than a
+    crash. ``Provider.run`` already puts any exception raised while normalising a frame into the
+    DLQ (``equity/providers/base.py:235-243``), which is what spec §5 asks for this case.
+    """
+
+    def __init__(
+        self,
+        record_currency: str | None,
+        record_scale: int | None,
+        listing_currency: str | None,
+        listing_scale: int | None,
+        symbol: str | None = None,
+    ) -> None:
+        self.record_currency = record_currency
+        self.record_scale = record_scale
+        self.listing_currency = listing_currency
+        self.listing_scale = listing_scale
+        self.symbol = symbol
+        MarketError.__init__(
+            self, record_currency, record_scale, listing_currency, listing_scale, symbol
+        )
+
+    def __str__(self) -> str:
+        subject = f"{self.symbol}" if self.symbol else "the listing"
+        mismatches: list[str] = []
+        if self.record_currency is not None and self.listing_currency is not None:
+            if self.record_currency != self.listing_currency:
+                mismatches.append(
+                    f"currency {self.record_currency!r} != listing {self.listing_currency!r}"
+                )
+        if self.record_scale is not None and self.listing_scale is not None:
+            if self.record_scale != self.listing_scale:
+                mismatches.append(
+                    f"price_scale {self.record_scale} != listing {self.listing_scale}"
+                )
+        detail = "; ".join(mismatches) if mismatches else "the stated units differ"
+        return (
+            f"record unit contradicts its listing {subject}: {detail}; "
+            "the record is refused (dead-letter), not written"
         )
 
 
