@@ -105,11 +105,6 @@ full = [
 # Every capability that serves equities is reachable here under the same name it
 # has for crypto, with `--asset-class equity` when the symbol does not say.
 crocodile        = "crocodile.surfaces.entrypoint:main"
-# The two old names stay callable for one minor version, through wrappers that
-# say so on stderr. Pointing them straight at `main` would have made them silent
-# aliases — the deprecation notice would exist only in this comment.
-crypcodile       = "crocodile._deprecated_cli:crypcodile_main"   # removed in 0.4
-stockodile       = "crocodile._deprecated_cli:stockodile_main"   # removed in 0.4
 
 [dependency-groups]
 dev = [
@@ -128,7 +123,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/crocodile", "src/crypcodile", "src/stockodile"]
+packages = ["src/crocodile"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

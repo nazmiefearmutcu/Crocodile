@@ -37,18 +37,11 @@ def _base_process(code: str, args: list[str] | None = None) -> subprocess.Comple
     )
 
 
-@pytest.mark.parametrize("command", ["crocodile", "crypcodile", "stockodile"])
-def test_base_cli_help_keeps_all_commands(command: str) -> None:
-    if command == "crocodile":
-        code = "from crocodile.surfaces.entrypoint import main; main()"
-    else:
-        code = f"from crocodile._deprecated_cli import {command}_main as main; main()"
-    result = _base_process(code, ["--help"])
+def test_base_cli_help_keeps_all_commands() -> None:
+    result = _base_process("from crocodile.surfaces.entrypoint import main; main()", ["--help"])
     assert result.returncode == 0, result.stderr
     for name in ("query", "collect", "onchain-price", "lending-stress"):
         assert name in result.stdout
-    if command != "crocodile":
-        assert "removed in 0.4" in result.stderr
 
 
 def test_base_cli_runs_a_lake_query(tmp_path: Path) -> None:

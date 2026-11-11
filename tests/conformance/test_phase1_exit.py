@@ -90,36 +90,14 @@ def test_no_source_file_still_imports_the_old_packages() -> None:
     assert not offenders, f"stale package imports: {offenders}"
 
 
-def test_the_two_old_distributions_are_shims_and_nothing_else() -> None:
-    """`src/crypcodile` and `src/stockodile` hold a deprecation notice, no code.
+def test_the_old_distributions_are_gone() -> None:
+    """`src/crypcodile` and `src/stockodile` were removed in 0.4, with their import shims.
 
-    A shim that still carried modules would keep the old import paths working by
-    duplicating the tree, which is the opposite of a merge.
+    Both were promised for removal "until 0.4". A directory left behind would keep the old
+    import names resolvable from a source checkout and in any wheel built from it.
     """
     for legacy in ("crypcodile", "stockodile"):
-        files = sorted(
-            p.name for p in (_REPO / "src" / legacy).rglob("*.py") if "__pycache__" not in p.parts
-        )
-        assert files == ["__init__.py"], f"src/{legacy} still ships modules: {files}"
-
-
-def test_the_deprecated_commands_say_they_are_deprecated() -> None:
-    """A silent alias is not a deprecation.
-
-    Both old commands still work, and both are removed in 0.4. Pointed straight
-    at the merged CLI they would have run without a word, leaving the notice in
-    a pyproject comment nobody reads.
-    """
-    for command, replacement in (("crypcodile", "crocodile"), ("stockodile", "crocodile-equity")):
-        result = subprocess.run(
-            [str(_REPO / ".venv" / "bin" / command), "--help"],
-            cwd=_REPO,
-            capture_output=True,
-            text=True,
-        )
-        assert "deprecated" in result.stderr, f"{command} ran without a deprecation notice"
-        assert "0.4" in result.stderr, f"{command} does not say when it goes away"
-        assert replacement in result.stderr, f"{command} does not name its replacement"
+        assert not (_REPO / "src" / legacy).exists(), f"src/{legacy} was removed in 0.4"
 
 
 def test_the_public_api_is_no_longer_empty() -> None:
@@ -509,9 +487,6 @@ _CLEAN_PACKAGES = (
     "src/crocodile/surfaces",
     "src/crocodile/equity/universal",
     "src/crocodile/__init__.py",
-    "src/crocodile/_deprecated_cli.py",
-    "src/crypcodile",
-    "src/stockodile",
 )
 
 

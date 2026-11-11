@@ -109,10 +109,39 @@ def test_a_target_naming_a_deleted_module_is_refused() -> None:
 
 
 def test_the_primary_command_is_the_projections_entry_point() -> None:
-    """``crocodile`` is the merged command; the other two are deprecation wrappers."""
+    """``crocodile`` is the only command. The ``crypcodile`` and ``stockodile`` aliases
+    were removed in 0.4, so nothing else may be declared."""
     scripts = _declared_scripts()
     assert scripts[PRIMARY] == "crocodile.surfaces.entrypoint:main"
-    assert set(scripts) == {PRIMARY, "crypcodile", "stockodile"}
+    assert set(scripts) == {PRIMARY}
+
+
+def test_the_retired_commands_are_not_declared_or_packaged() -> None:
+    """The pyproject entries and the wheel's package list both name nothing retired."""
+    with (_REPO / "pyproject.toml").open("rb") as handle:
+        project = tomllib.load(handle)
+    wheel_packages = project["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
+    assert wheel_packages == ["src/crocodile"]
+    assert not {"crypcodile", "stockodile"} & set(_declared_scripts())
+    assert not any("_deprecated_cli" in target for target in _declared_scripts().values())
+
+
+@pytest.mark.parametrize("retired", ["crypcodile", "stockodile"])
+def test_the_retired_import_names_do_not_resolve(retired: str) -> None:
+    """``import crypcodile`` and ``import stockodile`` are ModuleNotFoundError in 0.4.
+
+    Run in a subprocess with this checkout's ``src`` first on the path, so an editable install
+    cannot supply a stale copy of the shim from another working tree.
+    """
+    result = subprocess.run(
+        [sys.executable, "-c", f"import {retired}"],
+        cwd=_REPO,
+        env=_child_environment(),
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "ModuleNotFoundError" in result.stderr, result.stderr
 
 
 def test_the_primary_command_runs_and_lists_capabilities() -> None:
