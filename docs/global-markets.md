@@ -6,6 +6,8 @@ Crocodile 0.4.0 knows **172 operating exchanges in 129 countries and territories
 
 **Prices:** since 0.4.0 the universal collectors (Yahoo chart history, TradingView end-of-day snapshots and official listing directories; see the README, "Global equities") collect end-of-day prices from these exchanges. Through the reference layer, listing symbols such as `THYAO@XIST`, calendars and currency handling are the same everywhere. Existing US equity and crypto collection is unchanged. The measured limits are in the [0.4.0 release notes](release-notes-0.4.0.md).
 
+**Live state:** since 0.5.0 the live layer answers for 131 of these markets, with an order book, a top of book or the last price depending on what a public source exposes. See [live market coverage](live-coverage.md) for the measured table.
+
 ## Summary
 
 - Library trading calendars (`exchange_calendars` 4.13.2, holidays known): **68** exchanges. Six of them reuse another venue's calendar: Shenzhen and Beijing use Shanghai, CSE and TSX Venture use Toronto, NASDAQ uses NYSE and NGM uses Stockholm.

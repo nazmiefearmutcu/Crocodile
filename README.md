@@ -105,6 +105,16 @@ The ISO 10383 snapshot and the ISO 4217 list are stored unmodified in `src/croco
 
 Listings live in a local listing master, `<data_dir>/reference/listings.sqlite`. It holds issuers, instruments (keyed by ISIN) and listings (MIC, local symbol, currency, price scale and status). It keeps every source's spelling as an alias with a validity window, and it records changes to currency, status and aliases as events. A listing is unique on its MIC and local symbol, so `000001@XSHE` and `000001@XSHG` are two listings. Instrument types are `SecurityType` members, such as `CS`, `ETF`, `GDR` and `BOND`.
 
+### Live market state
+
+Beside the daily pipeline, `crocodile.equity.universal.live` answers what a listing is doing now. `LiveFeed.poll` asks the sources of the listing's market, deepest view first, and returns one snapshot: the last trade, the session's figures, the resting bid and ask levels the publisher exposes, and its recent prints. `snapshot_records` turns it into `BookSnapshot`, `Quote` and `Trade` records. Nothing is written to the lake by a live read.
+
+How deep the answer is depends on the market, and `crocodile.equity.universal.live.registry.coverage` reports it. Ten markets answer with a multi-level order book (Taiwan, Taipei Exchange, Shanghai, Shenzhen, Beijing, Korea, India NSE, Ho Chi Minh, Hanoi and Xetra), sixteen with a top of book, and the rest with the last price and the session's figures. The measured table, one listing per market, is [docs/live-coverage.md](docs/live-coverage.md); `scripts/measure_live_coverage.py` regenerates it. 36 markets that are open by default have no keyless source, and that page says so for each.
+
+Futures, options, currencies, indices and government bonds are read by `crocodile.equity.universal.live.assets`. `AssetFeed.board` lists one derivatives venue's contracts (52 venues, among them Eurex, CME, NSE and Borsa Istanbul's VIOP), the composite currency pairs, the indices or the bonds; `AssetFeed.quotes` reads any mix of tickers; `AssetFeed.option_series` lists an underlying's series (each contract family and expiry) and `AssetFeed.option_chain` returns its listed options, all of them or one series, with the greeks the scanner states. A futures row becomes a `DerivativeTicker` and an `OpenInterest`, an index row an `IndexValue`, a chain `OptionsChain` records. `crocodile.equity.universal.live.chains` reads whole chains from the publishers themselves, with the sizes, volume and open interest the scanner does not state: Cboe's delayed file for US shares and indices, Bybit and Deribit for crypto. All of it is one aggregator's scanner: there is no order book for these instruments, and a row carries the delay the scanner states for it.
+
+The sources are the exchange's own public service where one answers a plain request, aggregators where none does, and 48 exchange price boards described as data in `src/crocodile/equity/universal/live/data/sites.json`. They follow the same three rules as the daily sources below. A polled book is a sample: its records carry the `polled_book_snapshot` basis, and a publisher's stated delay travels with the snapshot.
+
 ### Sources and usage classes
 
 | Source | Gives | Usage class |
@@ -232,7 +242,7 @@ uv sync --all-extras
 uv run --all-extras pytest tests/
 ```
 
-Tests cover adapters, schemas, provenance, query boundaries, sequence handling, raw capture, and replay, including cross-process byte-identity checks. Static-analysis coverage and legacy exceptions are defined in [`pyproject.toml`](pyproject.toml); see [CHANGELOG.md](CHANGELOG.md) for changes and [release notes](docs/release-notes-0.4.0.md) for the current data model. [Global market coverage](docs/global-markets.md) lists the 172 exchanges in 129 countries and territories that the market reference layer knows.
+Tests cover adapters, schemas, provenance, query boundaries, sequence handling, raw capture, and replay, including cross-process byte-identity checks. Static-analysis coverage and legacy exceptions are defined in [`pyproject.toml`](pyproject.toml); see [CHANGELOG.md](CHANGELOG.md) for changes, [release notes 0.5.0](docs/release-notes-0.5.0.md) for the live layer and [release notes 0.4.0](docs/release-notes-0.4.0.md) for the current data model. [Global market coverage](docs/global-markets.md) lists the 172 exchanges in 129 countries and territories that the market reference layer knows.
 
 [Apache License 2.0](LICENSE).
 

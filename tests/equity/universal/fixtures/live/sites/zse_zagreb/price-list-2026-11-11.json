@@ -1,0 +1,210 @@
+{
+ "timestamp": "2026-11-12T09:55:25.774798+01:00",
+ "mic": "XZAG",
+ "date": "2026-11-11",
+ "segments": [
+  {
+   "segment": "RP",
+   "label": "Prime market",
+   "local_label": "Vode\u0107e tr\u017ei\u0161te"
+  },
+  {
+   "segment": "RO",
+   "label": "Official market",
+   "local_label": "Slu\u017ebeno tr\u017ei\u0161te"
+  },
+  {
+   "segment": "RR",
+   "label": "Regular market",
+   "local_label": "Redovito tr\u017ei\u0161te"
+  }
+ ],
+ "models": [
+  {
+   "model": "CT",
+   "label": "Continuous Trading",
+   "local_label": "Modalitet kontinuirane trgovine"
+  },
+  {
+   "model": "CTLL",
+   "label": "Low Liquidity Trading",
+   "local_label": "Modalitet trg. za niskolikvidne dionice"
+  }
+ ],
+ "security_classes": [
+  {
+   "security_class": "EQTY",
+   "label": "Equity Instruments",
+   "local_label": "Vlasni\u010dki vrij. papiri"
+  },
+  {
+   "security_class": "ETF",
+   "label": "Exchange-Traded Funds",
+   "local_label": "ETF"
+  },
+  {
+   "security_class": "DEBT",
+   "label": "Debt Instruments",
+   "local_label": "Du\u017eni\u010dki vrij. papiri"
+  }
+ ],
+ "security_types": [
+  {
+   "security_type": "ORD-SHARE",
+   "label": "Regular Stock",
+   "local_label": "Redovna dionica"
+  },
+  {
+   "security_type": "PREF-SHARE",
+   "label": "Preferred Stock",
+   "local_label": "Povla\u0161tena dionica"
+  },
+  {
+   "security_type": "ETF",
+   "label": "Exchange-Traded Fund",
+   "local_label": "Fond \u010dijim udjelima se trguje na burzi"
+  },
+  {
+   "security_type": "MUNI-BOND",
+   "label": "Municipal Bond",
+   "local_label": "Municipalna obveznica"
+  },
+  {
+   "security_type": "STATE-BOND",
+   "label": "State Bond",
+   "local_label": "Dr\u017eavna obveznica"
+  },
+  {
+   "security_type": "CORP-BOND",
+   "label": "Corporate Bond",
+   "local_label": "Korporativna obveznica"
+  },
+  {
+   "security_type": "BILL",
+   "label": "Money Market Instrument",
+   "local_label": "Instrument tr\u017ei\u0161ta novca"
+  }
+ ],
+ "securities": [
+  {
+   "date": "2026-11-11",
+   "mic": "XZAG",
+   "segment": "RP",
+   "symbol": "ADPL",
+   "isin": "HRADPLRA0006",
+   "model": "CT",
+   "open_price": "21.5000",
+   "high_price": "21.5000",
+   "low_price": "21.3000",
+   "close_price": "21.3000",
+   "trade_date": "2026-11-11",
+   "vwap_price": "21.361111111111",
+   "change_percent": "0.00",
+   "num_trades": 8,
+   "volume": "252.00000",
+   "turnover": "5383.00",
+   "security_class": "EQTY",
+   "security_type": "ORD-SHARE",
+   "price_currency": "EUR",
+   "turnover_currency": "EUR",
+   "debt_maturity_date": null,
+   "debt_interest_rate": null
+  },
+  {
+   "date": "2026-11-11",
+   "mic": "XZAG",
+   "segment": "RP",
+   "symbol": "ARNT",
+   "isin": "HRARNTRA0004",
+   "model": "CT",
+   "open_price": "44.4000",
+   "high_price": "44.4000",
+   "low_price": "44.4000",
+   "close_price": "44.4000",
+   "trade_date": "2026-11-11",
+   "vwap_price": "44.4",
+   "change_percent": "-0.89",
+   "num_trades": 1,
+   "volume": "25.00000",
+   "turnover": "1110.00",
+   "security_class": "EQTY",
+   "security_type": "ORD-SHARE",
+   "price_currency": "EUR",
+   "turnover_currency": "EUR",
+   "debt_maturity_date": null,
+   "debt_interest_rate": null
+  },
+  {
+   "date": "2026-11-11",
+   "mic": "XZAG",
+   "segment": "RP",
+   "symbol": "ATGR",
+   "isin": "HRATGRRA0003",
+   "model": "CT",
+   "open_price": "55.5000",
+   "high_price": "55.5000",
+   "low_price": "55.0000",
+   "close_price": "55.0000",
+   "trade_date": "2026-11-11",
+   "vwap_price": "55.401937046005",
+   "change_percent": "-0.90",
+   "num_trades": 15,
+   "volume": "1239.00000",
+   "turnover": "68643.00",
+   "security_class": "EQTY",
+   "security_type": "ORD-SHARE",
+   "price_currency": "EUR",
+   "turnover_currency": "EUR",
+   "debt_maturity_date": null,
+   "debt_interest_rate": null
+  },
+  {
+   "date": "2026-11-11",
+   "mic": "XZAG",
+   "segment": "RP",
+   "symbol": "HT",
+   "isin": "HRHT00RA0005",
+   "model": "CT",
+   "open_price": "38.6000",
+   "high_price": "38.8000",
+   "low_price": "38.5000",
+   "close_price": "38.6000",
+   "trade_date": "2026-11-11",
+   "vwap_price": "38.590013742556",
+   "change_percent": "0.26",
+   "num_trades": 25,
+   "volume": "2183.00000",
+   "turnover": "84242.00",
+   "security_class": "EQTY",
+   "security_type": "ORD-SHARE",
+   "price_currency": "EUR",
+   "turnover_currency": "EUR",
+   "debt_maturity_date": null,
+   "debt_interest_rate": null
+  },
+  {
+   "date": "2026-11-11",
+   "mic": "XZAG",
+   "segment": "RP",
+   "symbol": "PODR",
+   "isin": "HRPODRRA0004",
+   "model": "CT",
+   "open_price": "146.0000",
+   "high_price": "146.5000",
+   "low_price": "145.5000",
+   "close_price": "146.5000",
+   "trade_date": "2026-11-11",
+   "vwap_price": "146.34090909091",
+   "change_percent": "0.69",
+   "num_trades": 5,
+   "volume": "22.00000",
+   "turnover": "3219.50",
+   "security_class": "EQTY",
+   "security_type": "ORD-SHARE",
+   "price_currency": "EUR",
+   "turnover_currency": "EUR",
+   "debt_maturity_date": null,
+   "debt_interest_rate": null
+  }
+ ]
+}

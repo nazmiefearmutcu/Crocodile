@@ -23,6 +23,7 @@ data/
 # Package reference data is code, not lake data.
 !/src/crocodile/core/markets/data/
 !/src/crocodile/equity/universal/data/
+!/src/crocodile/equity/universal/live/data/
 *.parquet
 *.duckdb
 *.duckdb.wal

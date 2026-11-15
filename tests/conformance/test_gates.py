@@ -2057,6 +2057,33 @@ CONSTANT_BY_DEFINITION: dict[str, tuple[float, str]] = {
         "sampling evidence to grade because nothing on the record was sampled, which is "
         "the same reading scraped_last_price carries for the same reason.",
     ),
+    "scanner_snapshot": (
+        1.0,
+        "Every number on the record is the scanner's own statement of where a future, an index "
+        "or an option stands now, read and never reconstructed, so the record is fully sampled "
+        "at its own level and nothing about the method varies between two rows. The basis "
+        "exists for its name: the scanner is an aggregator whose row can be delayed and whose "
+        "greeks are its own model, and WHERE prov_basis = 'scanner_snapshot' separates those "
+        "rows from a venue's own derivative ticker, which native alone could not.",
+    ),
+    "polled_book_snapshot": (
+        1.0,
+        "Every price and size on the record is the publisher's own statement of its book at "
+        "the instant it stamped, copied and never reconstructed, which is native's argument. "
+        "Polling costs completeness between two records, not the truth of one, so nothing "
+        "about a single record varies and there is nothing to grade. The basis exists for "
+        "its name: WHERE prov_basis = 'polled_book_snapshot' separates a sampled ladder of "
+        "a few levels from a venue's continuous incremental book, which native could not.",
+    ),
+    "polled_last_print": (
+        1.0,
+        "The record is one real trade whose price and size the publisher stated, either as "
+        "a row of its own tape or as the last trade beside its quote; both numbers are "
+        "copied. That is the difference from scraped_last_price, whose page publishes no "
+        "size: here a snapshot without a stated size builds no trade at all, so no record "
+        "of this basis carries an invented quantity. What polling loses is the prints "
+        "between two polls, which is a fact about the tape and not about any record on it.",
+    ),
     "listing_directory": (
         1.0,
         "An official directory row is its publisher's own statement that a listing exists on "

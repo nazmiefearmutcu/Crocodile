@@ -1,0 +1,37 @@
+[
+ {
+  "Code": "BOSK-R-A",
+  "Description": "Boska RK a.d. Banja Luka",
+  "AvgPrice": "0,43",
+  "AvgPerChange": "-14,00%",
+  "Direction": -1
+ },
+ {
+  "Code": "DUVN-R-A",
+  "Description": "Duvan a.d. Bijeljina",
+  "AvgPrice": "0,24",
+  "AvgPerChange": "0,00%",
+  "Direction": 0
+ },
+ {
+  "Code": "EKBL-R-A",
+  "Description": "Elektrokrajina a.d. Banja Luka",
+  "AvgPrice": "0,196",
+  "AvgPerChange": "-2,97%",
+  "Direction": -1
+ },
+ {
+  "Code": "DEST-R-A",
+  "Description": "Hemijska industrija Destilacija a.d. Tesli\u0107",
+  "AvgPrice": "0,25",
+  "AvgPerChange": "0,00%",
+  "Direction": 0
+ },
+ {
+  "Code": "HEDR-R-A",
+  "Description": "Hidroelektrane na Drini a.d. Vi\u0161egrad",
+  "AvgPrice": "0,325",
+  "AvgPerChange": "-0,31%",
+  "Direction": -1
+ }
+]

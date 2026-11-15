@@ -49,6 +49,9 @@ class HttpRequest:
     params: tuple[tuple[str, str], ...] = ()
     json_body: Mapping[str, Any] | None = None
     headers: tuple[tuple[str, str], ...] = ()  # extra headers; User-Agent is the fetcher's
+    form: tuple[tuple[str, str], ...] = ()
+    """Fields of an ``application/x-www-form-urlencoded`` body, for publishers whose own pages
+    post a form. Never combined with ``json_body``."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +96,7 @@ class AiohttpFetcher:
                 request.url,
                 params=list(request.params) or None,
                 json=request.json_body,
+                data=dict(request.form) if request.form else None,
                 headers=headers,
                 allow_redirects=False,
             ) as response:

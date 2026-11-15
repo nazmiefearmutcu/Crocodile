@@ -1,0 +1,975 @@
+[
+ {
+  "id": "aix",
+  "mic": "AIXK",
+  "url": "https://market-backend.aixkz.com/api/table/mw-main-records",
+  "format": "json",
+  "fields": {
+   "symbol": "secCode",
+   "name": "shortName",
+   "isin": "isin",
+   "currency": "currency",
+   "last": "lastTrade",
+   "open": "open",
+   "high": "highPrice",
+   "low": "lowPrice",
+   "prev_close": "previousClose",
+   "volume": "volume",
+   "turnover": "value",
+   "bid": "bidPrice",
+   "ask": "offerPrice",
+   "bid_size": "bidQty",
+   "ask_size": "offerQty"
+  },
+  "attribution": "Source: Astana International Exchange (aixkz.com)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "cboe_europe_cxe",
+  "mic": "BCXE",
+  "url": "https://cdn-api.cboe.com/api/europe/equities/market-statistics/symbol-data/cxe/cxe-equities-symbol-data.csv",
+  "format": "csv",
+  "fields": {
+   "symbol": "Name",
+   "name": "Company Name / Description",
+   "turnover": "EUR Notional",
+   "volume": "Volume",
+   "ask_size": "Ask Size",
+   "ask": "Ask Price",
+   "bid_size": "Bid Size",
+   "bid": "Bid Price",
+   "last": "Last Price"
+  },
+  "attribution": "Source: Cboe Europe Equities (cboe.com)",
+  "notes": "CXE order book; symbols are Cboe Europe uniform symbology (issuer code plus a home-market letter)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "cboe_europe_bxe",
+  "mic": "BCXE",
+  "url": "https://cdn-api.cboe.com/api/europe/equities/market-statistics/symbol-data/bxe/bxe-equities-symbol-data.csv",
+  "format": "csv",
+  "fields": {
+   "symbol": "Name",
+   "name": "Company Name / Description",
+   "turnover": "EUR Notional",
+   "volume": "Volume",
+   "ask_size": "Ask Size",
+   "ask": "Ask Price",
+   "bid_size": "Bid Size",
+   "bid": "Bid Price",
+   "last": "Last Price"
+  },
+  "attribution": "Source: Cboe Europe Equities (cboe.com)",
+  "notes": "BXE order book",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "cboe_us_listed",
+  "mic": "XCBO",
+  "url": "https://www.cboe.com/us/equities/market_statistics/listed_symbols/csv/",
+  "format": "csv",
+  "fields": {
+   "symbol": "Name",
+   "volume": "Volume",
+   "ask_size": "Ask Size",
+   "ask": "Ask Price",
+   "bid_size": "Bid Size",
+   "bid": "Bid Price",
+   "last": "Last Price"
+  },
+  "currency": "USD",
+  "price_scale": 0,
+  "attribution": "Source: Cboe Global Markets (cboe.com)",
+  "notes": "Cboe-listed securities, quotes of the Cboe BZX book",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "maldives",
+  "mic": "MALX",
+  "url": "https://stockexchange.mv/insights",
+  "format": "html",
+  "fields": {
+   "symbol": "CODE",
+   "last": "PRICE (MVR)"
+  },
+  "row_filter": {
+   "TYPE": [
+    "Equity"
+   ]
+  },
+  "currency": "MVR",
+  "attribution": "Source: Maldives Stock Exchange (stockexchange.mv)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "rse",
+  "mic": "RSEX",
+  "url": "https://rse.rw/equities-market",
+  "format": "html",
+  "fields": {
+   "symbol": "Securities",
+   "last": "Closing",
+   "prev_close": "Previous",
+   "volume": "Volume",
+   "turnover": "Value"
+  },
+  "symbol_pattern": "(\\S+)$",
+  "currency": "RWF",
+  "attribution": "Source: Rwanda Stock Exchange (rse.rw)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "amman",
+  "mic": "XAMM",
+  "url": "https://www.exchange.jo/en/ticker_feeds",
+  "format": "json",
+  "fields": {
+   "symbol": "object_id",
+   "name": "name_long",
+   "last": "current_price",
+   "open": "open_price"
+  },
+  "row_filter": {
+   "group_code": [
+    "11",
+    "21"
+   ]
+  },
+  "currency": "JOD",
+  "attribution": "Source: Amman Stock Exchange (exchange.jo)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "bisx",
+  "mic": "XBAA",
+  "url": "https://www.bisxbahamas.com/price-sheet",
+  "format": "html",
+  "fields": {
+   "symbol": "Company",
+   "prev_close": "Last Close",
+   "last": "Closing Price",
+   "volume": "Volume"
+  },
+  "currency": "BSD",
+  "attribution": "Source: Bahamas International Securities Exchange (bisxbahamas.com)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "bsx",
+  "mic": "XBDA",
+  "url": "https://www.bsx.com/bsx-securities-pricing",
+  "format": "html",
+  "fields": {
+   "symbol": "Ticker",
+   "name": "Security",
+   "bid": "Bid",
+   "ask": "Ask",
+   "volume": "Volume",
+   "last": "Price"
+  },
+  "symbol_pattern": "^([A-Z0-9]+)\\.BH$",
+  "attribution": "Source: Bermuda Stock Exchange (bsx.com)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "bodiva",
+  "mic": "XBDV",
+  "url": "https://www.bodiva.ao/capizar/last-quotation/api/v1/getLastQuotation_no.php?mercado=1",
+  "format": "json",
+  "fields": {
+   "symbol": "symbol",
+   "isin": "isin",
+   "last": "price"
+  },
+  "currency": "AOA",
+  "attribution": "Source: BODIVA (bodiva.ao)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "blberza",
+  "mic": "XBLB",
+  "url": "https://www.blberza.com/services/defaultTicker.ashx?langId=1",
+  "format": "json",
+  "fields": {
+   "symbol": "Code",
+   "name": "Description",
+   "last": "AvgPrice"
+  },
+  "number": "european",
+  "currency": "BAM",
+  "attribution": "Source: Banja Luka Stock Exchange (blberza.com)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "bse_botswana",
+  "mic": "XBOT",
+  "url": "https://apis.bse.co.bw/api/v1/market-overview",
+  "format": "json",
+  "fields": {
+   "symbol": "security",
+   "currency": "tradingcurrency",
+   "last": "details.price",
+   "turnover": "details.turnover",
+   "volume": "details.volume"
+  },
+  "method": "POST",
+  "form": {
+   "board": "domestic"
+  },
+  "rows": [
+   "domestic"
+  ],
+  "attribution": "Source: Botswana Stock Exchange (bse.co.bw)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "brvm",
+  "mic": "XBRV",
+  "url": "https://www.brvm.org/fr/cours-actions/0",
+  "format": "html",
+  "fields": {
+   "symbol": "Symbole",
+   "name": "Nom",
+   "volume": "Volume",
+   "prev_close": "Cours veille (FCFA)",
+   "open": "Cours Ouverture (FCFA)",
+   "last": "Cours Cl\u00f4ture (FCFA)"
+  },
+  "number": "european",
+  "currency": "XOF",
+  "attribution": "Source: BRVM (brvm.org)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "bvc_cv",
+  "mic": "XBVC",
+  "url": "https://bvc.cv/pagina/dados-de-mercado-bvc-61",
+  "format": "html",
+  "fields": {
+   "symbol": "T\u00edtulo",
+   "name": "Descri\u00e7\u00e3o",
+   "last": "Ultima Cota\u00e7\u00e3o",
+   "open": "Cota\u00e7\u00e3o de Abertura"
+  },
+  "number": "european",
+  "currency": "CVE",
+  "attribution": "Source: Bolsa de Valores de Cabo Verde (bvc.cv)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "bvm_mz",
+  "mic": "XBVM",
+  "url": "https://central.bvm.co.mz/api/exchanges",
+  "format": "json",
+  "fields": {
+   "symbol": "stock_name",
+   "last": "current_price",
+   "prev_close": "previous_price"
+  },
+  "row_filter": {
+   "type": [
+    "STOCK"
+   ]
+  },
+  "currency": "MZN",
+  "attribution": "Source: Bolsa de Valores de Mocambique (bvm.co.mz)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "csx_cayman",
+  "mic": "XCAY",
+  "url": "https://www.csx.ky/_data/TickerDataMF.asp",
+  "format": "json",
+  "fields": {
+   "symbol": "LinkText",
+   "last": "LinkText"
+  },
+  "rows": [
+   "Tickers"
+  ],
+  "symbol_pattern": "^(\\S+) KY<br>",
+  "field_patterns": {
+   "last": "<br>\\s*([0-9.,]+)"
+  },
+  "attribution": "Source: Cayman Islands Stock Exchange (csx.ky)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "csx_cambodia",
+  "mic": "XCSX",
+  "url": "https://csx.com.kh/api/v1/website/home/main-and-growth-board-stocks-trades?lang=en",
+  "format": "json",
+  "fields": {
+   "symbol": "issueName",
+   "isin": "icode",
+   "last": "currentPrice"
+  },
+  "rows": [
+   "data.mainBoardStockTrades",
+   "data.growthBoardStockTrades"
+  ],
+  "currency": "KHR",
+  "attribution": "Source: Cambodia Securities Exchange (csx.com.kh)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "gse_ghana",
+  "mic": "XGHA",
+  "url": "https://gsemarketwatch.com/api/symbol-statistics",
+  "format": "json",
+  "fields": {
+   "symbol": "symbol",
+   "bid": "bid_price",
+   "bid_size": "bid_volume",
+   "ask": "ask_price",
+   "ask_size": "ask_volume",
+   "last": "last_trade_price",
+   "last_size": "last_trade_volume",
+   "open": "open_price",
+   "high": "high_price",
+   "low": "low_price",
+   "volume": "total_trade_volume",
+   "turnover": "total_trade_value"
+  },
+  "currency": "GHS",
+  "attribution": "Source: Ghana Stock Exchange (gsemarketwatch.com)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "isx",
+  "mic": "XIQS",
+  "url": "http://www.isx-iq.net/isxportal/portal/marketPerformance.html?marketType=0",
+  "format": "html",
+  "fields": {
+   "symbol": "\u0627\u0644\u0631\u0645\u0632",
+   "last": "\u0627\u063a\u0644\u0627\u0642",
+   "high": "\u0623\u0639\u0644\u0649",
+   "low": "\u0623\u062f\u0646\u064a"
+  },
+  "currency": "IQD",
+  "attribution": "Source: Iraq Stock Exchange (isx-iq.net)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "kase",
+  "mic": "XKAZ",
+  "url": "https://kase.kz/en/markets/shares-and-adr-gdr",
+  "format": "html",
+  "fields": {
+   "symbol": "Ticker",
+   "open": "Open",
+   "high": "High",
+   "low": "Low",
+   "last": "Last"
+  },
+  "number": "european",
+  "currency": "KZT",
+  "attribution": "Source: Kazakhstan Stock Exchange (kase.kz)",
+  "notes": "The page's Bid and Offer columns are not mapped: on 2026-11-12 every row showed Bid above Offer",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "lsx",
+  "mic": "XLAO",
+  "url": "http://lsx.com.la/api-server/api/stock",
+  "format": "json",
+  "fields": {
+   "symbol": "INameEnglishAbbrev",
+   "isin": "ICode",
+   "name": "INameEnglish",
+   "last": "TPrice",
+   "open": "OPrice",
+   "high": "HPrice",
+   "low": "LPrice",
+   "volume": "ATVolume",
+   "turnover": "ATValue"
+  },
+  "rows": [
+   "data"
+  ],
+  "currency": "LAK",
+  "attribution": "Source: Lao Securities Exchange (lsx.com.la)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "afx_luse",
+  "mic": "XLUS",
+  "url": "https://afx.kwayisi.org/luse/",
+  "format": "html",
+  "fields": {
+   "symbol": "Ticker",
+   "name": "Name",
+   "volume": "Volume",
+   "last": "Price"
+  },
+  "currency": "ZMW",
+  "official": false,
+  "usage": "internal",
+  "notes": "AFX (afx.kwayisi.org), a third-party mirror of the exchange board",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "afx_use",
+  "mic": "XUGA",
+  "url": "https://afx.kwayisi.org/use/",
+  "format": "html",
+  "fields": {
+   "symbol": "Ticker",
+   "name": "Name",
+   "volume": "Volume",
+   "last": "Price"
+  },
+  "currency": "UGX",
+  "official": false,
+  "usage": "internal",
+  "notes": "AFX (afx.kwayisi.org), a third-party mirror of the exchange board",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "mnse",
+  "mic": "XMNX",
+  "url": "https://www.mnse.me/code/navigate.asp?Id=14",
+  "format": "html",
+  "fields": {
+   "symbol": "Simbol",
+   "last": "Cijena"
+  },
+  "symbol_pattern": "^(\\S+)",
+  "number": "european",
+  "currency": "EUR",
+  "attribution": "Source: Montenegro Stock Exchange (mnse.me)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "mse_malawi",
+  "mic": "XMSW",
+  "url": "https://mse.co.mw/market/mainboard",
+  "format": "html",
+  "fields": {
+   "symbol": "Symbol",
+   "open": "Open Price",
+   "last": "Close Price",
+   "volume": "Volume",
+   "turnover": "Turnover (MK)"
+  },
+  "currency": "MWK",
+  "attribution": "Source: Malawi Stock Exchange (mse.co.mw)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "nsx_australia",
+  "mic": "XNEC",
+  "url": "https://www.nsx.com.au/marketdata/prices/",
+  "format": "html",
+  "fields": {
+   "symbol": "NSX Code",
+   "last": "Last$",
+   "bid": "Bid $",
+   "ask": "Offer $",
+   "bid_size": "Bid Qty",
+   "ask_size": "Offer Qty",
+   "open": "Open $",
+   "high": "High $",
+   "low": "Low $",
+   "volume": "Vol. units",
+   "prev_close": "Prev Cls"
+  },
+  "currency": "AUD",
+  "attribution": "Source: National Stock Exchange of Australia (nsx.com.au)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "latinex",
+  "mic": "XPTY",
+  "url": "https://latinexbolsa.com/emisor/mercado/accionario",
+  "format": "json",
+  "fields": {
+   "symbol": "nemotecnicoCode",
+   "name": "emisor",
+   "isin": "isin",
+   "last": "precio",
+   "high": "precio_maximo",
+   "low": "precio_minimo",
+   "volume": "cantidad",
+   "turnover": "volumen"
+  },
+  "rows": [
+   "data"
+  ],
+  "currency": "USD",
+  "attribution": "Source: Latinex (latinexbolsa.com)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "sase",
+  "mic": "XSSE",
+  "url": "https://www.sase.ba/FeedServices/HandlerChart.ashx",
+  "format": "json",
+  "fields": {
+   "symbol": "Symbol",
+   "name": "SymbolDescription",
+   "last": "AvgPrice"
+  },
+  "method": "POST",
+  "form": {
+   "type": "20",
+   "symbol": "",
+   "lng": "0"
+  },
+  "currency": "BAM",
+  "attribution": "Source: Sarajevo Stock Exchange (sase.ba)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "uzse",
+  "mic": "XSTE",
+  "url": "https://www.uzse.uz/trade_results",
+  "format": "html",
+  "fields": {
+   "symbol": "\u041a\u043e\u0434 \u0426\u0411",
+   "name": "\u042d\u043c\u0438\u0442\u0435\u043d\u0442",
+   "last": "\u0422\u043e\u0440\u0433\u043e\u0432\u0430\u044f \u0446\u0435\u043d\u0430",
+   "last_size": "\u041a\u043e\u043b-\u0432\u043e \u0426\u0411"
+  },
+  "symbol_pattern": "^(\\S+)",
+  "currency": "UZS",
+  "attribution": "Source: Republican Stock Exchange Toshkent (uzse.uz)",
+  "notes": "Latest trades; the first row of a symbol is its most recent print",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "zse_zimbabwe",
+  "mic": "XZIM",
+  "url": "https://d17zh5y0djjrt1.cloudfront.net/api/v1/voms/price-sheets/active",
+  "format": "json",
+  "fields": {
+   "symbol": "symbol",
+   "name": "symbolName",
+   "isin": "isin",
+   "last": "closingPrice",
+   "open": "openingPrice"
+  },
+  "rows": [
+   "data"
+  ],
+  "symbol_pattern": "^([A-Z0-9]+)\\.ZW$",
+  "attribution": "Source: Zimbabwe Stock Exchange (zse.co.zw)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "dfm",
+  "mic": "XDFM",
+  "url": "https://api2.dfm.ae/mw/v1/stocks",
+  "format": "json",
+  "fields": {
+   "symbol": "id",
+   "last": "lastradeprice",
+   "last_size": "lastradevolume",
+   "prev_close": "previousclosingprice",
+   "open": "openingprice",
+   "high": "highestprice",
+   "low": "lowestprice",
+   "bid": "bidprice",
+   "bid_size": "bidvolume",
+   "ask": "offerprice",
+   "ask_size": "offervolume",
+   "volume": "totalvolume",
+   "turnover": "totalvalue"
+  },
+  "currency": "AED",
+  "attribution": "Source: Dubai Financial Market (dfm.ae)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "qse",
+  "mic": "DSMD",
+  "url": "https://www.qe.com.qa/wp/mw/data/MarketWatch.txt",
+  "format": "json",
+  "fields": {
+   "symbol": "Symbol",
+   "name": "CompanyEN",
+   "ask_size": "OfferVolume",
+   "ask": "OfferPrice",
+   "bid": "BidPrice",
+   "bid_size": "BidVolume",
+   "open": "OpenPrice",
+   "high": "High",
+   "low": "Low",
+   "last": "LastPrice",
+   "prev_close": "PrevClosing",
+   "volume": "Volume",
+   "turnover": "Value"
+  },
+  "rows": [
+   "rows"
+  ],
+  "currency": "QAR",
+  "attribution": "Source: Qatar Stock Exchange (qe.com.qa)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "ngx",
+  "mic": "XNSA",
+  "url": "https://doclib.ngxgroup.com/REST/api/statistics/equities/?market=&sector=&orderby=&pageSize=300&pageNo=0",
+  "format": "json",
+  "fields": {
+   "symbol": "Symbol",
+   "name": "Company2",
+   "prev_close": "PrevClosingPrice",
+   "open": "OpeningPrice",
+   "high": "HighPrice",
+   "low": "LowPrice",
+   "last": "ClosePrice",
+   "volume": "Volume",
+   "turnover": "Value"
+  },
+  "currency": "NGN",
+  "attribution": "Source: Nigerian Exchange Group (ngxgroup.com)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "cse_colombo",
+  "mic": "XCOL",
+  "url": "https://www.cse.lk/api/tradeSummary",
+  "format": "json",
+  "fields": {
+   "symbol": "symbol",
+   "name": "name",
+   "last": "price",
+   "prev_close": "previousClose",
+   "high": "high",
+   "low": "low",
+   "open": "open",
+   "volume": "sharevolume",
+   "turnover": "turnover"
+  },
+  "method": "POST",
+  "json_body": {},
+  "rows": [
+   "reqTradeSummery"
+  ],
+  "currency": "LKR",
+  "attribution": "Source: Colombo Stock Exchange (cse.lk)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "bvl",
+  "mic": "XLIM",
+  "url": "https://dataondemand.bvl.com.pe/v1/stock-quote/market",
+  "format": "json",
+  "fields": {
+   "symbol": "nemonico",
+   "name": "companyName",
+   "bid": "buy",
+   "ask": "sell",
+   "last": "last",
+   "low": "minimun",
+   "high": "maximun",
+   "open": "opening",
+   "prev_close": "previous",
+   "volume": "negotiatedQuantity",
+   "turnover": "negotiatedAmount"
+  },
+  "method": "POST",
+  "json_body": {
+   "sector": "",
+   "today": true,
+   "companyCode": "",
+   "inputCompany": ""
+  },
+  "rows": [
+   "content"
+  ],
+  "attribution": "Source: Bolsa de Valores de Lima (bvl.com.pe)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "zse_zagreb",
+  "mic": "XZAG",
+  "url": "https://rest.zse.hr/web/Bvt9fe2peQ7pwpyYqODM/price-list/XZAG/{date}/json",
+  "format": "json",
+  "fields": {
+   "symbol": "symbol",
+   "isin": "isin",
+   "open": "open_price",
+   "high": "high_price",
+   "low": "low_price",
+   "last": "close_price",
+   "volume": "volume",
+   "turnover": "turnover",
+   "currency": "price_currency"
+  },
+  "rows": [
+   "securities"
+  ],
+  "attribution": "Source: Zagreb Stock Exchange (zse.hr)",
+  "notes": "Daily price list of the latest session; the path key is the one the exchange website itself uses",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "ljse",
+  "mic": "XLJU",
+  "url": "https://rest.ljse.si/web/Bvt9fe2peQ7pwpyYqODM/price-list/XLJU/{date}/json",
+  "format": "json",
+  "fields": {
+   "symbol": "symbol",
+   "isin": "isin",
+   "open": "open_price",
+   "high": "high_price",
+   "low": "low_price",
+   "last": "close_price",
+   "volume": "volume",
+   "turnover": "turnover",
+   "currency": "price_currency"
+  },
+  "rows": [
+   "securities"
+  ],
+  "attribution": "Source: Ljubljana Stock Exchange (ljse.si)",
+  "notes": "Daily price list of the latest session; the path key is the one the exchange website itself uses",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "phisix",
+  "mic": "XPHS",
+  "url": "https://phisix-api3.appspot.com/stocks.json",
+  "format": "json",
+  "fields": {
+   "symbol": "symbol",
+   "name": "name",
+   "last": "price.amount",
+   "volume": "volume",
+   "currency": "price.currency"
+  },
+  "rows": [
+   "stocks"
+  ],
+  "official": false,
+  "usage": "internal",
+  "notes": "Phisix, a third-party mirror of the Philippine Stock Exchange board",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "gpw",
+  "mic": "XWAR",
+  "url": "https://www.gpw.pl/ajaxindex.php?action=GPWQuotations&start=showTable&tab=all&lang=EN&full=1&format=html",
+  "format": "html",
+  "fields": {
+   "symbol": "#4",
+   "name": "#2",
+   "isin": "#3",
+   "currency": "#5",
+   "prev_close": "#7",
+   "open": "#9",
+   "low": "#10",
+   "high": "#11",
+   "last": "#12",
+   "bid_size": "#16",
+   "bid": "#17",
+   "ask": "#18",
+   "ask_size": "#19",
+   "last_size": "#21",
+   "volume": "#23",
+   "turnover": "#24"
+  },
+  "table_index": 0,
+  "header_row": 0,
+  "turnover_mult": 1000.0,
+  "row_filter": {
+   "#25": [
+    "XWAR"
+   ]
+  },
+  "attribution": "Source: Warsaw Stock Exchange (gpw.pl)",
+  "notes": "Cells are addressed by position: the best bid and ask columns expand into orders, volume and limit",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "bvb",
+  "mic": "XBSE",
+  "url": "https://www.bvb.ro/FinancialInstruments/Markets/Shares",
+  "format": "html",
+  "fields": {
+   "symbol": "Simbol / ISIN",
+   "name": "Societate",
+   "last": "Pret (RON)"
+  },
+  "symbol_pattern": "^(\\S+)",
+  "number": "european",
+  "currency": "RON",
+  "attribution": "Source: Bucharest Stock Exchange (bvb.ro)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "nzx",
+  "mic": "XNZE",
+  "url": "https://www.nzx.com/markets/NZSX",
+  "format": "html",
+  "fields": {
+   "symbol": "Code",
+   "name": "Company",
+   "last": "Price",
+   "volume": "Volume",
+   "turnover": "Value"
+  },
+  "currency": "NZD",
+  "attribution": "Source: NZX (nzx.com)",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "pfts_stock_exchange",
+  "mic": "PFTS",
+  "url": "https://webdata.pfts.ua/sitedata/rest/result/{date}/{date}/security/*",
+  "format": "json",
+  "fields": {
+   "symbol": "ticker",
+   "open": "openprice",
+   "high": "highprice",
+   "low": "lowprice",
+   "last": "closeprice",
+   "volume": "security_quantity",
+   "turnover": "security_amount",
+   "currency": "currencyid"
+  },
+  "currency": "UAH",
+  "attribution": "Source: PFTS Stock Exchange (pfts.ua)",
+  "notes": "Whole-market daily result of PFTS (shares, bonds, certificates); last = closing price of the latest session; rows without a close have no last price; no bid or ask on this board",
+  "evidence": "2026-11-12"
+ },
+ {
+  "id": "vfex_market_cap",
+  "mic": "VFEX",
+  "url": "https://ds88jcmqc11je.cloudfront.net/api/fetch/market-capitalisation?exchange=VFEX",
+  "format": "json",
+  "rows": [
+   "data"
+  ],
+  "fields": {
+   "symbol": "symbol",
+   "name": "companyName",
+   "last": "closingPrice"
+  },
+  "symbol_pattern": "^([A-Z0-9]+)\\.VX$",
+  "currency": "USD",
+  "official": true,
+  "usage": "display",
+  "min_interval_s": 300,
+  "attribution": "Source: Victoria Falls Stock Exchange (vfex.exchange)",
+  "evidence": "2026-11-12",
+  "notes": "Market-capitalisation feed used by the VFEX site (exchange=VFEX): one row per listed security with symbol CODE.VX (suffix stripped by symbol_pattern) and closingPrice as the last close (statsDate 2026-11-11). Checked by hand: marketCapitalisation = closingPrice x outstandingShares; closingPrice equals closePrice in the same host's price-sheet feed (AXIA 0.1802, CMCL 30.0576). No bid, ask, volume or previous close in this feed. Keyless: no key, cookie or Referer sent."
+ },
+ {
+  "id": "ecse_eastern_caribbean",
+  "mic": "XECS",
+  "url": "https://www.ecseonline.com/wp-admin/admin-ajax.php",
+  "method": "POST",
+  "form": {
+   "action": "ecse_get_trade_data",
+   "tradedata": "dailyquotes",
+   "size": "1000",
+   "page": "1"
+  },
+  "format": "json",
+  "rows": [
+   "data"
+  ],
+  "fields": {
+   "symbol": "dailyquotes_symbol",
+   "last": "dailyquotes_last_price_value",
+   "high": "dailyquotes_high_price",
+   "low": "dailyquotes_low_price",
+   "bid": "dailyquotes_buy_price",
+   "bid_size": "dailyquotes_buy_volume",
+   "ask": "dailyquotes_sell_price",
+   "ask_size": "dailyquotes_sell_volume",
+   "turnover": "dailyquotes_total_value"
+  },
+  "currency": "XCD",
+  "attribution": "Source: Eastern Caribbean Securities Exchange (ecseonline.com)",
+  "evidence": "2026-11-12",
+  "min_interval_s": 60.0,
+  "notes": "WordPress admin-ajax POST used by the ECSE dailyquotes page (Tabulator plugin table). Page size 1000 (size=3000 got no response). last is the last trade price and its trade date (dailyquotes_trade_date) can be weeks old per symbol; bid and ask are the best open orders (zero means none and is dropped). The page Open Price column is the close, so open is not mapped. Volume not mapped (no reliable column)."
+ },
+ {
+  "id": "mse_macedonia",
+  "mic": "XMAE",
+  "url": "https://www.mse.mk/mk/stats/current-ratios",
+  "format": "html",
+  "fields": {
+   "symbol": "\u0428\u0438\u0444\u0440\u0430 \u043d\u0430 \u0425\u0412",
+   "last": "\u041f\u0440\u043e\u0441\u0435\u0447\u043d\u0430 \u0446\u0435\u043d\u0430"
+  },
+  "table_id": "current-ratios-table",
+  "symbol_pattern": "^([A-Z0-9]+)",
+  "number": "european",
+  "currency": "MKD",
+  "attribution": "Source: Macedonian Stock Exchange (mse.mk)",
+  "evidence": "2026-11-12",
+  "notes": "Board table of all securities with a price on the current-ratios page. last = \u041f\u0440\u043e\u0441\u0435\u0447\u043d\u0430 \u0446\u0435\u043d\u0430, the session average price, which is the same figure the exchange's daily XLS calls \u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0430 \u0446\u0435\u043d\u0430. Symbols carry a year and asterisk suffix such as KMB(2025)*, which symbol_pattern strips. Group rows and the header have no ticker and no price and are dropped. Only securities with a price today appear (83 of about 378 listed codes). No bid, ask, volume or prev_close on this page."
+ },
+ {
+  "id": "sharesansar_nepal",
+  "mic": "XNEP",
+  "url": "https://www.sharesansar.com/today-share-price",
+  "format": "html",
+  "table_id": "headFixed",
+  "fields": {
+   "symbol": "Symbol",
+   "last": "LTP",
+   "open": "Open",
+   "high": "High",
+   "low": "Low",
+   "prev_close": "Prev. Close",
+   "volume": "Vol",
+   "turnover": "Turnover"
+  },
+  "number": "plain",
+  "official": false,
+  "usage": "internal",
+  "currency": "NPR",
+  "attribution": "Source: ShareSansar (sharesansar.com), third-party mirror of Nepal Stock Exchange data",
+  "evidence": "2026-11-12",
+  "notes": "Official NEPSE site api returns 401 UNAUTHORIZED ACCESS to the keyless client, so this third-party mirror is the only keyless full board. Table headFixed holds all listed securities of the day, server-rendered."
+ },
+ {
+  "id": "pex_palestine",
+  "mic": "XPAE",
+  "url": "https://webapi.pex.ps/api/GetAllHistoricalTradingData",
+  "format": "json",
+  "method": "POST",
+  "json_body": {
+   "StartDate": "2026-01-01T00:00:00.000Z",
+   "EndDate": "2030-01-01T00:00:00.000Z"
+  },
+  "rows": [
+   ""
+  ],
+  "fields": {
+   "symbol": "symbol",
+   "last": "price"
+  },
+  "attribution": "Source: Palestine Securities Exchange (pex.ps)",
+  "evidence": "2026-11-12",
+  "notes": "POST body is a fixed window (year-to-date from 2026-01-01); only last trade price and symbol are mapped because volume, value, high, low and previousClosing are aggregated over the requested window, not per session. Symbols that did not trade in the window are absent; zero prices are dropped by the engine. Revisit the start date in 2027. The board lists JOD and USD securities without saying which, so no currency is stated."
+ },
+ {
+  "id": "xsps_daily_quotes",
+  "mic": "XSPS",
+  "url": "https://marketreports.spx.com.fj/marketlistrpt.aspx",
+  "format": "html",
+  "table_id": "dataGridView3",
+  "fields": {
+   "symbol": "#0",
+   "last": "#1",
+   "volume": "#3"
+  },
+  "currency": "FJD",
+  "official": true,
+  "usage": "display",
+  "attribution": "Source: South Pacific Stock Exchange (spx.com.fj)",
+  "evidence": "2026-11-12",
+  "min_interval_s": 60.0,
+  "notes": "SPX Daily Quotes board (Market Statistics > Daily Quotes iframe). Columns by position: 0 Code, 1 Current Market Price, 3 Volume Traded. Header-text addressing is not used because the Closing Quotes group has two sub-columns (Buy/Sell) that the header row does not repeat, so header names are off by one for the cells after it. Closing Buy/Sell and Low/High were left out: the Buy/Sell cells are closing quotes, not a live book."
+ }
+]

@@ -1,0 +1,88 @@
+{
+  "research_date": "2026-11-15",
+  "status": "research arithmetic, not a production adapter",
+  "input_records": 1355,
+  "expected_minutes": [
+    {
+      "file": "DEUR-posttrade-2026-11-13T10_00.json.gz",
+      "isin": "DE000F0GDWD2",
+      "product": "FDAX",
+      "maturity": "2026-12",
+      "mapping_source": "https://live.deutsche-boerse.com/future/fdax-dec26-index-futures",
+      "rows_seen": 28,
+      "rows_eligible": 28,
+      "repeated_trade_key_count": 0,
+      "minute_start_utc": "2026-11-13T10:00:00Z",
+      "open": "26874.00",
+      "high": "26877.00",
+      "low": "26869.00",
+      "close": "26877.00",
+      "quantity_sum_raw": "33.00",
+      "vwap_raw": "26872.69696969696969696969697",
+      "price_notation_raw": [
+        1
+      ]
+    },
+    {
+      "file": "DEUR-posttrade-2026-11-13T10_00.json.gz",
+      "isin": "DE000F2HLQG4",
+      "product": "FGBL",
+      "maturity": "2026-12",
+      "mapping_source": "https://www.boerse-stuttgart.de/de-de/produkte/future/de000f2hlqg4-euro-bund-future-12-2026-eurex/",
+      "rows_seen": 153,
+      "rows_eligible": 153,
+      "repeated_trade_key_count": 0,
+      "minute_start_utc": "2026-11-13T10:00:00Z",
+      "open": "122.00",
+      "high": "122.01",
+      "low": "121.99",
+      "close": "122.01",
+      "quantity_sum_raw": "5356.00",
+      "vwap_raw": "121.9970575056011949215832711",
+      "price_notation_raw": [
+        2
+      ]
+    },
+    {
+      "file": "DEUR-posttrade-2026-11-13T10_01.json.gz",
+      "isin": "DE000F0GDWD2",
+      "product": "FDAX",
+      "maturity": "2026-12",
+      "mapping_source": "https://live.deutsche-boerse.com/future/fdax-dec26-index-futures",
+      "rows_seen": 30,
+      "rows_eligible": 30,
+      "repeated_trade_key_count": 0,
+      "minute_start_utc": "2026-11-13T10:01:00Z",
+      "open": "26878.00",
+      "high": "26882.00",
+      "low": "26874.00",
+      "close": "26880.00",
+      "quantity_sum_raw": "37.00",
+      "vwap_raw": "26877.62162162162162162162162",
+      "price_notation_raw": [
+        1
+      ]
+    },
+    {
+      "file": "DEUR-posttrade-2026-11-13T10_01.json.gz",
+      "isin": "DE000F2HLQG4",
+      "product": "FGBL",
+      "maturity": "2026-12",
+      "mapping_source": "https://www.boerse-stuttgart.de/de-de/produkte/future/de000f2hlqg4-euro-bund-future-12-2026-eurex/",
+      "rows_seen": 75,
+      "rows_eligible": 75,
+      "repeated_trade_key_count": 0,
+      "minute_start_utc": "2026-11-13T10:01:00Z",
+      "open": "122.02",
+      "high": "122.04",
+      "low": "122.02",
+      "close": "122.04",
+      "quantity_sum_raw": "1121.00",
+      "vwap_raw": "122.0231043710972346119536128",
+      "price_notation_raw": [
+        2
+      ]
+    }
+  ],
+  "caveat": "Quantity is a sum of the publisher quantity field. No independent full-day reconciliation or live-session latency test has been performed."
+}

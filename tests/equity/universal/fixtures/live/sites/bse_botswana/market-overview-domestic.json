@@ -1,0 +1,84 @@
+{
+ "domestic": [
+  {
+   "instrid": "KNO-EQO",
+   "security": "KNO",
+   "tradingcurrency": "BWP",
+   "logo_url": "https://apis.bse.co.bw/storage/logos/566.jpeg",
+   "details": {
+    "change": 0.05,
+    "percentage_change": 4.35,
+    "turnover": "26,666.40",
+    "volume": "22,222",
+    "trades": "7",
+    "statdate": "2026-11-11",
+    "price": "1.20"
+   }
+  },
+  {
+   "instrid": "BTCL-EQO",
+   "security": "BTCL",
+   "tradingcurrency": "BWP",
+   "logo_url": "https://apis.bse.co.bw/storage/logos/377.png",
+   "details": {
+    "change": 0,
+    "percentage_change": 0,
+    "turnover": "5,658.96",
+    "volume": "3,876",
+    "trades": "3",
+    "statdate": "2026-11-11",
+    "price": "1.46"
+   }
+  },
+  {
+   "instrid": "LETS-EQO",
+   "security": "LETSHEGO",
+   "tradingcurrency": "BWP",
+   "logo_url": "https://apis.bse.co.bw/storage/logos/222.jpeg",
+   "details": {
+    "change": -0.02,
+    "percentage_change": -2.41,
+    "turnover": "3,050.46",
+    "volume": "3,766",
+    "trades": "1",
+    "statdate": "2026-11-11",
+    "price": "0.81"
+   }
+  },
+  {
+   "instrid": "FNBB-EQO",
+   "security": "FNBB",
+   "tradingcurrency": "BWP",
+   "logo_url": "https://apis.bse.co.bw/storage/logos/434.jpeg",
+   "details": {
+    "change": 0,
+    "percentage_change": 0,
+    "turnover": 0,
+    "volume": 0,
+    "trades": 0,
+    "statdate": "2026-11-11",
+    "price": "5.75"
+   }
+  },
+  {
+   "instrid": "SCBB-EQO",
+   "security": "STANCHART",
+   "tradingcurrency": "BWP",
+   "logo_url": "https://apis.bse.co.bw/storage/logos/217.jpeg",
+   "details": {
+    "change": 0,
+    "percentage_change": 0,
+    "turnover": 0,
+    "volume": 0,
+    "trades": 0,
+    "statdate": "2026-11-11",
+    "price": "8.77"
+   }
+  }
+ ],
+ "updated_at": {
+  "date": "11/11/2026",
+  "time": "13:48 PM GMT+2"
+ },
+ "now": "10:15 AM GMT+2"
+}

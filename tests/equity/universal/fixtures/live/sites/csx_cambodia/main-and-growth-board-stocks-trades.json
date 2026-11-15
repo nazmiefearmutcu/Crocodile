@@ -1,0 +1,84 @@
+{
+ "timestamp": "2026-11-12T15:15:58.068+07:00",
+ "status": 200,
+ "totalRecords": 1,
+ "data": {
+  "topMemberPerformance": null,
+  "topLiquidityProvider": null,
+  "gmsExchanges": null,
+  "bondDetails": null,
+  "growthBoardStockTrades": [
+   {
+    "issueName": "DBDE",
+    "currentPrice": "2,260",
+    "percentChange": "0.00",
+    "change": 0,
+    "changeUpDown": "equal",
+    "value": null,
+    "volume": null,
+    "date": null,
+    "boardId": "growth",
+    "list": null,
+    "icode": "KH1000150008"
+   },
+   {
+    "issueName": "JSL",
+    "currentPrice": "2,080",
+    "percentChange": "0.48",
+    "change": 10,
+    "changeUpDown": "up",
+    "value": null,
+    "volume": null,
+    "date": null,
+    "boardId": "growth",
+    "list": null,
+    "icode": "KH1000160007"
+   }
+  ],
+  "mainBoardStockTrades": [
+   {
+    "issueName": "PWSA      ",
+    "currentPrice": "6,960",
+    "percentChange": "0.29",
+    "change": 20,
+    "changeUpDown": "down",
+    "value": null,
+    "volume": null,
+    "date": null,
+    "boardId": "main",
+    "list": null,
+    "icode": "KH1000010004"
+   },
+   {
+    "issueName": "GTI       ",
+    "currentPrice": "8,060",
+    "percentChange": "0.25",
+    "change": 20,
+    "changeUpDown": "up",
+    "value": null,
+    "volume": null,
+    "date": null,
+    "boardId": "main",
+    "list": null,
+    "icode": "KH1000020003"
+   },
+   {
+    "issueName": "PPAP      ",
+    "currentPrice": "14,840",
+    "percentChange": "0.13",
+    "change": 20,
+    "changeUpDown": "up",
+    "value": null,
+    "volume": null,
+    "date": null,
+    "boardId": "main",
+    "list": null,
+    "icode": "KH1000040001"
+   }
+  ],
+  "disclosures": null,
+  "notices": null,
+  "dailyIndexes": null,
+  "highlights": null
+ }
+}

@@ -1,0 +1,52 @@
+[
+ {
+  "id": "4271",
+  "object_id": "ASE20",
+  "current_price": "2,195.69",
+  "open_price": "2,194.84",
+  "current_variation_percent": "0.1",
+  "group_code": "20",
+  "name_long": "Index ASE20",
+  "name_short": "Index ASE20"
+ },
+ {
+  "id": "523",
+  "object_id": "ABUS",
+  "current_price": "0.57",
+  "open_price": "0.57",
+  "current_variation_percent": "-1.72",
+  "group_code": "21",
+  "name_long": "COMPREHENSIVE MULTIPLE TRANSPORTATIONS CO.",
+  "name_short": "COMP TRANSPORTS"
+ },
+ {
+  "id": "383",
+  "object_id": "AEIV",
+  "current_price": "1.17",
+  "open_price": "1.18",
+  "current_variation_percent": "0.86",
+  "group_code": "21",
+  "name_long": "ARAB EAST INVESTMENT",
+  "name_short": "ARAB EAST INVST."
+ },
+ {
+  "id": "223",
+  "object_id": "AHLI",
+  "current_price": "1.37",
+  "open_price": "1.37",
+  "current_variation_percent": "-0.72",
+  "group_code": "11",
+  "name_long": "JORDAN AHLI BANK",
+  "name_short": "JORDAN AHLI BANK"
+ },
+ {
+  "id": "295",
+  "object_id": "AIHO",
+  "current_price": "0.72",
+  "open_price": "0.72",
+  "current_variation_percent": "0",
+  "group_code": "21",
+  "name_long": "ARAB INTERNATIONAL HOTELS",
+  "name_short": "ARAB INTL HOTEL"
+ }
+]

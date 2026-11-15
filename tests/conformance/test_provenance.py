@@ -27,11 +27,14 @@ _EXPECTED_BASES = frozenset(
         "caller_supplied",
         "farcaster_cast_search",
         "listing_directory",
+        "polled_book_snapshot",
+        "polled_last_print",
         "native",
         "ohlcv_from_ohlcv",
         "ohlcv_from_quotes",
         "ohlcv_from_trades",
         "reference_merge",
+        "scanner_snapshot",
         "scraped_last_price",
         "session_snapshot",
         "sec_13f_hr",
@@ -39,6 +42,7 @@ _EXPECTED_BASES = frozenset(
         "treasury_carry",
         "unavailable",
         "visible_l3_sum",
+        "volume_delta_print",
         "yahoo_1m_vap",
     }
 )
